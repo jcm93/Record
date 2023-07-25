@@ -113,7 +113,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of outputType: SCStreamOutputType) {
         
         // Return early if the sample buffer is invalid.
-        guard sampleBuffer.isValid else { return }
+        guard sampleBuffer.isValid else {
+            print("invalid sample")
+            return
+        }
         
         // Determine which type of data the sample buffer contains.
         switch outputType {
@@ -123,8 +126,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
             capturedFrameHandler?(frame)
         case .audio:
             // Create an AVAudioPCMBuffer from an audio sample buffer.
-            guard let samples = createPCMBuffer(for: sampleBuffer) else { return }
-            pcmBufferHandler?(samples)
+            self.encoder?.encodeAudioFrame(sampleBuffer)
+            //guard let samples = createPCMBuffer(for: sampleBuffer) else { return }
+            //pcmBufferHandler?(samples)
         @unknown default:
             fatalError("Encountered unknown stream output type: \(outputType)")
         }
@@ -174,7 +178,8 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         guard let audioBufferList = ablPointer,
               let absd = sampleBuffer.formatDescription?.audioStreamBasicDescription,
               let format = AVAudioFormat(standardFormatWithSampleRate: absd.mSampleRate, channels: absd.mChannelsPerFrame) else { return nil }
-        return AVAudioPCMBuffer(pcmFormat: format, bufferListNoCopy: audioBufferList)
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, bufferListNoCopy: audioBufferList)
+        return buffer
     }
     
     func stream(_ stream: SCStream, didStopWithError error: Error) {

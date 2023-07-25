@@ -8,6 +8,7 @@
 
 import Foundation
 import VideoToolbox
+import AVFAudio
 
 class Encoder: NSObject {
     
@@ -120,12 +121,17 @@ class Encoder: NSObject {
         }
     }
     
+    func encodeAudioFrame(_ buffer: CMSampleBuffer) {
+        self.videoSink.sendAudioBuffer(buffer)
+    }
+    
     func stopEncoding() async {
         VTCompressionSessionCompleteFrames(self.session, untilPresentationTimeStamp: .invalid)
         do {
             try await self.videoSink.close()
         } catch {
-            fatalError("poopy")
+            print(error)
+            fatalError("error")
         }
     }
     

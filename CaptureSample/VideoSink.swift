@@ -4,7 +4,9 @@ import AVFoundation
 public class VideoSink {
     private let assetWriter: AVAssetWriter
     private let assetWriterInput: AVAssetWriterInput
+    private var assetWriterAudioInput: AVAssetWriterInput
     private var sessionStarted = false
+    private var hasInitAudio = false
     
     /// Creates a video sink or throws an error if it fails.
     /// - Parameters:
@@ -24,15 +26,32 @@ public class VideoSink {
         let videoFormatDesc = try CMFormatDescription(videoCodecType: CMFormatDescription.MediaSubType(rawValue: codec), width: width, height: height)
 
         assetWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: nil, sourceFormatHint: videoFormatDesc)
+        let audioFormatDescription = AudioStreamBasicDescription(mSampleRate: 48000.0, mFormatID: kAudioFormatLinearPCM, mFormatFlags: 0x29, mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
+        var outputSettings = [
+                AVFormatIDKey: UInt(kAudioFormatLinearPCM),
+                AVSampleRateKey: 44100,
+                AVNumberOfChannelsKey: 2,
+                //AVChannelLayoutKey: NSData(bytes:&channelLayout, length:MemoryLayout<AudioChannelLayout>.size),
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsNonInterleaved: false,
+                AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsBigEndianKey: false
+            ] as [String : Any]
+        let cmFormat = try CMFormatDescription(audioStreamBasicDescription: audioFormatDescription)
+        assetWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: outputSettings, sourceFormatHint: cmFormat)
+        
         if isRealTime {
             assetWriterInput.expectsMediaDataInRealTime = true
+            assetWriterAudioInput.expectsMediaDataInRealTime = true
         }
         assetWriter.add(assetWriterInput)
+        assetWriter.add(assetWriterAudioInput)
 
         guard assetWriter.startWriting() else {
             throw assetWriter.error!
         }
     }
+    
     
     /// Appends a video frame to the destination movie file.
     /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
@@ -48,9 +67,17 @@ public class VideoSink {
         }
     }
     
+    public func sendAudioBuffer(_ buffer: CMSampleBuffer) {
+        guard sessionStarted else { return }
+        if assetWriterAudioInput.isReadyForMoreMediaData {
+            assetWriterAudioInput.append(buffer)
+        }
+    }
+    
     /// Closes the destination movie file.
     public func close() async throws {
         assetWriterInput.markAsFinished()
+        assetWriterAudioInput.markAsFinished()
         await assetWriter.finishWriting()
 
         if assetWriter.status == .failed {
