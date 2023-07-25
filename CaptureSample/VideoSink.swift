@@ -27,9 +27,9 @@ public class VideoSink {
 
         assetWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: nil, sourceFormatHint: videoFormatDesc)
         let audioFormatDescription = AudioStreamBasicDescription(mSampleRate: 48000.0, mFormatID: kAudioFormatLinearPCM, mFormatFlags: 0x29, mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
-        var outputSettings = [
+        let outputSettings = [
                 AVFormatIDKey: UInt(kAudioFormatLinearPCM),
-                AVSampleRateKey: 44100,
+                AVSampleRateKey: 48000,
                 AVNumberOfChannelsKey: 2,
                 //AVChannelLayoutKey: NSData(bytes:&channelLayout, length:MemoryLayout<AudioChannelLayout>.size),
                 AVLinearPCMBitDepthKey: 16,

@@ -25,10 +25,56 @@ class ScreenRecorder: ObservableObject {
         case window
     }
     
+    enum EncoderSetting {
+        case H264
+        case H265
+    }
+    
+    enum ContainerSetting {
+        case mov
+        case mp4
+    }
+    
+    enum RateControlSetting {
+        case cbr
+        case abr
+        case crf
+    }
+    
+    enum PixelFormat {
+        case bgra
+        case v420
+    }
+    
+    enum YCbCrMatrix {
+        case ITU_R_2020
+        case ITU_R_709_2
+    }
+    
+    enum ColorPrimaries {
+        case P3_D65
+        case DCI_P3
+    }
+    
+    enum TransferFunction {
+        case untagged
+    }
+    
     private let logger = Logger()
     
     @Published var isRunning = false
     @Published var isRecording = false
+    
+    @Published var captureWidth: String = ""
+    @Published var captureHeight: String = ""
+    
+    @Published var bitRate: Int = 10000
+    
+    @Published var crfValue: Double = 0.70
+    
+    @Published var containerSetting: ContainerSetting = .mp4 {
+        didSet { updateEngine() }
+    }
     
     // MARK: - Video Properties
     @Published var captureType: CaptureType = .display {
@@ -44,6 +90,30 @@ class ScreenRecorder: ObservableObject {
     }
     
     @Published var isAppExcluded = true {
+        didSet { updateEngine() }
+    }
+    
+    @Published var encoderSetting: EncoderSetting = .H265 {
+        didSet { updateEngine() }
+    }
+    
+    @Published var rateControlSetting: RateControlSetting = .crf {
+        didSet { updateEngine() }
+    }
+    
+    @Published var pixelFormat: PixelFormat = .bgra {
+        didSet { updateEngine() }
+    }
+    
+    @Published var yCbCrMatrix: YCbCrMatrix = .ITU_R_2020 {
+        didSet { updateEngine() }
+    }
+    
+    @Published var colorPrimaries: ColorPrimaries = .P3_D65 {
+        didSet { updateEngine() }
+    }
+    
+    @Published var transferFunction: TransferFunction = .untagged {
         didSet { updateEngine() }
     }
     
