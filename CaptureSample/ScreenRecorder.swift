@@ -17,7 +17,7 @@ class AudioLevelsProvider: ObservableObject {
     @Published var audioLevels = AudioLevels.zero
 }
 
-public enum RateControlSetting {
+public enum RateControlSetting: Int, Codable, CaseIterable {
     case cbr
     case abr
     case crf
@@ -27,27 +27,27 @@ public enum RateControlSetting {
 class ScreenRecorder: ObservableObject {
     
     /// The supported capture types.
-    enum CaptureType {
+    enum CaptureType: Int, Codable, CaseIterable {
         case display
         case window
     }
     
-    enum EncoderSetting {
+    enum EncoderSetting: Int, Codable, CaseIterable {
         case H264
         case H265
     }
     
-    enum ContainerSetting {
+    enum ContainerSetting: Int, Codable, CaseIterable {
         case mov
         case mp4
     }
     
-    enum PixelFormatSetting {
+    enum PixelFormatSetting: Int, Codable, CaseIterable {
         case bgra
         case v420
     }
     
-    enum YCbCrMatrixSetting {
+    enum YCbCrMatrixSetting: Int, Codable, CaseIterable {
         case ITU_R_2020
         case ITU_R_709_2
         case untagged
@@ -63,7 +63,7 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
-    enum ColorPrimariesSetting {
+    enum ColorPrimariesSetting: Int, Codable, CaseIterable {
         case P3_D65
         case DCI_P3
         case untagged
@@ -79,24 +79,24 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
-    enum TransferFunctionSetting {
+    enum TransferFunctionSetting: Int, Codable, CaseIterable {
         case untagged
         func stringValue() -> CFString? {
             return nil
         }
     }
     
-    enum KeyframeSetting {
+    enum KeyframeSetting: Int, Codable, CaseIterable {
         case auto
         case custom
     }
     
-    enum KeyframeDurationSetting {
+    enum KeyframeDurationSetting: Int, Codable, CaseIterable {
         case unlimited
         case custom
     }
     
-    enum BitDepthSetting {
+    enum BitDepthSetting: Int, Codable, CaseIterable {
         case eight
         case ten
     }
@@ -111,21 +111,21 @@ class ScreenRecorder: ObservableObject {
     @Published var captureWidth: String = ""
     @Published var captureHeight: String = ""
     
-    @Published var bitRate: Int = 10000 {
+    @AppStorage("bitRate") var bitRate: Int = 10000 {
         didSet { updateEngine() }
     }
     
-    @Published var crfValue: Double = 0.70 {
+    @AppStorage("crfValue") var crfValue: Double = 0.70 {
         didSet { updateEngine() }
     }
     
-    @Published var enableBroken: Bool = false
+    @AppStorage("enableBroken") var enableBroken: Bool = false
     
-    @Published var usesICCProfile: Bool = false {
+    @AppStorage("usesICC") var usesICCProfile: Bool = false {
         didSet { updateEngine() }
     }
     
-    @Published var containerSetting: ContainerSetting = .mp4 {
+    @AppStorage("containerSetting") var containerSetting: ContainerSetting = .mp4 {
         didSet { updateEngine() }
     }
     
@@ -142,64 +142,68 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
-    @Published var isAppExcluded = true {
+    @AppStorage("excludeSelf") var isAppExcluded = true {
         didSet { updateEngine() }
     }
     
-    @Published var encoderSetting: EncoderSetting = .H265 {
+    @AppStorage("encoderSetting") var encoderSetting: EncoderSetting = .H265 {
         didSet { updateEngine() }
     }
     
-    @Published var rateControlSetting: RateControlSetting = .crf {
+    @AppStorage("rateControlSetting") var rateControlSetting: RateControlSetting = .crf {
         didSet { updateEngine() }
     }
     
-    @Published var pixelFormatSetting: PixelFormatSetting = .bgra {
+    @AppStorage("pixelFormatSetting") var pixelFormatSetting: PixelFormatSetting = .bgra {
         didSet { updateEngine() }
     }
     
-    @Published var yCbCrMatrixSetting: YCbCrMatrixSetting = .ITU_R_2020 {
+    @AppStorage("yuvMatrix") var yCbCrMatrixSetting: YCbCrMatrixSetting = .ITU_R_2020 {
         didSet { updateEngine() }
     }
     
-    @Published var colorPrimariesSetting: ColorPrimariesSetting = .P3_D65 {
+    @AppStorage("colorPrimaries") var colorPrimariesSetting: ColorPrimariesSetting = .P3_D65 {
         didSet { updateEngine() }
     }
     
-    @Published var transferFunctionSetting: TransferFunctionSetting = .untagged {
+    @AppStorage("transferFunction") var transferFunctionSetting: TransferFunctionSetting = .untagged {
         didSet { updateEngine() }
     }
     
-    @Published var keyframeSetting: KeyframeSetting = .auto {
+    @AppStorage("keyframeSetting") var keyframeSetting: KeyframeSetting = .auto {
         didSet { updateEngine() }
     }
     
-    @Published var keyframeIntervalSetting: KeyframeDurationSetting = .unlimited {
+    @AppStorage("keyframeIntervalSetting") var keyframeIntervalSetting: KeyframeDurationSetting = .unlimited {
         didSet { updateEngine() }
     }
     
-    @Published var bFramesSetting = false {
+    @AppStorage("bFrames") var bFramesSetting = false {
         didSet { updateEngine() }
     }
     
-    @Published var bitDepthSetting: BitDepthSetting = .ten {
+    @AppStorage("bitDepthSetting") var bitDepthSetting: BitDepthSetting = .ten {
         didSet { updateEngine() }
     }
     
-    @Published var outputFolder: URL! = Bundle.main.resourceURL {
+    @AppStorage("outputFolder") var outputFolder: URL = Bundle.main.resourceURL! {
         didSet { updateEngine() }
     }
-    @Published var filePath: String = "" {
+    @AppStorage("filePath") var filePath: String = "" {
         didSet { updateEngine() }
     }
-    @Published var bitDepth: Int = 10 {
+    @AppStorage("bitDepth") var bitDepth: Int = 10 {
         didSet { updateEngine() }
     }
     
-    @Published var maxKeyframeInterval: Int = 120 {
+    @AppStorage("maxKeyframeInterval") var maxKeyframeInterval: Int = 120 {
         didSet { updateEngine() }
     }
-    @Published var maxKeyframeIntervalDuration: Double = 10.5 {
+    @AppStorage("maxKeyframeIntervalDuration") var maxKeyframeIntervalDuration: Double = 10.5 {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("framesPerSecond") var framesPerSecond: Double = 60.0 {
         didSet { updateEngine() }
     }
     
@@ -345,6 +349,7 @@ class ScreenRecorder: ObservableObject {
         }
         self.captureWidth = "\(self.streamConfiguration.width)"
         self.captureHeight = "\(self.streamConfiguration.height)"
+        //self.streamConfiguration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
         let outputExtension = self.containerSetting == .mov ? "mov" : "mp4"
         let fileName = "Record \(Date()).\(outputExtension)"
         let outputURL = self.outputFolder.appending(path: fileName)
@@ -421,7 +426,7 @@ class ScreenRecorder: ObservableObject {
         }
         
         // Set the capture interval at 60 fps.
-        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: 60)
+        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
         
         // Increase the depth of the frame queue to ensure high fps at the expense of increasing
         // the memory footprint of WindowServer.

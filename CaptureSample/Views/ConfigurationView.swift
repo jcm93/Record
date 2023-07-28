@@ -21,333 +21,344 @@ struct ConfigurationView: View {
     @Binding var userStopped: Bool
     
     var body: some View {
-        VStack {
-            Form {
-                VStack(alignment: .leading) {
-                    HeaderView("Video")
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
-                    
-                    // A group that hides view labels.
-                    Group {
-                        VStack(alignment: .leading, spacing: verticalLabelSpacing) {
-                            Text("Capture Type")
-                            Picker("Capture", selection: $screenRecorder.captureType) {
-                                Text("Display")
-                                    .tag(ScreenRecorder.CaptureType.display)
-                                Text("Window")
-                                    .tag(ScreenRecorder.CaptureType.window)
-                            }
-                            .pickerStyle(.radioGroup)
-                            .horizontalRadioGroupLayout()
-                        }
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 5, trailing: 0))
+        ScrollView {
+            VStack {
+                Form {
+                    VStack(alignment: .leading) {
+                        HeaderView("Video")
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
                         
-                        VStack(alignment: .leading, spacing: verticalLabelSpacing) {
-                            Text("Screen Content")
-                            switch screenRecorder.captureType {
-                            case .display:
-                                Picker("Display", selection: $screenRecorder.selectedDisplay) {
-                                    ForEach(screenRecorder.availableDisplays, id: \.self) { display in
-                                        Text(display.displayName)
-                                            .tag(SCDisplay?.some(display))
-                                    }
+                        // A group that hides view labels.
+                        Group {
+                            VStack(alignment: .leading, spacing: verticalLabelSpacing) {
+                                Text("Capture Type")
+                                Picker("Capture", selection: $screenRecorder.captureType) {
+                                    Text("Display")
+                                        .tag(ScreenRecorder.CaptureType.display)
+                                    Text("Window")
+                                        .tag(ScreenRecorder.CaptureType.window)
                                 }
-                                
-                            case .window:
-                                Picker("Window", selection: $screenRecorder.selectedWindow) {
-                                    ForEach(screenRecorder.availableWindows, id: \.self) { window in
-                                        Text(window.displayName)
-                                            .tag(SCWindow?.some(window))
+                                .pickerStyle(.radioGroup)
+                                .horizontalRadioGroupLayout()
+                            }
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 5, trailing: 0))
+                            
+                            VStack(alignment: .leading, spacing: verticalLabelSpacing) {
+                                Text("Screen Content")
+                                switch screenRecorder.captureType {
+                                case .display:
+                                    Picker("Display", selection: $screenRecorder.selectedDisplay) {
+                                        ForEach(screenRecorder.availableDisplays, id: \.self) { display in
+                                            Text(display.displayName)
+                                                .tag(SCDisplay?.some(display))
+                                        }
                                     }
-                                }
-                            }
-                        }
-                    }
-                    .labelsHidden()
-                    
-                    Toggle("Exclude self from stream", isOn: $screenRecorder.isAppExcluded)
-                        .disabled(screenRecorder.captureType == .window)
-                        .onChange(of: screenRecorder.isAppExcluded) { _ in
-                            // Capturing app audio is only possible when the sample is included in the stream.
-                            // Ensure the audio stops playing if the user enables the "Exclude app from stream" checkbox.
-                            if screenRecorder.isAppExcluded {
-                                audioPlayer.stop()
-                            }
-                        }
-                    
-                    // Add some space between the Video and Audio sections.
-                    Spacer()
-                        .frame(height: 20)
-                    
-                    HeaderView("Audio")
-                    
-                    Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    AudioLevelsView(audioLevelsProvider: screenRecorder.audioLevelsProvider)
-                    Spacer()
-                        .frame(height: 20)
-                    
-                    HeaderView("Encoder")
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
-                    
-                    Group {
-                        VStack(alignment: .leading) {
-                            Text("Output folder")
-                            HStack {
-                                TextField("Path", text: $screenRecorder.filePath)
-                                    .disabled(true)
-                                Button {
-                                    Task { await self.selectFolder() }
                                     
-                                } label: {
-                                    Text("Browse")
+                                case .window:
+                                    Picker("Window", selection: $screenRecorder.selectedWindow) {
+                                        ForEach(screenRecorder.availableWindows, id: \.self) { window in
+                                            Text(window.displayName)
+                                                .tag(SCWindow?.some(window))
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                    .labelsHidden()
-                    
-                    Group {
-                        Text("Codec")
-                        Picker("Codec", selection: $screenRecorder.encoderSetting) {
-                            Text("H.264")
-                                .tag(ScreenRecorder.EncoderSetting.H264)
-                            Text("HEVC")
-                                .tag(ScreenRecorder.EncoderSetting.H265)
-                        }
-                        .pickerStyle(.radioGroup)
-                        .horizontalRadioGroupLayout()
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        .labelsHidden()
                         
-                    }
-                    .labelsHidden()
-                    
-                    Group {
-                        Text("Container")
-                        Picker("Container", selection: $screenRecorder.containerSetting) {
-                            Text(".mp4")
-                                .tag(ScreenRecorder.ContainerSetting.mp4)
-                            Text(".mov")
-                                .tag(ScreenRecorder.ContainerSetting.mov)
-                        }
-                        .pickerStyle(.radioGroup)
-                        .horizontalRadioGroupLayout()
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .labelsHidden()
-                    Group {
-                        Text("Rate Control")
-                        Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
-                            Text("CBR")
-                                .tag(RateControlSetting.cbr)
-                            Text("ABR")
-                                .tag(RateControlSetting.abr)
-                            Text("CRF")
-                                .tag(RateControlSetting.crf)
-                        }
-                        .pickerStyle(.radioGroup)
-                        .horizontalRadioGroupLayout()
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .labelsHidden()
-                    
-                    
-                    if (screenRecorder.rateControlSetting != .crf) {
+                        Toggle("Exclude self from stream", isOn: $screenRecorder.isAppExcluded)
+                            .disabled(screenRecorder.captureType == .window)
+                            .onChange(of: screenRecorder.isAppExcluded) { _ in
+                                // Capturing app audio is only possible when the sample is included in the stream.
+                                // Ensure the audio stops playing if the user enables the "Exclude app from stream" checkbox.
+                                if screenRecorder.isAppExcluded {
+                                    audioPlayer.stop()
+                                }
+                            }
+                        
+                        // Add some space between the Video and Audio sections.
+                        Spacer()
+                            .frame(height: 20)
+                        
+                        HeaderView("Audio")
+                        
+                        Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        AudioLevelsView(audioLevelsProvider: screenRecorder.audioLevelsProvider)
+                        Spacer()
+                            .frame(height: 20)
+                        
+                        HeaderView("Encoder")
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
+                        
                         Group {
-                            Text("Bitrate")
-                            HStack {
-                                TextField("", value: $screenRecorder.bitRate, format: .number)
-                                    .frame(width: 100)
-                                Text("kbps")
+                            VStack(alignment: .leading) {
+                                Text("Output folder")
+                                HStack {
+                                    TextField("Path", text: $screenRecorder.filePath)
+                                        .disabled(true)
+                                    Button {
+                                        Task { await self.selectFolder() }
+                                        
+                                    } label: {
+                                        Text("Browse")
+                                    }
+                                }
                             }
                         }
                         .labelsHidden()
-                    } else {
+                        
                         Group {
-                            //Text("Quality")
-                            Text("Quality")
-                            Slider(
-                                value: $screenRecorder.crfValue,
-                                in: 0.0...1.00,
-                                step: 0.05
-                            ) {
-                                Text("Values from 0 to 1.00")
-                            } minimumValueLabel: {
-                                Text("Poor")
-                            } maximumValueLabel: {
-                                Text("'Lossless'")
-                            }
-                            Text("CRF \(screenRecorder.crfValue)")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                        .labelsHidden()
-                    }
-                    
-                    TabView {
-                        VStack(alignment: .leading) {
-                            Group {
-                                Text("Pixel Format")
-                                Picker("Pixel Format", selection: $screenRecorder.pixelFormatSetting) {
-                                    Text("BGRA")
-                                        .tag(ScreenRecorder.PixelFormatSetting.bgra)
-                                    Text("v420")
-                                        .tag(ScreenRecorder.PixelFormatSetting.v420)
-                                }
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            }
-                            .labelsHidden()
-                            Group {
-                                Text("Color Primaries")
-                                Picker("Color Primaries", selection: $screenRecorder.colorPrimariesSetting) {
-                                    Text("P3 D65")
-                                        .tag(ScreenRecorder.ColorPrimariesSetting.P3_D65)
-                                    Text("DCI P3")
-                                        .tag(ScreenRecorder.ColorPrimariesSetting.DCI_P3)
-                                }
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            }
-                            .labelsHidden()
-                            Group {
-                                Text("YCbCr Matrix")
-                                Picker("YCbCr Matrix", selection: $screenRecorder.yCbCrMatrixSetting) {
-                                    Text("ITU_R_2020")
-                                        .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_2020)
-                                    Text("ITU_R_709_2")
-                                        .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_709_2)
-                                }
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            }
-                            .labelsHidden()
-                            Group {
-                                Text("Transfer Function")
-                                Picker("Transfer Function", selection: $screenRecorder.transferFunctionSetting) {
-                                    Text("Untagged")
-                                        .tag(ScreenRecorder.TransferFunctionSetting.untagged)
-                                }
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            }
-                            .labelsHidden()
-                            Text("Bit Depth")
-                            Picker("Bit depth", selection: $screenRecorder.bitDepthSetting) {
-                                Text("8")
-                                    .tag(ScreenRecorder.BitDepthSetting.eight)
-                                Text("10")
-                                    .tag(ScreenRecorder.BitDepthSetting.ten)
+                            Text("Codec")
+                            Picker("Codec", selection: $screenRecorder.encoderSetting) {
+                                Text("H.264")
+                                    .tag(ScreenRecorder.EncoderSetting.H264)
+                                Text("HEVC")
+                                    .tag(ScreenRecorder.EncoderSetting.H265)
                             }
                             .pickerStyle(.radioGroup)
                             .horizontalRadioGroupLayout()
                             .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            .labelsHidden()
-                            Toggle("Use display ICC profile", isOn: $screenRecorder.usesICCProfile)
                             
                         }
-                        .tabItem { Label("Color", systemImage: "house") }
+                        .labelsHidden()
                         
-                        VStack(alignment: .leading) {
-                            Group {
-                                Text("Max keyframe interval (frames)")
-                                HStack {
-                                    Picker("Max keyframe interval", selection: $screenRecorder.keyframeSetting) {
-                                        Text("Auto")
-                                            .tag(ScreenRecorder.KeyframeSetting.auto)
-                                            .frame(width: 30)
-                                        Text("Custom")
-                                            .tag(ScreenRecorder.KeyframeSetting.custom)
-                                            .frame(width: 50)
-                                    }
-                                    .pickerStyle(.radioGroup)
-                                    .horizontalRadioGroupLayout()
-                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                                    TextField("Value", value: $screenRecorder.maxKeyframeInterval, format: .number)
-                                            .disabled(screenRecorder.keyframeSetting != .custom)
-                                }
+                        Group {
+                            Text("Container")
+                            Picker("Container", selection: $screenRecorder.containerSetting) {
+                                Text(".mp4")
+                                    .tag(ScreenRecorder.ContainerSetting.mp4)
+                                Text(".mov")
+                                    .tag(ScreenRecorder.ContainerSetting.mov)
                             }
-                            .labelsHidden()
-                            Group {
-                                Text("Max keyframe interval duration (secs)")
-                                HStack {
-                                    Picker("Max keyframe interval duration (secs)", selection: $screenRecorder.keyframeIntervalSetting) {
-                                        Text("Unlimited")
-                                            .tag(ScreenRecorder.KeyframeDurationSetting.unlimited)
-                                            .frame(width: 60)
-                                        Text("Custom")
-                                            .tag(ScreenRecorder.KeyframeDurationSetting.custom)
-                                            .frame(width: 50)
-                                    }
-                                    .pickerStyle(.radioGroup)
-                                    .horizontalRadioGroupLayout()
-                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                                    TextField("Value", value: $screenRecorder.maxKeyframeIntervalDuration, format: .number)
-                                        .disabled(screenRecorder.keyframeIntervalSetting != .custom)
-                                }
-                                
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            }
-                            .labelsHidden()
-                            Group {
-                                Toggle("Allow frame reordering (B frames)", isOn: $screenRecorder.bFramesSetting)
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                            }
+                            .pickerStyle(.radioGroup)
+                            .horizontalRadioGroupLayout()
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                         }
-                        .tabItem { Label("Keyframes", systemImage: "house") }
+                        .labelsHidden()
+                        Group {
+                            Text("Rate Control")
+                            Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
+                                Text("CBR")
+                                    .tag(RateControlSetting.cbr)
+                                Text("ABR")
+                                    .tag(RateControlSetting.abr)
+                                Text("CRF")
+                                    .tag(RateControlSetting.crf)
+                            }
+                            .pickerStyle(.radioGroup)
+                            .horizontalRadioGroupLayout()
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        }
+                        .labelsHidden()
                         
                         
+                        if (screenRecorder.rateControlSetting != .crf) {
+                            Group {
+                                Text("Bitrate")
+                                HStack {
+                                    TextField("", value: $screenRecorder.bitRate, format: .number)
+                                        .frame(width: 100)
+                                    Text("kbps")
+                                }
+                            }
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            .labelsHidden()
+                        } else {
+                            Group {
+                                //Text("Quality")
+                                Text("Quality")
+                                Slider(
+                                    value: $screenRecorder.crfValue,
+                                    in: 0.0...1.00,
+                                    step: 0.05
+                                ) {
+                                    Text("Values from 0 to 1.00")
+                                } minimumValueLabel: {
+                                    Text("Poor")
+                                } maximumValueLabel: {
+                                    Text("'Lossless'")
+                                }
+                                Text("CRF \(screenRecorder.crfValue)")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            .labelsHidden()
+                        }
+                        Group {
+                            //Text("Quality")
+                            Text("Frames per second")
+                            TextField("Value", value: $screenRecorder.framesPerSecond, format: .number)
+                        }
+                        .labelsHidden()
+                        
+                        TabView {
+                            VStack(alignment: .leading) {
+                                Group {
+                                    Text("Pixel Format")
+                                    Picker("Pixel Format", selection: $screenRecorder.pixelFormatSetting) {
+                                        Text("BGRA")
+                                            .tag(ScreenRecorder.PixelFormatSetting.bgra)
+                                        Text("v420")
+                                            .tag(ScreenRecorder.PixelFormatSetting.v420)
+                                    }
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
+                                .labelsHidden()
+                                Group {
+                                    Text("Color Primaries")
+                                    Picker("Color Primaries", selection: $screenRecorder.colorPrimariesSetting) {
+                                        Text("P3 D65")
+                                            .tag(ScreenRecorder.ColorPrimariesSetting.P3_D65)
+                                        Text("DCI P3")
+                                            .tag(ScreenRecorder.ColorPrimariesSetting.DCI_P3)
+                                    }
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
+                                .labelsHidden()
+                                Group {
+                                    Text("YCbCr Matrix")
+                                    Picker("YCbCr Matrix", selection: $screenRecorder.yCbCrMatrixSetting) {
+                                        Text("ITU_R_2020")
+                                            .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_2020)
+                                        Text("ITU_R_709_2")
+                                            .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_709_2)
+                                    }
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
+                                .labelsHidden()
+                                Group {
+                                    Text("Transfer Function")
+                                    Picker("Transfer Function", selection: $screenRecorder.transferFunctionSetting) {
+                                        Text("Untagged")
+                                            .tag(ScreenRecorder.TransferFunctionSetting.untagged)
+                                    }
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
+                                .labelsHidden()
+                                Text("Bit Depth")
+                                Picker("Bit depth", selection: $screenRecorder.bitDepthSetting) {
+                                    Text("8")
+                                        .tag(ScreenRecorder.BitDepthSetting.eight)
+                                    Text("10")
+                                        .tag(ScreenRecorder.BitDepthSetting.ten)
+                                }
+                                .pickerStyle(.radioGroup)
+                                .horizontalRadioGroupLayout()
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                .labelsHidden()
+                                Toggle("Use display ICC profile", isOn: $screenRecorder.usesICCProfile)
+                                
+                            }
+                            .tabItem { Label("Color", systemImage: "house") }
+                            
+                            VStack(alignment: .leading) {
+                                Group {
+                                    Text("Max keyframe interval (frames)")
+                                    HStack {
+                                        Picker("Max keyframe interval", selection: $screenRecorder.keyframeSetting) {
+                                            Text("Auto")
+                                                .tag(ScreenRecorder.KeyframeSetting.auto)
+                                                .frame(width: 30)
+                                            Text("Custom")
+                                                .tag(ScreenRecorder.KeyframeSetting.custom)
+                                                .frame(width: 50)
+                                        }
+                                        .pickerStyle(.radioGroup)
+                                        .horizontalRadioGroupLayout()
+                                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                        TextField("Value", value: $screenRecorder.maxKeyframeInterval, format: .number)
+                                            .disabled(screenRecorder.keyframeSetting != .custom)
+                                    }
+                                }
+                                .labelsHidden()
+                                Group {
+                                    Text("Max keyframe interval duration (secs)")
+                                    HStack {
+                                        Picker("Max keyframe interval duration (secs)", selection: $screenRecorder.keyframeIntervalSetting) {
+                                            Text("Unlimited")
+                                                .tag(ScreenRecorder.KeyframeDurationSetting.unlimited)
+                                                .frame(width: 60)
+                                            Text("Custom")
+                                                .tag(ScreenRecorder.KeyframeDurationSetting.custom)
+                                                .frame(width: 50)
+                                        }
+                                        .pickerStyle(.radioGroup)
+                                        .horizontalRadioGroupLayout()
+                                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                        TextField("Value", value: $screenRecorder.maxKeyframeIntervalDuration, format: .number)
+                                            .disabled(screenRecorder.keyframeIntervalSetting != .custom)
+                                    }
+                                    
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
+                                .labelsHidden()
+                                Group {
+                                    Toggle("Allow frame reordering (B frames)", isOn: $screenRecorder.bFramesSetting)
+                                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
+                            }
+                            .tabItem { Label("Keyframes", systemImage: "house") }
+                            
+                            
+                        }
+                        Toggle("Allow broken combinations", isOn: $screenRecorder.enableBroken)
+                        
+                        
+                        Spacer()
                     }
-                    Toggle("Allow broken combinations", isOn: $screenRecorder.enableBroken)
                     
                     
-                    Spacer()
                 }
+                .padding()
                 
                 
-            }
-            .padding()
-            
-            
-            
-            
-            Spacer()
-            HStack {
-                Button {
-                    Task { await screenRecorder.start() }
-                    // Fades the paused screen out.
-                    withAnimation(Animation.easeOut(duration: 0.25)) {
-                        userStopped = false
+                
+                
+                Spacer()
+                HStack {
+                    Button {
+                        Task { await screenRecorder.start() }
+                        // Fades the paused screen out.
+                        withAnimation(Animation.easeOut(duration: 0.25)) {
+                            userStopped = false
+                        }
+                    } label: {
+                        Text("Start Capture")
                     }
-                } label: {
-                    Text("Start Capture")
-                }
-                .disabled(screenRecorder.isRunning)
-                Button {
-                    Task { await screenRecorder.stop() }
-                    // Fades the paused screen in.
-                    withAnimation(Animation.easeOut(duration: 0.25)) {
-                        userStopped = true
+                    .disabled(screenRecorder.isRunning)
+                    Button {
+                        Task { await screenRecorder.stop() }
+                        // Fades the paused screen in.
+                        withAnimation(Animation.easeOut(duration: 0.25)) {
+                            userStopped = true
+                        }
+                        
+                    } label: {
+                        Text("Stop Capture")
                     }
-                    
-                } label: {
-                    Text("Stop Capture")
+                    .disabled(!screenRecorder.isRunning)
                 }
-                .disabled(!screenRecorder.isRunning)
+                HStack {
+                    Button {
+                        Task { await screenRecorder.record() }
+                        
+                    } label: {
+                        Text("Start Recording")
+                    }
+                    .disabled(screenRecorder.isRecording || !screenRecorder.isRunning)
+                    Button {
+                        Task { await screenRecorder.stopRecord() }
+                        
+                    } label: {
+                        Text("Stop Recording")
+                    }
+                    .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
+                }
+                .frame(maxWidth: .infinity, minHeight: 60)
             }
-            HStack {
-                Button {
-                    Task { await screenRecorder.record() }
-                    
-                } label: {
-                    Text("Start Recording")
-                }
-                .disabled(screenRecorder.isRecording || !screenRecorder.isRunning)
-                Button {
-                    Task { await screenRecorder.stopRecord() }
-                    
-                } label: {
-                    Text("Stop Recording")
-                }
-                .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
-            }
-            .frame(maxWidth: .infinity, minHeight: 60)
         }
+        .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 6))
         .background(MaterialView())
     }
     
