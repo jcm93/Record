@@ -145,7 +145,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         // Validate the status of the frame. If it isn't `.complete`, return nil.
         /*guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
               let status = SCFrameStatus(rawValue: statusRawValue),
-              status == .complete else { return nil }*/
+              status == .complete else {
+            print("non-complete frame status")
+            return nil
+        }*/
         
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return nil }

@@ -73,13 +73,13 @@ class Encoder: NSObject {
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AverageBitRate) failed (\(err))")
             }
-            let byteLimit = (Double(options.destBitRate) / 8 * 1.5) as CFNumber
+            /*let byteLimit = (Double(options.destBitRate) / 8 * 1.5) as CFNumber
             let secLimit = Double(1.0) as CFNumber
             let limitsArray = [ byteLimit, secLimit ] as CFArray
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_DataRateLimits, value: limitsArray)
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_DataRateLimits) failed (\(err))")
-            }
+            }*/
         case .crf:
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_Quality, value: options.crfValue)
             if noErr != err {
@@ -131,7 +131,9 @@ class Encoder: NSObject {
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
         VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
             (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
-            self.videoSink.sendSampleBuffer(sbuf!)
+            if sbuf != nil {
+                self.videoSink.sendSampleBuffer(sbuf!)
+            }
         }
     }
     
