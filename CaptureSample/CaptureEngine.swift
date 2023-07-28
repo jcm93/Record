@@ -73,8 +73,8 @@ class CaptureEngine: @unchecked Sendable {
         powerMeter.processSilence()
     }
     
-    func startRecording() async {
-        let options = Options(destMoviePath: "./poopy.mp4", destFileType: .mp4, destWidth: 3456, destHeight: 2234, destBitRate: 50000000, codec: kCMVideoCodecType_HEVC, pixelFormat: kCVPixelFormatType_32BGRA, maxKeyFrameIntervalDuration: 2.0, maxKeyFrameInterval: 2, cbr: false, verbose: true)
+    func startRecording(options: Options) async {
+        //let options = Options(destMovieURL: "./poopy.mp4", destFileType: .mp4, destWidth: 3456, destHeight: 2234, destBitRate: 15000000, codec: kCMVideoCodecType_HEVC, pixelFormat: kCVPixelFormatType_32BGRA, maxKeyFrameIntervalDuration: 0.0, maxKeyFrameInterval: 2, cbr: false, verbose: true, iccProfile: nil, bitDepth: 8)
         self.streamOutput.encoder = await Encoder(options: options)
     }
     
@@ -143,9 +143,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
               let attachments = attachmentsArray.first else { return nil }
         
         // Validate the status of the frame. If it isn't `.complete`, return nil.
-        guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
+        /*guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
               let status = SCFrameStatus(rawValue: statusRawValue),
-              status == .complete else { return nil }
+              status == .complete else { return nil }*/
         
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return nil }

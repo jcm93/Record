@@ -18,8 +18,8 @@ public class VideoSink {
     ///   - isRealTime: A Boolean value that indicates whether the video sink tailors its processing for real-time sources.
     ///                 Set to `true` if video source operates in real-time like a live camera.
     ///                 Set to `false` for offline transcoding, which may be faster or slower than real-time.
-    public init(filePath: String, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool) throws {
-        let sinkURL = URL(fileURLWithPath: filePath)
+    public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool) throws {
+        let sinkURL = fileURL
 
         assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
 

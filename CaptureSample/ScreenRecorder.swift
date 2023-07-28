@@ -10,10 +10,17 @@ import ScreenCaptureKit
 import Combine
 import OSLog
 import SwiftUI
+import AVFoundation
 
 /// A provider of audio levels from the captured samples.
 class AudioLevelsProvider: ObservableObject {
     @Published var audioLevels = AudioLevels.zero
+}
+
+public enum RateControlSetting {
+    case cbr
+    case abr
+    case crf
 }
 
 @MainActor
@@ -35,32 +42,68 @@ class ScreenRecorder: ObservableObject {
         case mp4
     }
     
-    enum RateControlSetting {
-        case cbr
-        case abr
-        case crf
-    }
-    
-    enum PixelFormat {
+    enum PixelFormatSetting {
         case bgra
         case v420
     }
     
-    enum YCbCrMatrix {
+    enum YCbCrMatrixSetting {
         case ITU_R_2020
         case ITU_R_709_2
+        case untagged
+        func stringValue() -> CFString? {
+            switch self {
+            case .ITU_R_2020:
+                return kCVImageBufferYCbCrMatrix_ITU_R_2020
+            case .ITU_R_709_2:
+                return kCVImageBufferYCbCrMatrix_ITU_R_709_2
+            case .untagged:
+                return nil
+            }
+        }
     }
     
-    enum ColorPrimaries {
+    enum ColorPrimariesSetting {
         case P3_D65
         case DCI_P3
+        case untagged
+        func stringValue() -> CFString? {
+            switch self {
+            case .DCI_P3:
+                return kCVImageBufferColorPrimaries_DCI_P3
+            case .P3_D65:
+                return kCVImageBufferColorPrimaries_P3_D65
+            case .untagged:
+                return nil
+            }
+        }
     }
     
-    enum TransferFunction {
+    enum TransferFunctionSetting {
         case untagged
+        func stringValue() -> CFString? {
+            return nil
+        }
+    }
+    
+    enum KeyframeSetting {
+        case auto
+        case custom
+    }
+    
+    enum KeyframeDurationSetting {
+        case unlimited
+        case custom
+    }
+    
+    enum BitDepthSetting {
+        case eight
+        case ten
     }
     
     private let logger = Logger()
+    
+    private var options: Options! = nil
     
     @Published var isRunning = false
     @Published var isRecording = false
@@ -68,9 +111,19 @@ class ScreenRecorder: ObservableObject {
     @Published var captureWidth: String = ""
     @Published var captureHeight: String = ""
     
-    @Published var bitRate: Int = 10000
+    @Published var bitRate: Int = 10000 {
+        didSet { updateEngine() }
+    }
     
-    @Published var crfValue: Double = 0.70
+    @Published var crfValue: Double = 0.70 {
+        didSet { updateEngine() }
+    }
+    
+    @Published var enableBroken: Bool = false
+    
+    @Published var usesICCProfile: Bool = false {
+        didSet { updateEngine() }
+    }
     
     @Published var containerSetting: ContainerSetting = .mp4 {
         didSet { updateEngine() }
@@ -101,19 +154,52 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
-    @Published var pixelFormat: PixelFormat = .bgra {
+    @Published var pixelFormatSetting: PixelFormatSetting = .bgra {
         didSet { updateEngine() }
     }
     
-    @Published var yCbCrMatrix: YCbCrMatrix = .ITU_R_2020 {
+    @Published var yCbCrMatrixSetting: YCbCrMatrixSetting = .ITU_R_2020 {
         didSet { updateEngine() }
     }
     
-    @Published var colorPrimaries: ColorPrimaries = .P3_D65 {
+    @Published var colorPrimariesSetting: ColorPrimariesSetting = .P3_D65 {
         didSet { updateEngine() }
     }
     
-    @Published var transferFunction: TransferFunction = .untagged {
+    @Published var transferFunctionSetting: TransferFunctionSetting = .untagged {
+        didSet { updateEngine() }
+    }
+    
+    @Published var keyframeSetting: KeyframeSetting = .auto {
+        didSet { updateEngine() }
+    }
+    
+    @Published var keyframeIntervalSetting: KeyframeDurationSetting = .unlimited {
+        didSet { updateEngine() }
+    }
+    
+    @Published var bFramesSetting = false {
+        didSet { updateEngine() }
+    }
+    
+    @Published var bitDepthSetting: BitDepthSetting = .ten {
+        didSet { updateEngine() }
+    }
+    
+    @Published var outputFolder: URL! = Bundle.main.resourceURL {
+        didSet { updateEngine() }
+    }
+    @Published var filePath: String = "" {
+        didSet { updateEngine() }
+    }
+    @Published var bitDepth: Int = 10 {
+        didSet { updateEngine() }
+    }
+    
+    @Published var maxKeyframeInterval: Int = 120 {
+        didSet { updateEngine() }
+    }
+    @Published var maxKeyframeIntervalDuration: Double = 10.5 {
         didSet { updateEngine() }
     }
     
@@ -150,6 +236,7 @@ class ScreenRecorder: ObservableObject {
     private let captureEngine = CaptureEngine()
     
     private var isSetup = false
+    private var iccProfile: CFData?
     
     // Combine subscribers.
     private var subscriptions = Set<AnyCancellable>()
@@ -226,8 +313,7 @@ class ScreenRecorder: ObservableObject {
     func record() async {
         guard isRunning else { return }
         guard !isRecording else { return }
-        //start encoding
-        await captureEngine.startRecording()
+        await captureEngine.startRecording(options: self.options)
         self.isRecording = true
     }
     
@@ -253,6 +339,35 @@ class ScreenRecorder: ObservableObject {
     /// - Tag: UpdateCaptureConfig
     private func updateEngine() {
         guard isRunning else { return }
+        //store all properties from picker enums
+        if self.usesICCProfile {
+            self.iccProfile = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData()
+        }
+        self.captureWidth = "\(self.streamConfiguration.width)"
+        self.captureHeight = "\(self.streamConfiguration.height)"
+        let outputExtension = self.containerSetting == .mov ? "mov" : "mp4"
+        let fileName = "Record \(Date()).\(outputExtension)"
+        let outputURL = self.outputFolder.appending(path: fileName)
+        let fileType: AVFileType = self.containerSetting == .mov ? AVFileType.mov : AVFileType.mp4
+        let codec = self.encoderSetting == .H264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC
+        let bitrate = self.bitRate
+        let width = Int(self.captureWidth)!
+        let height = Int(self.captureHeight)!
+        let pixelFormat = self.pixelFormatSetting == .bgra ? kCVPixelFormatType_32BGRA : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+        let colorPrimaries = self.colorPrimariesSetting.stringValue()
+        let transferFunction = self.transferFunctionSetting.stringValue()
+        let yuvMatrix = self.yCbCrMatrixSetting.stringValue()
+        let bitDepth = self.bitDepth
+        let iccProfile = self.iccProfile
+        let maxKeyFrameIntervalDuration = self.maxKeyframeIntervalDuration
+        let maxKeyFrameInterval = self.maxKeyframeInterval
+        let rateControl = self.rateControlSetting
+        let bFrames = self.bFramesSetting
+        let crfValue = self.crfValue as CFNumber
+        
+        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: bitrate, codec: codec, pixelFormat: pixelFormat, maxKeyFrameIntervalDuration: maxKeyFrameIntervalDuration, maxKeyFrameInterval: maxKeyframeInterval, rateControl: rateControl, crfValue: crfValue, verbose: false, iccProfile: iccProfile, bitDepth: bitDepth, colorPrimaries: colorPrimaries, transferFunction: transferFunction, yuvMatrix: yuvMatrix, bFrames: bFrames)
+        
+        self.options = options
         Task {
             await captureEngine.update(configuration: streamConfiguration, filter: contentFilter)
         }

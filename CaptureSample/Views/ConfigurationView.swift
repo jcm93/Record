@@ -82,23 +82,30 @@ struct ConfigurationView: View {
                     HeaderView("Audio")
                     
                     Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
-                    Toggle("Exclude app audio", isOn: $screenRecorder.isAppAudioExcluded)
-                        .disabled(screenRecorder.isAppExcluded)
+                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                     AudioLevelsView(audioLevelsProvider: screenRecorder.audioLevelsProvider)
-                    Button {
-                        if !audioPlayer.isPlaying {
-                            audioPlayer.play()
-                        } else {
-                            audioPlayer.stop()
-                        }
-                    } label: {
-                        Text("\(!audioPlayer.isPlaying ? "Play" : "Stop") App Audio")
-                    }
-                    .disabled(screenRecorder.isAppExcluded)
                     Spacer()
                         .frame(height: 20)
+                    
                     HeaderView("Encoder")
                         .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
+                    
+                    Group {
+                        VStack(alignment: .leading) {
+                            Text("Output folder")
+                            HStack {
+                                TextField("Path", text: $screenRecorder.filePath)
+                                    .disabled(true)
+                                Button {
+                                    Task { await self.selectFolder() }
+                                    
+                                } label: {
+                                    Text("Browse")
+                                }
+                            }
+                        }
+                    }
+                    .labelsHidden()
                     
                     Group {
                         Text("Codec")
@@ -132,11 +139,11 @@ struct ConfigurationView: View {
                         Text("Rate Control")
                         Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
                             Text("CBR")
-                                .tag(ScreenRecorder.RateControlSetting.cbr)
+                                .tag(RateControlSetting.cbr)
                             Text("ABR")
-                                .tag(ScreenRecorder.RateControlSetting.abr)
+                                .tag(RateControlSetting.abr)
                             Text("CRF")
-                                .tag(ScreenRecorder.RateControlSetting.crf)
+                                .tag(RateControlSetting.crf)
                         }
                         .pickerStyle(.radioGroup)
                         .horizontalRadioGroupLayout()
@@ -176,51 +183,117 @@ struct ConfigurationView: View {
                         .labelsHidden()
                     }
                     
-                    Group {
-                        Text("Pixel Format")
-                        Picker("Pixel Format", selection: $screenRecorder.pixelFormat) {
-                            Text("BGRA")
-                                .tag(ScreenRecorder.PixelFormat.bgra)
-                            Text("v420")
-                                .tag(ScreenRecorder.PixelFormat.v420)
+                    TabView {
+                        VStack(alignment: .leading) {
+                            Group {
+                                Text("Pixel Format")
+                                Picker("Pixel Format", selection: $screenRecorder.pixelFormatSetting) {
+                                    Text("BGRA")
+                                        .tag(ScreenRecorder.PixelFormatSetting.bgra)
+                                    Text("v420")
+                                        .tag(ScreenRecorder.PixelFormatSetting.v420)
+                                }
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            }
+                            .labelsHidden()
+                            Group {
+                                Text("Color Primaries")
+                                Picker("Color Primaries", selection: $screenRecorder.colorPrimariesSetting) {
+                                    Text("P3 D65")
+                                        .tag(ScreenRecorder.ColorPrimariesSetting.P3_D65)
+                                    Text("DCI P3")
+                                        .tag(ScreenRecorder.ColorPrimariesSetting.DCI_P3)
+                                }
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            }
+                            .labelsHidden()
+                            Group {
+                                Text("YCbCr Matrix")
+                                Picker("YCbCr Matrix", selection: $screenRecorder.yCbCrMatrixSetting) {
+                                    Text("ITU_R_2020")
+                                        .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_2020)
+                                    Text("ITU_R_709_2")
+                                        .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_709_2)
+                                }
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            }
+                            .labelsHidden()
+                            Group {
+                                Text("Transfer Function")
+                                Picker("Transfer Function", selection: $screenRecorder.transferFunctionSetting) {
+                                    Text("Untagged")
+                                        .tag(ScreenRecorder.TransferFunctionSetting.untagged)
+                                }
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            }
+                            .labelsHidden()
+                            Text("Bit Depth")
+                            Picker("Bit depth", selection: $screenRecorder.bitDepthSetting) {
+                                Text("8")
+                                    .tag(ScreenRecorder.BitDepthSetting.eight)
+                                Text("10")
+                                    .tag(ScreenRecorder.BitDepthSetting.ten)
+                            }
+                            .pickerStyle(.radioGroup)
+                            .horizontalRadioGroupLayout()
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            .labelsHidden()
+                            Toggle("Use display ICC profile", isOn: $screenRecorder.usesICCProfile)
+                            
                         }
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .labelsHidden()
-                    Group {
-                        Text("Color Primaries")
-                        Picker("Color Primaries", selection: $screenRecorder.colorPrimaries) {
-                            Text("P3 D65")
-                                .tag(ScreenRecorder.ColorPrimaries.P3_D65)
-                            Text("DCI P3")
-                                .tag(ScreenRecorder.ColorPrimaries.DCI_P3)
+                        .tabItem { Label("Color", systemImage: "house") }
+                        
+                        VStack(alignment: .leading) {
+                            Group {
+                                Text("Max keyframe interval (frames)")
+                                HStack {
+                                    Picker("Max keyframe interval", selection: $screenRecorder.keyframeSetting) {
+                                        Text("Auto")
+                                            .tag(ScreenRecorder.KeyframeSetting.auto)
+                                            .frame(width: 30)
+                                        Text("Custom")
+                                            .tag(ScreenRecorder.KeyframeSetting.custom)
+                                            .frame(width: 50)
+                                    }
+                                    .pickerStyle(.radioGroup)
+                                    .horizontalRadioGroupLayout()
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                    TextField("Value", value: $screenRecorder.maxKeyframeInterval, format: .number)
+                                            .disabled(screenRecorder.keyframeSetting != .custom)
+                                }
+                            }
+                            .labelsHidden()
+                            Group {
+                                Text("Max keyframe interval duration (secs)")
+                                HStack {
+                                    Picker("Max keyframe interval duration (secs)", selection: $screenRecorder.keyframeIntervalSetting) {
+                                        Text("Unlimited")
+                                            .tag(ScreenRecorder.KeyframeDurationSetting.unlimited)
+                                            .frame(width: 60)
+                                        Text("Custom")
+                                            .tag(ScreenRecorder.KeyframeDurationSetting.custom)
+                                            .frame(width: 50)
+                                    }
+                                    .pickerStyle(.radioGroup)
+                                    .horizontalRadioGroupLayout()
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                    TextField("Value", value: $screenRecorder.maxKeyframeIntervalDuration, format: .number)
+                                        .disabled(screenRecorder.keyframeIntervalSetting != .custom)
+                                }
+                                
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            }
+                            .labelsHidden()
+                            Group {
+                                Toggle("Allow frame reordering (B frames)", isOn: $screenRecorder.bFramesSetting)
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            }
                         }
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        .tabItem { Label("Keyframes", systemImage: "house") }
+                        
+                        
                     }
-                    .labelsHidden()
-                    Group {
-                        Text("YCbCr Matrix")
-                        Picker("YCbCr Matrix", selection: $screenRecorder.yCbCrMatrix) {
-                            Text("ITU_R_2020")
-                                .tag(ScreenRecorder.YCbCrMatrix.ITU_R_2020)
-                            Text("ITU_R_709_2")
-                                .tag(ScreenRecorder.YCbCrMatrix.ITU_R_709_2)
-                        }
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .labelsHidden()
-                    Group {
-                        Text("Transfer Function")
-                        Picker("Transfer Function", selection: $screenRecorder.transferFunction) {
-                            Text("Untagged")
-                                .tag(ScreenRecorder.TransferFunction.untagged)
-                        }
-                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .labelsHidden()
-                    
-                    
-                    
+                    Toggle("Allow broken combinations", isOn: $screenRecorder.enableBroken)
                     
                     
                     Spacer()
@@ -277,6 +350,27 @@ struct ConfigurationView: View {
         }
         .background(MaterialView())
     }
+    
+    func selectFolder() async {
+            
+            let folderChooserPoint = CGPoint(x: 0, y: 0)
+            let folderChooserSize = CGSize(width: 500, height: 600)
+            let folderChooserRectangle = CGRect(origin: folderChooserPoint, size: folderChooserSize)
+            let folderPicker = NSOpenPanel(contentRect: folderChooserRectangle, styleMask: .utilityWindow, backing: .buffered, defer: true)
+            
+            folderPicker.canChooseDirectories = true
+            folderPicker.canDownloadUbiquitousContents = true
+            folderPicker.canResolveUbiquitousConflicts = true
+            
+            folderPicker.begin { response in
+                
+                if response == .OK {
+                    let pickedFolders = folderPicker.urls
+                    self.screenRecorder.outputFolder = pickedFolders[0]
+                    self.screenRecorder.filePath = pickedFolders[0].path()
+                }
+            }
+        }
 }
 
 /// A view that displays a styled header for the Video and Audio sections.

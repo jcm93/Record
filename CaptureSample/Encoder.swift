@@ -9,6 +9,8 @@
 import Foundation
 import VideoToolbox
 import AVFAudio
+import CoreGraphics
+import AppKit
 
 class Encoder: NSObject {
     
@@ -34,7 +36,7 @@ class Encoder: NSObject {
         }
         await self.configureSession(options: options)
         do {
-            self.videoSink = try VideoSink(filePath: options.destMoviePath,
+            self.videoSink = try VideoSink(fileURL: options.destMovieURL,
                                            fileType: options.destFileType,
                                            codec: options.codec,
                                            width: options.destWidth,
@@ -60,12 +62,13 @@ class Encoder: NSObject {
             print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_RealTime) failed (\(err))")
         }
         
-        if  options.cbr {
+        switch options.rateControl {
+        case .cbr:
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ConstantBitRate, value: options.destBitRate as CFNumber)
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_ConstantBitRate) failed (\(err))")
             }
-        } else {
+        case .abr:
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: options.destBitRate as CFNumber)
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AverageBitRate) failed (\(err))")
@@ -77,12 +80,17 @@ class Encoder: NSObject {
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_DataRateLimits) failed (\(err))")
             }
+        case .crf:
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_Quality, value: options.crfValue)
+            if noErr != err {
+                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_Quality) failed (\(err))")
+            }
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowTemporalCompression, value: kCFBooleanTrue)
         if noErr != err {
             print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AllowTemporalCompression) failed (\(err))")
         }
-        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowFrameReordering, value: kCFBooleanTrue)
+        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowFrameReordering, value: options.bFrames ? kCFBooleanTrue : kCFBooleanFalse)
         if noErr != err {
             print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AllowFrameReordering) failed (\(err))")
         }
@@ -96,26 +104,32 @@ class Encoder: NSObject {
             print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration) failed (\(err))")
         }
         
-        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ColorPrimaries, value: kCVImageBufferColorPrimaries_P3_D65)
+        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ColorPrimaries, value: options.colorPrimaries)
         if noErr != err {
             print("setting color primaries failed")
         }
-        /*err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_TransferFunction, value: kCVImageBufferTransferFunction_ITU_R_2100_HLG)
+        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_OutputBitDepth, value: options.bitDepth as CFNumber)
         if noErr != err {
-            print("setting transfer function failed")
-        }*/
-        /*err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ICCProfile, value: kIOSurfaceICCProfile)
-        if noErr != err {
-            print("setting icc profile failed")
-        }*/
-        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_YCbCrMatrix, value: kCVImageBufferYCbCrMatrix_ITU_R_2020)
+            print("setting output bit depth failed")
+        }
+        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_YCbCrMatrix, value: options.yuvMatrix)
         if noErr != err {
             print("setting ycbcr matrix failed")
+        }
+        if let icc = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData() {
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ICCProfile, value: icc as CFTypeRef)
+            if noErr != err {
+                print("setting icc profile failed")
+            }
+        }
+        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_TransferFunction, value: options.transferFunction)
+        if noErr != err {
+            print("setting transfer function failed")
         }
     }
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
-        VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: .invalid, frameProperties: properties, infoFlagsOut: infoFlags) {
+        VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
             (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
             self.videoSink.sendSampleBuffer(sbuf!)
         }
