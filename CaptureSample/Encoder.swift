@@ -16,6 +16,7 @@ class Encoder: NSObject {
     
     var session: VTCompressionSession!
     var videoSink: VideoSink!
+    var pixelTransferSession: VTPixelTransferSession?
     
     init(options: Options) async {
         super.init()
@@ -44,6 +45,14 @@ class Encoder: NSObject {
                                            isRealTime: true)
         } catch {
             fatalError("dong")
+        }
+        var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
+        if noErr != err2 {
+            print("error creating pixel transfer session")
+        }
+        err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: kCVImageBufferColorPrimaries_ITU_R_2020)
+        if noErr != err2 {
+            print("error setting color primaries on pixel transfer")
         }
     }
     
@@ -103,7 +112,6 @@ class Encoder: NSObject {
         if noErr != err {
             print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration) failed (\(err))")
         }
-        
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ColorPrimaries, value: options.colorPrimaries)
         if noErr != err {
             print("setting color primaries failed")
@@ -126,9 +134,17 @@ class Encoder: NSObject {
         if noErr != err {
             print("setting transfer function failed")
         }
+        print("set settings")
+        /*err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: 2.2 as CFNumber)
+        if noErr != err {
+            print("setting transfer function failed")
+        }*/
     }
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
+        if let pixelTransferSession = pixelTransferSession {
+            VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: buffer)
+        }
         VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
             (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
             if sbuf != nil {

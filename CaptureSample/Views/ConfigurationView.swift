@@ -75,7 +75,34 @@ struct ConfigurationView: View {
                                     audioPlayer.stop()
                                 }
                             }
-                        
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        Group {
+                            Text("Pixel Format")
+                            Picker("Pixel Format", selection: $screenRecorder.capturePixelFormat) {
+                                ForEach(ScreenRecorder.CapturePixelFormat.allCases, id: \.self) { format in
+                                    Text(format.stringValue())
+                                        .tag(format)
+                                }
+                            }
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                            if (self.screenRecorder.capturePixelFormat == .biplanarfull420f || self.screenRecorder.capturePixelFormat == .biplanarpartial420v) {
+                                Text("Transfer Function")
+                                Picker("Transfer Function", selection: $screenRecorder.captureYUVMatrix) {
+                                    ForEach(ScreenRecorder.CaptureYUVMatrix.allCases, id: \.self) { format in
+                                        Text(format.stringValue())
+                                            .tag(format)
+                                    }
+                                }
+                            }
+                            Text("Color Space")
+                            Picker("Color Space", selection: $screenRecorder.captureColorSpace) {
+                                ForEach(CaptureColorSpace.allCases, id: \.self) { format in
+                                    Text(String(format.cfString()))
+                                        .tag(format)
+                                }
+                            }
+                        }
+                        .labelsHidden()
                         // Add some space between the Video and Audio sections.
                         Spacer()
                             .frame(height: 20)
@@ -197,10 +224,10 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("Pixel Format")
                                     Picker("Pixel Format", selection: $screenRecorder.pixelFormatSetting) {
-                                        Text("BGRA")
-                                            .tag(ScreenRecorder.PixelFormatSetting.bgra)
-                                        Text("v420")
-                                            .tag(ScreenRecorder.PixelFormatSetting.v420)
+                                        ForEach(ScreenRecorder.CapturePixelFormat.allCases, id: \.self) { format in
+                                            Text(format.stringValue())
+                                                .tag(format)
+                                        }
                                     }
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                                 }
@@ -208,10 +235,10 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("Color Primaries")
                                     Picker("Color Primaries", selection: $screenRecorder.colorPrimariesSetting) {
-                                        Text("P3 D65")
-                                            .tag(ScreenRecorder.ColorPrimariesSetting.P3_D65)
-                                        Text("DCI P3")
-                                            .tag(ScreenRecorder.ColorPrimariesSetting.DCI_P3)
+                                        ForEach(ScreenRecorder.ColorPrimariesSetting.allCases, id: \.self) { format in
+                                            Text(format.stringValue() as String? ?? "Untagged")
+                                                .tag(format)
+                                        }
                                     }
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                                 }
@@ -219,10 +246,10 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("YCbCr Matrix")
                                     Picker("YCbCr Matrix", selection: $screenRecorder.yCbCrMatrixSetting) {
-                                        Text("ITU_R_2020")
-                                            .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_2020)
-                                        Text("ITU_R_709_2")
-                                            .tag(ScreenRecorder.YCbCrMatrixSetting.ITU_R_709_2)
+                                        ForEach(ScreenRecorder.YCbCrMatrixSetting.allCases, id: \.self) { format in
+                                            Text(format.stringValue() as String? ?? "Untagged")
+                                                .tag(format)
+                                        }
                                     }
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                                 }
@@ -230,8 +257,10 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("Transfer Function")
                                     Picker("Transfer Function", selection: $screenRecorder.transferFunctionSetting) {
-                                        Text("Untagged")
-                                            .tag(ScreenRecorder.TransferFunctionSetting.untagged)
+                                        ForEach(ScreenRecorder.TransferFunctionSetting.allCases, id: \.self) { format in
+                                            Text(format.stringValue() as String? ?? "Untagged")
+                                                .tag(format)
+                                        }
                                     }
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                                 }

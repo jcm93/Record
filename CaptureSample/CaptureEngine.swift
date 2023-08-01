@@ -10,6 +10,7 @@ import AVFAudio
 import ScreenCaptureKit
 import OSLog
 import Combine
+import VideoToolbox
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
@@ -31,7 +32,6 @@ class CaptureEngine: @unchecked Sendable {
     private let videoSampleBufferQueue = DispatchQueue(label: "com.example.apple-samplecode.VideoSampleBufferQueue")
     private let audioSampleBufferQueue = DispatchQueue(label: "com.example.apple-samplecode.AudioSampleBufferQueue")
     var streamOutput: CaptureEngineStreamOutput!
-    
     
     // Performs average and peak power calculations on the audio samples.
     private let powerMeter = PowerMeter()
@@ -101,6 +101,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
     
     var encoder: Encoder!
+    var pixelTransferSession: ColorConverter?
     
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
