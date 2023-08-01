@@ -46,13 +46,15 @@ class Encoder: NSObject {
         } catch {
             fatalError("dong")
         }
-        var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
-        if noErr != err2 {
-            print("error creating pixel transfer session")
-        }
-        err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: kCVImageBufferColorPrimaries_ITU_R_2020)
-        if noErr != err2 {
-            print("error setting color primaries on pixel transfer")
+        if options.convertsColorSpace {
+            var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
+            if noErr != err2 {
+                print("error creating pixel transfer session")
+            }
+            err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: options.targetColorSpace!)
+            if noErr != err2 {
+                print("error setting color primaries on pixel transfer")
+            }
         }
     }
     
@@ -124,8 +126,8 @@ class Encoder: NSObject {
         if noErr != err {
             print("setting ycbcr matrix failed")
         }
-        if let icc = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData() {
-            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ICCProfile, value: icc as CFTypeRef)
+        if options.usesICC {
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ICCProfile, value: options.iccProfile)
             if noErr != err {
                 print("setting icc profile failed")
             }
@@ -135,10 +137,12 @@ class Encoder: NSObject {
             print("setting transfer function failed")
         }
         print("set settings")
-        /*err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: 2.2 as CFNumber)
-        if noErr != err {
-            print("setting transfer function failed")
-        }*/
+        if options.gammaValue != nil {
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: options.gammaValue! as CFNumber)
+            if noErr != err {
+                print("setting gamma failed")
+            }
+        }
     }
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
@@ -159,6 +163,8 @@ class Encoder: NSObject {
     
     func stopEncoding() async {
         VTCompressionSessionCompleteFrames(self.session, untilPresentationTimeStamp: .invalid)
+        VTCompressionSessionInvalidate(self.session)
+        //CFRelease(self.session)
         do {
             try await self.videoSink.close()
         } catch {

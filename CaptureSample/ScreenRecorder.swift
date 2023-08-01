@@ -286,6 +286,9 @@ class ScreenRecorder: ObservableObject {
     
     private var options: Options {
         //self.streamConfiguration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
+        if self.usesICCProfile {
+            self.iccProfile = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData()
+        }
         let outputExtension = self.containerSetting == .mov ? "mov" : "mp4"
         let fileName = "Record \(Date()).\(outputExtension)"
         let outputURL = self.outputFolder.appending(path: fileName)
@@ -299,14 +302,18 @@ class ScreenRecorder: ObservableObject {
         let transferFunction = self.transferFunctionSetting.stringValue()
         let yuvMatrix = self.yCbCrMatrixSetting.stringValue()
         let bitDepth = self.bitDepth
+        let usesICC = self.usesICCProfile
         let iccProfile = self.iccProfile
         let maxKeyFrameIntervalDuration = self.maxKeyframeIntervalDuration
         let maxKeyFrameInterval = self.maxKeyframeInterval
         let rateControl = self.rateControlSetting
         let bFrames = self.bFramesSetting
         let crfValue = self.crfValue as CFNumber
+        let gammaValue = self.gammaValue
+        let convertsColorSpace = self.pixelTransferEnabled
+        let targetColorSpace = self.convertTargetColorSpace.cfString()
         
-        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: bitrate, codec: codec, pixelFormat: pixelFormat, maxKeyFrameIntervalDuration: maxKeyFrameIntervalDuration, maxKeyFrameInterval: maxKeyframeInterval, rateControl: rateControl, crfValue: crfValue, verbose: false, iccProfile: iccProfile, bitDepth: bitDepth, colorPrimaries: colorPrimaries, transferFunction: transferFunction, yuvMatrix: yuvMatrix, bFrames: bFrames)
+        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: bitrate, codec: codec, pixelFormat: pixelFormat, maxKeyFrameIntervalDuration: maxKeyFrameIntervalDuration, maxKeyFrameInterval: maxKeyframeInterval, rateControl: rateControl, crfValue: crfValue, verbose: false, iccProfile: iccProfile, bitDepth: bitDepth, colorPrimaries: colorPrimaries, transferFunction: transferFunction, yuvMatrix: yuvMatrix, bFrames: bFrames, gammaValue: gammaValue, convertsColorSpace: convertsColorSpace, targetColorSpace: targetColorSpace, usesICC: usesICC)
         
         return options
     }
@@ -361,6 +368,14 @@ class ScreenRecorder: ObservableObject {
     }
     
     @AppStorage("captureColorSpace") var captureColorSpace: CaptureColorSpace = .displayp3 {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("pixelTransferEnabled") var pixelTransferEnabled: Bool = false {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("convertTargetColorSpace") var convertTargetColorSpace: CaptureColorSpace = .displayp3 {
         didSet { updateEngine() }
     }
     
@@ -422,6 +437,10 @@ class ScreenRecorder: ObservableObject {
     }
     
     @AppStorage("framesPerSecond") var framesPerSecond: Double = 60.0 {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("gammaValue") var gammaValue: Double = 1.1 {
         didSet { updateEngine() }
     }
     
@@ -562,13 +581,6 @@ class ScreenRecorder: ObservableObject {
     /// - Tag: UpdateCaptureConfig
     private func updateEngine() {
         guard isRunning else { return }
-        //store all properties from picker enums
-        if self.usesICCProfile {
-            self.iccProfile = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData()
-        }
-        /*//this triggers stored property updates on self.streamConfiguration and self.options. not very clean but whatever
-        self.captureWidth = "\(self.streamConfiguration.width)"
-        self.captureHeight = "\(self.streamConfiguration.height)"*/
         Task {
             await captureEngine.update(configuration: streamConfiguration, filter: contentFilter)
         }

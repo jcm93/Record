@@ -51,6 +51,14 @@ public struct Options: @unchecked Sendable {
     public let bFrames: Bool
     
     public let crfValue: CFNumber?
+    
+    public let gammaValue: Double?
+    
+    public let convertsColorSpace: Bool
+    
+    public let targetColorSpace: CFString?
+    
+    public let usesICC: Bool
 
     /// A read only property that shows the configuration values user provides.
     public var description: String {
@@ -83,7 +91,7 @@ public struct Options: @unchecked Sendable {
     ///   - verbose: A Boolean value that specifies whether to print frame info.
     public init(destMovieURL: URL, destFileType: AVFileType, destWidth: Int, destHeight: Int, destBitRate: Int,
                 codec: CMVideoCodecType, pixelFormat: OSType, maxKeyFrameIntervalDuration: Double,
-                maxKeyFrameInterval: Int, rateControl: RateControlSetting, crfValue: CFNumber, verbose: Bool, iccProfile: CFData?, bitDepth: Int, colorPrimaries: CFString?, transferFunction: CFString?, yuvMatrix: CFString?, bFrames: Bool) {
+                maxKeyFrameInterval: Int, rateControl: RateControlSetting, crfValue: CFNumber, verbose: Bool, iccProfile: CFData?, bitDepth: Int, colorPrimaries: CFString?, transferFunction: CFString?, yuvMatrix: CFString?, bFrames: Bool, gammaValue: Double?, convertsColorSpace: Bool, targetColorSpace: CFString?, usesICC: Bool) {
         self.destMovieURL = destMovieURL
         self.destFileType = destFileType
         self.destWidth = destWidth
@@ -102,5 +110,9 @@ public struct Options: @unchecked Sendable {
         self.yuvMatrix = yuvMatrix
         self.bFrames = bFrames
         self.crfValue = crfValue
+        self.gammaValue = gammaValue
+        self.convertsColorSpace = convertsColorSpace
+        self.targetColorSpace = targetColorSpace
+        self.usesICC = usesICC
     }
 }

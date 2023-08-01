@@ -221,6 +221,20 @@ struct ConfigurationView: View {
                         
                         TabView {
                             VStack(alignment: .leading) {
+                                Toggle("Pre-convert to other color space", isOn: $screenRecorder.pixelTransferEnabled)
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                if (screenRecorder.pixelTransferEnabled) {
+                                    Group {
+                                        Picker("Color Space", selection: $screenRecorder.convertTargetColorSpace) {
+                                            ForEach(CaptureColorSpace.allCases, id: \.self) { format in
+                                                Text(String(format.cfString()))
+                                                    .tag(format)
+                                            }
+                                        }
+                                    }
+                                    .labelsHidden()
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                }
                                 Group {
                                     Text("Pixel Format")
                                     Picker("Pixel Format", selection: $screenRecorder.pixelFormatSetting) {
@@ -263,6 +277,22 @@ struct ConfigurationView: View {
                                         }
                                     }
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                    if self.screenRecorder.transferFunctionSetting == .useGamma {
+                                        Text("Gamma")
+                                        Slider(
+                                            value: $screenRecorder.gammaValue,
+                                            in: 0.0...3.0,
+                                            step: 0.05
+                                        ) {
+                                            Text("Values from 0 to 3.00")
+                                        } minimumValueLabel: {
+                                            Text("0.0")
+                                        } maximumValueLabel: {
+                                            Text("3.0")
+                                        }
+                                        Text("Gamma \(screenRecorder.gammaValue)")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                    }
                                 }
                                 .labelsHidden()
                                 Text("Bit Depth")
