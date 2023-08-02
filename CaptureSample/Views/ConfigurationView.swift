@@ -138,10 +138,10 @@ struct ConfigurationView: View {
                         Group {
                             Text("Codec")
                             Picker("Codec", selection: $screenRecorder.encoderSetting) {
-                                Text("H.264")
-                                    .tag(ScreenRecorder.EncoderSetting.H264)
-                                Text("HEVC")
-                                    .tag(ScreenRecorder.EncoderSetting.H265)
+                                ForEach(ScreenRecorder.EncoderSetting.allCases, id: \.self) { format in
+                                    Text(format.stringValue())
+                                        .tag(format)
+                                }
                             }
                             .pickerStyle(.radioGroup)
                             .horizontalRadioGroupLayout()
@@ -163,53 +163,70 @@ struct ConfigurationView: View {
                             .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                         }
                         .labelsHidden()
-                        Group {
-                            Text("Rate Control")
-                            Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
-                                Text("CBR")
-                                    .tag(RateControlSetting.cbr)
-                                Text("ABR")
-                                    .tag(RateControlSetting.abr)
-                                Text("CRF")
-                                    .tag(RateControlSetting.crf)
-                            }
-                            .pickerStyle(.radioGroup)
-                            .horizontalRadioGroupLayout()
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                        }
-                        .labelsHidden()
-                        
-                        
-                        if (screenRecorder.rateControlSetting != .crf) {
+                        if (self.screenRecorder.encoderSetting == .H264 || self.screenRecorder.encoderSetting == .H265) {
                             Group {
-                                Text("Bitrate")
-                                HStack {
-                                    TextField("", value: $screenRecorder.bitRate, format: .number)
-                                        .frame(width: 100)
-                                    Text("kbps")
+                                Text("Rate Control")
+                                Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
+                                    Text("CBR")
+                                        .tag(RateControlSetting.cbr)
+                                    Text("ABR")
+                                        .tag(RateControlSetting.abr)
+                                    Text("CRF")
+                                        .tag(RateControlSetting.crf)
                                 }
+                                .pickerStyle(.radioGroup)
+                                .horizontalRadioGroupLayout()
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                             }
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                             .labelsHidden()
+                            
+                            
+                            if (screenRecorder.rateControlSetting != .crf) {
+                                Group {
+                                    Text("Bitrate")
+                                    HStack {
+                                        TextField("", value: $screenRecorder.bitRate, format: .number)
+                                            .frame(width: 100)
+                                        Text("kbps")
+                                    }
+                                }
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                .labelsHidden()
+                            } else {
+                                Group {
+                                    //Text("Quality")
+                                    Text("Quality")
+                                    Slider(
+                                        value: $screenRecorder.crfValue,
+                                        in: 0.0...1.00
+                                    ) {
+                                        Text("Values from 0 to 1.00")
+                                    } minimumValueLabel: {
+                                        Text("Poor")
+                                    } maximumValueLabel: {
+                                        Text("'Lossless'")
+                                    }
+                                    HStack {
+                                        Text("CRF:")
+                                        TextField("CRF", value: $screenRecorder.crfValue, format: .number)
+                                            .frame(width: 70)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                }
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                                .labelsHidden()
+                            }
                         } else {
                             Group {
-                                //Text("Quality")
-                                Text("Quality")
-                                Slider(
-                                    value: $screenRecorder.crfValue,
-                                    in: 0.0...1.00,
-                                    step: 0.05
-                                ) {
-                                    Text("Values from 0 to 1.00")
-                                } minimumValueLabel: {
-                                    Text("Poor")
-                                } maximumValueLabel: {
-                                    Text("'Lossless'")
+                                Text("ProRes Setting")
+                                Picker("ProRes Setting", selection: $screenRecorder.proResSetting) {
+                                    ForEach(ScreenRecorder.ProResSetting.allCases, id: \.self) { format in
+                                        Text(format.stringValue())
+                                            .tag(format)
+                                    }
                                 }
-                                Text("CRF \(screenRecorder.crfValue)")
-                                    .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                             }
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                             .labelsHidden()
                         }
                         Group {
@@ -281,8 +298,7 @@ struct ConfigurationView: View {
                                         Text("Gamma")
                                         Slider(
                                             value: $screenRecorder.gammaValue,
-                                            in: 0.0...3.0,
-                                            step: 0.05
+                                            in: 0.0...3.0
                                         ) {
                                             Text("Values from 0 to 3.00")
                                         } minimumValueLabel: {
@@ -290,7 +306,11 @@ struct ConfigurationView: View {
                                         } maximumValueLabel: {
                                             Text("3.0")
                                         }
-                                        Text("Gamma \(screenRecorder.gammaValue)")
+                                        HStack {
+                                            Text("Gamma:")
+                                            TextField("Gamma", value: $screenRecorder.gammaValue, format: .number)
+                                                .frame(width: 70)
+                                        }
                                             .frame(maxWidth: .infinity, alignment: .center)
                                     }
                                 }
@@ -361,7 +381,6 @@ struct ConfigurationView: View {
                             
                             
                         }
-                        Toggle("Allow broken combinations", isOn: $screenRecorder.enableBroken)
                         
                         
                         Spacer()

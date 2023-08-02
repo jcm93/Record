@@ -137,7 +137,7 @@ class Encoder: NSObject {
             print("setting transfer function failed")
         }
         print("set settings")
-        if options.gammaValue != nil {
+        if options.gammaValue != nil && options.transferFunction == ScreenRecorder.TransferFunctionSetting.useGamma.stringValue() {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: options.gammaValue! as CFNumber)
             if noErr != err {
                 print("setting gamma failed")

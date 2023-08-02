@@ -116,6 +116,68 @@ class ScreenRecorder: ObservableObject {
     enum EncoderSetting: Int, Codable, CaseIterable {
         case H264
         case H265
+        case ProRes
+        func stringValue() -> String {
+            switch self {
+            case .H264:
+                return "H.264"
+            case .H265:
+                return "HEVC"
+            case .ProRes:
+                return "ProRes"
+            }
+        }
+    }
+    
+    enum ProResSetting: Int, Codable, CaseIterable {
+        case ProRes422
+        case ProRes4444
+        case ProResRAW
+        case ProRes422HQ
+        case ProRes422LT
+        case ProResRAWHQ
+        case ProRes4444XQ
+        case ProRes422Proxy
+        func codecValue() -> CMVideoCodecType {
+            switch self {
+            case .ProRes422:
+                return kCMVideoCodecType_AppleProRes422
+            case .ProRes4444:
+                return kCMVideoCodecType_AppleProRes4444
+            case .ProResRAW:
+                return kCMVideoCodecType_AppleProResRAW
+            case .ProRes422HQ:
+                return kCMVideoCodecType_AppleProRes422HQ
+            case .ProRes422LT:
+                return kCMVideoCodecType_AppleProRes422LT
+            case .ProResRAWHQ:
+                return kCMVideoCodecType_AppleProResRAWHQ
+            case .ProRes4444XQ:
+                return kCMVideoCodecType_AppleProRes4444XQ
+            case .ProRes422Proxy:
+                return kCMVideoCodecType_AppleProRes422Proxy
+            }
+        }
+        func stringValue() -> String {
+            switch self {
+            case .ProRes422:
+                return "ProRes 422"
+            case .ProRes4444:
+                return "ProRes 4444"
+            case .ProResRAW:
+                return "ProRes RAW"
+            case .ProRes422HQ:
+                return "ProRes 422 HQ"
+            case .ProRes422LT:
+                return "ProRes 422 LT"
+            case .ProResRAWHQ:
+                return "ProRes RAW HQ"
+            case .ProRes4444XQ:
+                return "ProRes 4444 XQ"
+            case .ProRes422Proxy:
+                return "ProRes 422 Proxy"
+            }
+        }
     }
     
     enum ContainerSetting: Int, Codable, CaseIterable {
@@ -282,6 +344,17 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
+    func getCodecType() -> CMVideoCodecType {
+        switch self.encoderSetting {
+        case .H264:
+            return kCMVideoCodecType_H264
+        case .H265:
+            return kCMVideoCodecType_HEVC
+        case .ProRes:
+            return self.proResSetting.codecValue()
+        }
+    }
+    
     private let logger = Logger()
     
     private var options: Options {
@@ -293,7 +366,7 @@ class ScreenRecorder: ObservableObject {
         let fileName = "Record \(Date()).\(outputExtension)"
         let outputURL = self.outputFolder.appending(path: fileName)
         let fileType: AVFileType = self.containerSetting == .mov ? AVFileType.mov : AVFileType.mp4
-        let codec = self.encoderSetting == .H264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC
+        let codec = self.getCodecType()
         let bitrate = self.bitRate
         let width = Int(self.captureWidth)!
         let height = Int(self.captureHeight)!
@@ -416,6 +489,10 @@ class ScreenRecorder: ObservableObject {
     }
     
     @AppStorage("bitDepthSetting") var bitDepthSetting: BitDepthSetting = .ten {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("proResSetting") var proResSetting: ProResSetting = .ProRes422 {
         didSet { updateEngine() }
     }
     
