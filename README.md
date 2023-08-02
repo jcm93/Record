@@ -4,14 +4,13 @@ Record captures and encodes macOS screen content with full color fidelity.<img w
 <video src="https://github.com/jcm93/Record/assets/6864788/e64d21a9-abe6-4a09-890e-0193c772f5c3" controls="controls" style="max-width: 730px;">
 </video>
 <video src="https://github.com/jcm93/Record/assets/6864788/53d590c5-e4da-45e7-adf2-8b54d585175b" controls="controls" style="max-width: 730px;"></video>
+
 # Disclaimer
 
 
 This is an experimental commit and many things may be broken.
 # todo
-## master to 2020 instead of p3
 ## alpha?
-## HDR capture / master as HDR
+## hdr capture
 ## buffer/hotkey controls
-## prores
 
