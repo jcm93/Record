@@ -13,4 +13,6 @@ This is an experimental commit and many things may be broken.
 ## alpha?
 ## hdr capture
 ## buffer/hotkey controls
+## presets
+## scale
 

@@ -17,6 +17,7 @@ class Encoder: NSObject {
     var session: VTCompressionSession!
     var videoSink: VideoSink!
     var pixelTransferSession: VTPixelTransferSession?
+    var stoppingEncoding = false
     
     init(options: Options) async {
         super.init()
@@ -149,10 +150,12 @@ class Encoder: NSObject {
         if let pixelTransferSession = pixelTransferSession {
             VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: buffer)
         }
-        VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
-            (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
-            if sbuf != nil {
-                self.videoSink.sendSampleBuffer(sbuf!)
+        if self.stoppingEncoding != true {
+            VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+                (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
+                if sbuf != nil {
+                    self.videoSink.sendSampleBuffer(sbuf!)
+                }
             }
         }
     }
@@ -162,11 +165,13 @@ class Encoder: NSObject {
     }
     
     func stopEncoding() async {
+        self.stoppingEncoding = true
         VTCompressionSessionCompleteFrames(self.session, untilPresentationTimeStamp: .invalid)
         VTCompressionSessionInvalidate(self.session)
         //CFRelease(self.session)
         do {
             try await self.videoSink.close()
+            self.stoppingEncoding = false
         } catch {
             print(error)
             fatalError("error")
