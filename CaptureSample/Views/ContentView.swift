@@ -16,7 +16,7 @@ struct ContentView: View {
     @State var disableInput = false
     @State var isUnauthorized = false
     
-    @StateObject var screenRecorder = ScreenRecorder()
+    @EnvironmentObject var screenRecorder: ScreenRecorder
     
     var body: some View {
         HSplitView {

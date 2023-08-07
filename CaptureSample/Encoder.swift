@@ -168,6 +168,10 @@ class Encoder: NSObject {
         self.stoppingEncoding = true
         VTCompressionSessionCompleteFrames(self.session, untilPresentationTimeStamp: .invalid)
         VTCompressionSessionInvalidate(self.session)
+        if let pts = self.pixelTransferSession {
+            VTPixelTransferSessionInvalidate(pts)
+            self.pixelTransferSession = nil
+        }
         //CFRelease(self.session)
         do {
             try await self.videoSink.close()

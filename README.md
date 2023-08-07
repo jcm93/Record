@@ -15,4 +15,4 @@ This is an experimental commit and many things may be broken.
 ## buffer/hotkey controls
 ## presets
 ## scale
-
+## audio meter

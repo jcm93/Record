@@ -8,11 +8,23 @@ import SwiftUI
 
 @main
 struct CaptureSampleApp: App {
+    
+    @StateObject var screenRecorder = ScreenRecorder()
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(screenRecorder)
                 .frame(minWidth: 960, minHeight: 724)
                 .background(.black)
+        }
+        .commands {
+            CommandMenu("Preset") {
+                Button("do") {
+                    Task {
+                        screenRecorder.encoderSetting = .H264
+                    }
+                }
+            }
         }
     }
 }

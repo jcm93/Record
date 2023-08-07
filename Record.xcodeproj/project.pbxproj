@@ -73,6 +73,7 @@
 		C41D1B1D2814BD230033613F /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				C4B0DABB276BA4B50015082A /* ContentView.swift */,
 				C4B0DABC276BA4B50015082A /* CapturePreview.swift */,
 				C4EB90D328108656006A595C /* ConfigurationView.swift */,
 				C471DFFD280A0968001D24C9 /* AudioLevelsView.swift */,
@@ -119,7 +120,6 @@
 				C4B0DABD276BA4B50015082A /* CaptureEngine.swift */,
 				C471DFF92809F440001D24C9 /* PowerMeter.swift */,
 				C44093742816EC9C00FB8386 /* AudioPlayer.swift */,
-				C4B0DABB276BA4B50015082A /* ContentView.swift */,
 				C41D1B1D2814BD230033613F /* Views */,
 				C4B0DAB9276BA49F0015082A /* CaptureSampleApp.swift */,
 				C44093712816EC7800FB8386 /* Audio */,
