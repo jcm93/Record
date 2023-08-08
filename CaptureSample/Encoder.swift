@@ -12,7 +12,7 @@ import AVFAudio
 import CoreGraphics
 import AppKit
 
-class Encoder: NSObject {
+class VTEncoder: NSObject {
     
     var session: VTCompressionSession!
     var videoSink: VideoSink!
@@ -138,7 +138,7 @@ class Encoder: NSObject {
             print("setting transfer function failed")
         }
         print("set settings")
-        if options.gammaValue != nil && options.transferFunction == ScreenRecorder.TransferFunctionSetting.useGamma.stringValue() {
+        if options.gammaValue != nil && options.transferFunction == TransferFunctionSetting.useGamma.stringValue() {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: options.gammaValue! as CFNumber)
             if noErr != err {
                 print("setting gamma failed")

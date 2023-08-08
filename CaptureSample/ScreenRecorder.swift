@@ -17,377 +17,95 @@ class AudioLevelsProvider: ObservableObject {
     @Published var audioLevels = AudioLevels.zero
 }
 
-public enum RateControlSetting: Int, Codable, CaseIterable {
-    case cbr
-    case abr
-    case crf
-}
-
-public enum CaptureColorSpace: Int, Codable, CaseIterable {
-    case displayp3
-    case displayp3hlg
-    case displayp3pq
-    case extendedlineardisplayp3
-    case srgb
-    case linearsrgb
-    case extendedlinearsrgb
-    case genericgraygamma22
-    case lineargray
-    case extendedgray
-    case extendedlineargray
-    case genericrgblinear
-    case cmyk
-    case xyz
-    case genericlab
-    case acescg
-    case adobergb98
-    case dcip3
-    case itur709
-    case rommrgb
-    case itur2020
-    case itur2020hlg
-    case itur2020pq
-    case extendedlinearitur2020
-    
-    func cfString() -> CFString {
-        switch self {
-        case .displayp3:
-            return CGColorSpace.displayP3
-        case .displayp3hlg:
-            return CGColorSpace.displayP3_HLG
-        case .displayp3pq:
-            return CGColorSpace.displayP3_PQ
-        case .extendedlineardisplayp3:
-            return CGColorSpace.extendedLinearDisplayP3
-        case .srgb:
-            return CGColorSpace.sRGB
-        case .linearsrgb:
-            return CGColorSpace.linearSRGB
-        case .extendedlinearsrgb:
-            return CGColorSpace.extendedLinearSRGB
-        case .genericgraygamma22:
-            return CGColorSpace.genericGrayGamma2_2
-        case .lineargray:
-            return CGColorSpace.linearGray
-        case .extendedgray:
-            return CGColorSpace.extendedGray
-        case .extendedlineargray:
-            return CGColorSpace.extendedLinearGray
-        case .genericrgblinear:
-            return CGColorSpace.genericRGBLinear
-        case .cmyk:
-            return CGColorSpace.genericCMYK
-        case .xyz:
-            return CGColorSpace.genericXYZ
-        case .genericlab:
-            return CGColorSpace.genericLab
-        case .acescg:
-            return CGColorSpace.acescgLinear
-        case .adobergb98:
-            return CGColorSpace.adobeRGB1998
-        case .dcip3:
-            return CGColorSpace.dcip3
-        case .itur709:
-            return CGColorSpace.itur_709
-        case .rommrgb:
-            return CGColorSpace.rommrgb
-        case .itur2020:
-            return CGColorSpace.itur_2020
-        case .itur2020hlg:
-            return CGColorSpace.itur_2020_HLG
-        case .itur2020pq:
-            return CGColorSpace.itur_2020_PQ
-        case .extendedlinearitur2020:
-            return CGColorSpace.extendedLinearITUR_2020
-        }
-    }
-    
-}
-
 @MainActor
 class ScreenRecorder: ObservableObject {
     
     /// The supported capture types.
-    enum CaptureType: Int, Codable, CaseIterable {
-        case display
-        case window
-    }
     
-    enum EncoderSetting: Int, Codable, CaseIterable {
-        case H264
-        case H265
-        case ProRes
-        func stringValue() -> String {
-            switch self {
-            case .H264:
-                return "H.264"
-            case .H265:
-                return "HEVC"
-            case .ProRes:
-                return "ProRes"
-            }
-        }
-    }
-    
-    enum ProResSetting: Int, Codable, CaseIterable {
-        case ProRes422
-        case ProRes4444
-        case ProResRAW
-        case ProRes422HQ
-        case ProRes422LT
-        case ProResRAWHQ
-        case ProRes4444XQ
-        case ProRes422Proxy
-        func codecValue() -> CMVideoCodecType {
-            switch self {
-            case .ProRes422:
-                return kCMVideoCodecType_AppleProRes422
-            case .ProRes4444:
-                return kCMVideoCodecType_AppleProRes4444
-            case .ProResRAW:
-                return kCMVideoCodecType_AppleProResRAW
-            case .ProRes422HQ:
-                return kCMVideoCodecType_AppleProRes422HQ
-            case .ProRes422LT:
-                return kCMVideoCodecType_AppleProRes422LT
-            case .ProResRAWHQ:
-                return kCMVideoCodecType_AppleProResRAWHQ
-            case .ProRes4444XQ:
-                return kCMVideoCodecType_AppleProRes4444XQ
-            case .ProRes422Proxy:
-                return kCMVideoCodecType_AppleProRes422Proxy
-            }
-        }
-        func stringValue() -> String {
-            switch self {
-            case .ProRes422:
-                return "ProRes 422"
-            case .ProRes4444:
-                return "ProRes 4444"
-            case .ProResRAW:
-                return "ProRes RAW"
-            case .ProRes422HQ:
-                return "ProRes 422 HQ"
-            case .ProRes422LT:
-                return "ProRes 422 LT"
-            case .ProResRAWHQ:
-                return "ProRes RAW HQ"
-            case .ProRes4444XQ:
-                return "ProRes 4444 XQ"
-            case .ProRes422Proxy:
-                return "ProRes 422 Proxy"
-            }
-        }
-    }
-    
-    enum ContainerSetting: Int, Codable, CaseIterable {
-        case mov
-        case mp4
-    }
-    
-    enum YCbCrMatrixSetting: Int, Codable, CaseIterable {
-        case ITU_R_2020
-        case ITU_R_709_2
-        case ITU_R_601_2
-        case SMPTE_240M_1995
-        case untagged
-        func stringValue() -> CFString? {
-            switch self {
-            case .ITU_R_2020:
-                return kCVImageBufferYCbCrMatrix_ITU_R_2020
-            case .ITU_R_709_2:
-                return kCVImageBufferYCbCrMatrix_ITU_R_709_2
-            case .untagged:
-                return nil
-            case .ITU_R_601_2:
-                return kCVImageBufferYCbCrMatrix_ITU_R_601_4
-            case .SMPTE_240M_1995:
-                return kCVImageBufferYCbCrMatrix_SMPTE_240M_1995
-            }
-        }
-    }
-    
-    enum ColorPrimariesSetting: Int, Codable, CaseIterable {
-        case P3_D65
-        case DCI_P3
-        case ITU_R_709_2
-        case EBU_3213
-        case SMPTE_C
-        case ITU_R_2020
-        case P22
-        case untagged
-        func stringValue() -> CFString? {
-            switch self {
-            case .DCI_P3:
-                return kCVImageBufferColorPrimaries_DCI_P3
-            case .P3_D65:
-                return kCVImageBufferColorPrimaries_P3_D65
-            case .untagged:
-                return nil
-            case .ITU_R_709_2:
-                return kCVImageBufferColorPrimaries_ITU_R_709_2
-            case .EBU_3213:
-                return kCVImageBufferColorPrimaries_EBU_3213
-            case .SMPTE_C:
-                return kCVImageBufferColorPrimaries_SMPTE_C
-            case .ITU_R_2020:
-                return kCVImageBufferColorPrimaries_ITU_R_2020
-            case .P22:
-                return kCVImageBufferColorPrimaries_P22
-            }
-        }
-    }
-    
-    enum TransferFunctionSetting: Int, Codable, CaseIterable {
-        case ITU_R_709_2
-        case SMPTE_240M_1995
-        case useGamma
-        case sRGB
-        case ITU_R_2020
-        case SMPTE_ST_428_1
-        case ITU_R_2100_HLG
-        case SMPTE_ST_2084_PQ
-        case untagged
-        func stringValue() -> CFString? {
-            switch self {
-            case .ITU_R_709_2:
-                return kCVImageBufferTransferFunction_ITU_R_709_2
-            case .SMPTE_240M_1995:
-                return kCVImageBufferTransferFunction_SMPTE_240M_1995
-            case .useGamma:
-                return kCVImageBufferTransferFunction_UseGamma
-            case .sRGB:
-                return kCVImageBufferTransferFunction_sRGB
-            case .ITU_R_2020:
-                return kCVImageBufferTransferFunction_ITU_R_2020
-            case .SMPTE_ST_428_1:
-                return kCVImageBufferTransferFunction_SMPTE_ST_428_1
-            case .ITU_R_2100_HLG:
-                return kCVImageBufferTransferFunction_ITU_R_2100_HLG
-            case .SMPTE_ST_2084_PQ:
-                return kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ
-            case .untagged:
-                return nil
-            }
-        }
-    }
-    
-    enum KeyframeSetting: Int, Codable, CaseIterable {
-        case auto
-        case custom
-    }
-    
-    enum KeyframeDurationSetting: Int, Codable, CaseIterable {
-        case unlimited
-        case custom
-    }
-    
-    enum BitDepthSetting: Int, Codable, CaseIterable {
-        case eight
-        case ten
-    }
-    
-    enum CapturePixelFormat: Int, Codable, CaseIterable {
-        case bgra
-        case l10r
-        case biplanarpartial420v
-        case biplanarfull420f
-        func osTypeFormat() -> OSType {
-            switch self {
-            case .bgra:
-                return kCVPixelFormatType_32BGRA
-            case .l10r:
-                return kCVPixelFormatType_ARGB2101010LEPacked
-            case .biplanarpartial420v:
-                return kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange
-            case .biplanarfull420f:
-                return kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
-            }
-        }
-        func stringValue() -> String {
-            switch self {
-            case .bgra:
-                return "BGRA"
-            case .l10r:
-                return "l10r"
-            case .biplanarpartial420v:
-                return "420v"
-            case .biplanarfull420f:
-                return "420f"
-            }
-        }
-    }
-    
-    enum CaptureYUVMatrix: Int, Codable, CaseIterable {
-        case itu_r_709
-        case itu_r_601
-        case smpte_240m_1995
-        func cfStringFormat() -> CFString {
-            switch self {
-            case .itu_r_709:
-                return CGDisplayStream.yCbCrMatrix_ITU_R_709_2
-            case .itu_r_601:
-                return CGDisplayStream.yCbCrMatrix_ITU_R_601_4
-            case .smpte_240m_1995:
-                return CGDisplayStream.yCbCrMatrix_SMPTE_240M_1995
-            }
-        }
-        func stringValue() -> String {
-            switch self {
-            case .itu_r_709:
-                return "709"
-            case .itu_r_601:
-                return "601"
-            case .smpte_240m_1995:
-                return "SMPTE 240M 1995"
-            }
-        }
-    }
-    
-    func getCodecType() -> CMVideoCodecType {
-        switch self.encoderSetting {
+    func getCodecType(_ storableOptions: OptionsStorable) -> CMVideoCodecType {
+        switch storableOptions.encoderSetting {
         case .H264:
             return kCMVideoCodecType_H264
         case .H265:
             return kCMVideoCodecType_HEVC
         case .ProRes:
-            return self.proResSetting.codecValue()
+            return storableOptions.proResSetting.codecValue()
         }
     }
     
     private let logger = Logger()
     
-    private var options: Options {
+    func savePreset() {
+        let options = self.getStoredOptions()
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(options)
+            UserDefaults.standard.setValue(data, forKey: "testPreset")
+        } catch {
+            print(error)
+        }
+    }
+    
+    func loadPreset() {
+        do {
+            let data = UserDefaults.standard.value(forKey: "testPreset") as! Data
+            let decoder = JSONDecoder()
+            let storable = try decoder.decode(OptionsStorable.self, from: data)
+            self.setOptionsFromStorable(storable)
+        } catch {
+            print(error)
+        }
+    }
+    
+    func setOptionsFromStorable(_ storedOptions: OptionsStorable) {
+        self.containerSetting = storedOptions.fileType
+        self.bitRate = storedOptions.bitrate
+        self.capturePixelFormat = storedOptions.pixelFormat
+        self.colorPrimariesSetting = storedOptions.primaries
+        self.transferFunctionSetting = storedOptions.transfer
+        self.yCbCrMatrixSetting = storedOptions.yuv
+        self.bitDepth = storedOptions.bitDepth
+        self.usesICCProfile = storedOptions.usesICC
+        self.maxKeyframeIntervalDuration = storedOptions.maxKeyFrameDuration
+        self.maxKeyframeInterval = storedOptions.maxKeyFrameInterval
+        self.rateControlSetting = storedOptions.rateControl
+        self.bFramesSetting = storedOptions.bFrames
+        self.crfValue =  storedOptions.crfValue
+        self.gammaValue = storedOptions.gammaValue
+        self.pixelTransferEnabled = storedOptions.convertsColorSpace
+        self.convertTargetColorSpace = storedOptions.targetColorSpace
+        self.encoderSetting = storedOptions.encoderSetting
+        self.proResSetting = storedOptions.proResSetting
+        self.pixelFormatSetting = storedOptions.encoderPixelFormat
+    }
+    
+    func getStoredOptions() -> OptionsStorable {
+        let storableOptions = OptionsStorable(fileType: self.containerSetting, bitrate: self.bitRate, pixelFormat: self.capturePixelFormat, primaries: self.colorPrimariesSetting, transfer: self.transferFunctionSetting, yuv: self.yCbCrMatrixSetting, bitDepth: self.bitDepth, usesICC: self.usesICCProfile, maxKeyFrameDuration: self.maxKeyframeIntervalDuration, maxKeyFrameInterval: self.maxKeyframeInterval, rateControl: self.rateControlSetting, bFrames: self.bFramesSetting, crfValue: self.crfValue, gammaValue: self.gammaValue, convertsColorSpace: self.pixelTransferEnabled, targetColorSpace: self.convertTargetColorSpace, encoderSetting: self.encoderSetting, proResSetting: self.proResSetting, encoderPixelFormat: self.pixelFormatSetting)
+        return storableOptions
+    }
+    
+    var options: Options {
         //self.streamConfiguration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
         if self.usesICCProfile {
             self.iccProfile = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData()
         }
-        let outputExtension = self.containerSetting == .mov ? "mov" : "mp4"
+        
+        let storableOptions = self.getStoredOptions()
+        
+        let options = self.optionsFromPreset(storableOptions: storableOptions)
+        
+        return options
+    }
+    
+    func optionsFromPreset(storableOptions: OptionsStorable) -> Options {
+        let outputExtension = storableOptions.fileType == .mov ? "mov" : "mp4"
         let fileName = "Record \(Date()).\(outputExtension)"
         let outputURL = self.outputFolder.appending(path: fileName)
-        let fileType: AVFileType = self.containerSetting == .mov ? AVFileType.mov : AVFileType.mp4
-        let codec = self.getCodecType()
-        let bitrate = self.bitRate
+        let fileType = storableOptions.fileType == .mov ? AVFileType.mov : AVFileType.mp4
         let width = Int(self.captureWidth)!
         let height = Int(self.captureHeight)!
-        let pixelFormat = self.pixelFormatSetting.osTypeFormat()
-        let colorPrimaries = self.colorPrimariesSetting.stringValue()
-        let transferFunction = self.transferFunctionSetting.stringValue()
-        let yuvMatrix = self.yCbCrMatrixSetting.stringValue()
-        let bitDepth = self.bitDepth
-        let usesICC = self.usesICCProfile
-        let iccProfile = self.iccProfile
-        let maxKeyFrameIntervalDuration = self.maxKeyframeIntervalDuration
-        let maxKeyFrameInterval = self.maxKeyframeInterval
-        let rateControl = self.rateControlSetting
-        let bFrames = self.bFramesSetting
-        let crfValue = self.crfValue as CFNumber
-        let gammaValue = self.gammaValue
-        let convertsColorSpace = self.pixelTransferEnabled
-        let targetColorSpace = self.convertTargetColorSpace.cfString()
-        
-        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: bitrate, codec: codec, pixelFormat: pixelFormat, maxKeyFrameIntervalDuration: maxKeyFrameIntervalDuration, maxKeyFrameInterval: maxKeyframeInterval, rateControl: rateControl, crfValue: crfValue, verbose: false, iccProfile: iccProfile, bitDepth: bitDepth, colorPrimaries: colorPrimaries, transferFunction: transferFunction, yuvMatrix: yuvMatrix, bFrames: bFrames, gammaValue: gammaValue, convertsColorSpace: convertsColorSpace, targetColorSpace: targetColorSpace, usesICC: usesICC)
-        
+        let codec = self.getCodecType(storableOptions)
+        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: self.getCodecType(storableOptions), pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC)
         return options
     }
     

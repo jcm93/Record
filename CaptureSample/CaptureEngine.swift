@@ -75,7 +75,7 @@ class CaptureEngine: @unchecked Sendable {
     
     func startRecording(options: Options) async {
         //let options = Options(destMovieURL: "./poopy.mp4", destFileType: .mp4, destWidth: 3456, destHeight: 2234, destBitRate: 15000000, codec: kCMVideoCodecType_HEVC, pixelFormat: kCVPixelFormatType_32BGRA, maxKeyFrameIntervalDuration: 0.0, maxKeyFrameInterval: 2, cbr: false, verbose: true, iccProfile: nil, bitDepth: 8)
-        self.streamOutput.encoder = await Encoder(options: options)
+        self.streamOutput.encoder = await VTEncoder(options: options)
     }
     
     func stopRecording() async {
@@ -100,7 +100,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var pcmBufferHandler: ((AVAudioPCMBuffer) -> Void)?
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
     
-    var encoder: Encoder!
+    var encoder: VTEncoder!
     var pixelTransferSession: ColorConverter?
     
     // Store the the startCapture continuation, so you can cancel it if an error occurs.

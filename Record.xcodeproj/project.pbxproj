@@ -11,6 +11,7 @@
 		0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */; };
 		0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B202A6CF6BA00DA288D /* VideoSink.swift */; };
 		0D3898382A7582EA003D1E2D /* PixelTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3898372A7582EA003D1E2D /* PixelTransfer.swift */; };
+		0D4875402A81A20800F6D832 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D48753F2A81A20800F6D832 /* Enums.swift */; };
 		0DF11FDE2A6ECBA500B45306 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 0DF11FDD2A6ECBA500B45306 /* README.md */; };
 		C44093732816EC8800FB8386 /* Synth.aif in Resources */ = {isa = PBXBuildFile; fileRef = C44093722816EC8800FB8386 /* Synth.aif */; };
 		C44093752816EC9C00FB8386 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44093742816EC9C00FB8386 /* AudioPlayer.swift */; };
@@ -32,6 +33,7 @@
 		0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncoderOptions.swift; sourceTree = "<group>"; };
 		0D368B202A6CF6BA00DA288D /* VideoSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSink.swift; sourceTree = "<group>"; };
 		0D3898372A7582EA003D1E2D /* PixelTransfer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PixelTransfer.swift; sourceTree = "<group>"; };
+		0D48753F2A81A20800F6D832 /* Enums.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Enums.swift; sourceTree = "<group>"; };
 		0DF11FDD2A6ECBA500B45306 /* README.md */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; fileEncoding = 4; path = README.md; sourceTree = "<group>"; };
 		7C6C99F1D4B6E3EBA3A7B7DF /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		C44093722816EC8800FB8386 /* Synth.aif */ = {isa = PBXFileReference; lastKnownFileType = file; path = Synth.aif; sourceTree = "<group>"; };
@@ -114,6 +116,7 @@
 			children = (
 				0D3898372A7582EA003D1E2D /* PixelTransfer.swift */,
 				C470F0802811C5CB00D29309 /* ScreenRecorder.swift */,
+				0D48753F2A81A20800F6D832 /* Enums.swift */,
 				0D368B1C2A6CEC2600DA288D /* Encoder.swift */,
 				0D368B202A6CF6BA00DA288D /* VideoSink.swift */,
 				0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */,
@@ -230,6 +233,7 @@
 				C4B0DABA276BA49F0015082A /* CaptureSampleApp.swift in Sources */,
 				C471DFFE280A0968001D24C9 /* AudioLevelsView.swift in Sources */,
 				C4EB90D428108656006A595C /* ConfigurationView.swift in Sources */,
+				0D4875402A81A20800F6D832 /* Enums.swift in Sources */,
 				C4729DA52821BFAD00AAC477 /* MaterialView.swift in Sources */,
 				C4B0DABE276BA4B50015082A /* ContentView.swift in Sources */,
 				0D368B1D2A6CEC2600DA288D /* Encoder.swift in Sources */,

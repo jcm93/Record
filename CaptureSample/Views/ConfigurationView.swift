@@ -34,9 +34,9 @@ struct ConfigurationView: View {
                                 Text("Capture Type")
                                 Picker("Capture", selection: $screenRecorder.captureType) {
                                     Text("Display")
-                                        .tag(ScreenRecorder.CaptureType.display)
+                                        .tag(CaptureType.display)
                                     Text("Window")
-                                        .tag(ScreenRecorder.CaptureType.window)
+                                        .tag(CaptureType.window)
                                 }
                                 .pickerStyle(.radioGroup)
                                 .horizontalRadioGroupLayout()
@@ -79,7 +79,7 @@ struct ConfigurationView: View {
                         Group {
                             Text("Pixel Format")
                             Picker("Pixel Format", selection: $screenRecorder.capturePixelFormat) {
-                                ForEach(ScreenRecorder.CapturePixelFormat.allCases, id: \.self) { format in
+                                ForEach(CapturePixelFormat.allCases, id: \.self) { format in
                                     Text(format.stringValue())
                                         .tag(format)
                                 }
@@ -88,7 +88,7 @@ struct ConfigurationView: View {
                             if (self.screenRecorder.capturePixelFormat == .biplanarfull420f || self.screenRecorder.capturePixelFormat == .biplanarpartial420v) {
                                 Text("Transfer Function")
                                 Picker("Transfer Function", selection: $screenRecorder.captureYUVMatrix) {
-                                    ForEach(ScreenRecorder.CaptureYUVMatrix.allCases, id: \.self) { format in
+                                    ForEach(CaptureYUVMatrix.allCases, id: \.self) { format in
                                         Text(format.stringValue())
                                             .tag(format)
                                     }
@@ -138,7 +138,7 @@ struct ConfigurationView: View {
                         Group {
                             Text("Codec")
                             Picker("Codec", selection: $screenRecorder.encoderSetting) {
-                                ForEach(ScreenRecorder.EncoderSetting.allCases, id: \.self) { format in
+                                ForEach(EncoderSetting.allCases, id: \.self) { format in
                                     Text(format.stringValue())
                                         .tag(format)
                                 }
@@ -154,9 +154,9 @@ struct ConfigurationView: View {
                             Text("Container")
                             Picker("Container", selection: $screenRecorder.containerSetting) {
                                 Text(".mp4")
-                                    .tag(ScreenRecorder.ContainerSetting.mp4)
+                                    .tag(ContainerSetting.mp4)
                                 Text(".mov")
-                                    .tag(ScreenRecorder.ContainerSetting.mov)
+                                    .tag(ContainerSetting.mov)
                             }
                             .pickerStyle(.radioGroup)
                             .horizontalRadioGroupLayout()
@@ -220,7 +220,7 @@ struct ConfigurationView: View {
                             Group {
                                 Text("ProRes Setting")
                                 Picker("ProRes Setting", selection: $screenRecorder.proResSetting) {
-                                    ForEach(ScreenRecorder.ProResSetting.allCases, id: \.self) { format in
+                                    ForEach(ProResSetting.allCases, id: \.self) { format in
                                         Text(format.stringValue())
                                             .tag(format)
                                     }
@@ -255,7 +255,7 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("Pixel Format")
                                     Picker("Pixel Format", selection: $screenRecorder.pixelFormatSetting) {
-                                        ForEach(ScreenRecorder.CapturePixelFormat.allCases, id: \.self) { format in
+                                        ForEach(CapturePixelFormat.allCases, id: \.self) { format in
                                             Text(format.stringValue())
                                                 .tag(format)
                                         }
@@ -266,7 +266,7 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("Color Primaries")
                                     Picker("Color Primaries", selection: $screenRecorder.colorPrimariesSetting) {
-                                        ForEach(ScreenRecorder.ColorPrimariesSetting.allCases, id: \.self) { format in
+                                        ForEach(ColorPrimariesSetting.allCases, id: \.self) { format in
                                             Text(format.stringValue() as String? ?? "Untagged")
                                                 .tag(format)
                                         }
@@ -277,7 +277,7 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("YCbCr Matrix")
                                     Picker("YCbCr Matrix", selection: $screenRecorder.yCbCrMatrixSetting) {
-                                        ForEach(ScreenRecorder.YCbCrMatrixSetting.allCases, id: \.self) { format in
+                                        ForEach(YCbCrMatrixSetting.allCases, id: \.self) { format in
                                             Text(format.stringValue() as String? ?? "Untagged")
                                                 .tag(format)
                                         }
@@ -288,7 +288,7 @@ struct ConfigurationView: View {
                                 Group {
                                     Text("Transfer Function")
                                     Picker("Transfer Function", selection: $screenRecorder.transferFunctionSetting) {
-                                        ForEach(ScreenRecorder.TransferFunctionSetting.allCases, id: \.self) { format in
+                                        ForEach(TransferFunctionSetting.allCases, id: \.self) { format in
                                             Text(format.stringValue() as String? ?? "Untagged")
                                                 .tag(format)
                                         }
@@ -318,9 +318,9 @@ struct ConfigurationView: View {
                                 Text("Bit Depth")
                                 Picker("Bit depth", selection: $screenRecorder.bitDepthSetting) {
                                     Text("8")
-                                        .tag(ScreenRecorder.BitDepthSetting.eight)
+                                        .tag(BitDepthSetting.eight)
                                     Text("10")
-                                        .tag(ScreenRecorder.BitDepthSetting.ten)
+                                        .tag(BitDepthSetting.ten)
                                 }
                                 .pickerStyle(.radioGroup)
                                 .horizontalRadioGroupLayout()
@@ -337,10 +337,10 @@ struct ConfigurationView: View {
                                     HStack {
                                         Picker("Max keyframe interval", selection: $screenRecorder.keyframeSetting) {
                                             Text("Auto")
-                                                .tag(ScreenRecorder.KeyframeSetting.auto)
+                                                .tag(KeyframeSetting.auto)
                                                 .frame(width: 30)
                                             Text("Custom")
-                                                .tag(ScreenRecorder.KeyframeSetting.custom)
+                                                .tag(KeyframeSetting.custom)
                                                 .frame(width: 50)
                                         }
                                         .pickerStyle(.radioGroup)
@@ -356,10 +356,10 @@ struct ConfigurationView: View {
                                     HStack {
                                         Picker("Max keyframe interval duration (secs)", selection: $screenRecorder.keyframeIntervalSetting) {
                                             Text("Unlimited")
-                                                .tag(ScreenRecorder.KeyframeDurationSetting.unlimited)
+                                                .tag(KeyframeDurationSetting.unlimited)
                                                 .frame(width: 60)
                                             Text("Custom")
-                                                .tag(ScreenRecorder.KeyframeDurationSetting.custom)
+                                                .tag(KeyframeDurationSetting.custom)
                                                 .frame(width: 50)
                                         }
                                         .pickerStyle(.radioGroup)

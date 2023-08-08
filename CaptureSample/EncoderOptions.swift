@@ -1,6 +1,51 @@
 import AVFoundation
 import VideoToolbox
 
+public struct OptionsStorable: Encodable, Decodable {
+    
+    public let fileType: ContainerSetting
+    public let bitrate: Int
+    public let pixelFormat: CapturePixelFormat
+    public let primaries: ColorPrimariesSetting
+    public let transfer: TransferFunctionSetting
+    public let yuv: YCbCrMatrixSetting
+    public let bitDepth: Int
+    public let usesICC: Bool
+    public let maxKeyFrameDuration: Double
+    public let maxKeyFrameInterval: Int
+    public let rateControl: RateControlSetting
+    public let bFrames: Bool
+    public let crfValue: Double
+    public let gammaValue: Double
+    public let convertsColorSpace: Bool
+    public let targetColorSpace: CaptureColorSpace
+    public let encoderSetting: EncoderSetting
+    public let proResSetting: ProResSetting
+    public let encoderPixelFormat: CapturePixelFormat
+    
+    init(fileType: ContainerSetting, bitrate: Int, pixelFormat: CapturePixelFormat, primaries: ColorPrimariesSetting, transfer: TransferFunctionSetting, yuv: YCbCrMatrixSetting, bitDepth: Int, usesICC: Bool, maxKeyFrameDuration: Double, maxKeyFrameInterval: Int, rateControl: RateControlSetting, bFrames: Bool, crfValue: Double, gammaValue: Double, convertsColorSpace: Bool, targetColorSpace: CaptureColorSpace, encoderSetting: EncoderSetting, proResSetting: ProResSetting, encoderPixelFormat: CapturePixelFormat) {
+        self.fileType = fileType
+        self.bitrate = bitrate
+        self.pixelFormat = pixelFormat
+        self.primaries = primaries
+        self.transfer = transfer
+        self.yuv = yuv
+        self.bitDepth = bitDepth
+        self.usesICC = usesICC
+        self.maxKeyFrameDuration = maxKeyFrameDuration
+        self.maxKeyFrameInterval = maxKeyFrameInterval
+        self.rateControl = rateControl
+        self.bFrames = bFrames
+        self.crfValue = crfValue
+        self.gammaValue = gammaValue
+        self.convertsColorSpace = convertsColorSpace
+        self.targetColorSpace = targetColorSpace
+        self.encoderSetting = encoderSetting
+        self.proResSetting = proResSetting
+        self.encoderPixelFormat = encoderPixelFormat
+    }
+}
+
 public struct Options: @unchecked Sendable {
 
     /// The destination movie file to write output video frames to.

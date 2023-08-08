@@ -19,9 +19,20 @@ struct CaptureSampleApp: App {
         }
         .commands {
             CommandMenu("Preset") {
-                Button("do") {
+                Button("Test") {
+                    
+                    //let options = try JSONSerialization.data(withJSONObject: self.options)
+                    //print(options)
+                }
+                Divider()
+                Button("Save Preset") {
                     Task {
-                        screenRecorder.encoderSetting = .H264
+                        screenRecorder.savePreset()
+                    }
+                }
+                Button("Load Preset") {
+                    Task {
+                        screenRecorder.loadPreset()
                     }
                 }
             }
