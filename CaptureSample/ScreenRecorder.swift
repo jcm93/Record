@@ -35,25 +35,19 @@ class ScreenRecorder: ObservableObject {
     
     private let logger = Logger()
     
-    func savePreset() {
-        let options = self.getStoredOptions()
-        do {
-            let encoder = JSONEncoder()
-            let data = try encoder.encode(options)
-            UserDefaults.standard.setValue(data, forKey: "testPreset")
-        } catch {
-            print(error)
-        }
+    func savePreset(name: String) {
+        let options = self.getStoredOptions(name: name)
+        var presets = self.presets
+        presets.append(options)
+        self.savePresets(presets: presets)
     }
     
-    func loadPreset() {
-        do {
-            let data = UserDefaults.standard.value(forKey: "testPreset") as! Data
-            let decoder = JSONDecoder()
-            let storable = try decoder.decode(OptionsStorable.self, from: data)
-            self.setOptionsFromStorable(storable)
-        } catch {
-            print(error)
+    func loadPreset(name: String) {
+        let presets = self.presets
+        if let selectedPreset = presets.filter({ return $0.presetName == name }).first {
+            self.setOptionsFromStorable(selectedPreset)
+        } else {
+            logger.error("Preset \(name) not found.")
         }
     }
     
@@ -79,8 +73,8 @@ class ScreenRecorder: ObservableObject {
         self.pixelFormatSetting = storedOptions.encoderPixelFormat
     }
     
-    func getStoredOptions() -> OptionsStorable {
-        let storableOptions = OptionsStorable(fileType: self.containerSetting, bitrate: self.bitRate, pixelFormat: self.capturePixelFormat, primaries: self.colorPrimariesSetting, transfer: self.transferFunctionSetting, yuv: self.yCbCrMatrixSetting, bitDepth: self.bitDepth, usesICC: self.usesICCProfile, maxKeyFrameDuration: self.maxKeyframeIntervalDuration, maxKeyFrameInterval: self.maxKeyframeInterval, rateControl: self.rateControlSetting, bFrames: self.bFramesSetting, crfValue: self.crfValue, gammaValue: self.gammaValue, convertsColorSpace: self.pixelTransferEnabled, targetColorSpace: self.convertTargetColorSpace, encoderSetting: self.encoderSetting, proResSetting: self.proResSetting, encoderPixelFormat: self.pixelFormatSetting)
+    func getStoredOptions(name: String?) -> OptionsStorable {
+        let storableOptions = OptionsStorable(fileType: self.containerSetting, bitrate: self.bitRate, pixelFormat: self.capturePixelFormat, primaries: self.colorPrimariesSetting, transfer: self.transferFunctionSetting, yuv: self.yCbCrMatrixSetting, bitDepth: self.bitDepth, usesICC: self.usesICCProfile, maxKeyFrameDuration: self.maxKeyframeIntervalDuration, maxKeyFrameInterval: self.maxKeyframeInterval, rateControl: self.rateControlSetting, bFrames: self.bFramesSetting, crfValue: self.crfValue, gammaValue: self.gammaValue, convertsColorSpace: self.pixelTransferEnabled, targetColorSpace: self.convertTargetColorSpace, encoderSetting: self.encoderSetting, proResSetting: self.proResSetting, encoderPixelFormat: self.pixelFormatSetting, presetName: name ?? "")
         return storableOptions
     }
     
@@ -90,11 +84,36 @@ class ScreenRecorder: ObservableObject {
             self.iccProfile = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData()
         }
         
-        let storableOptions = self.getStoredOptions()
+        let storableOptions = self.getStoredOptions(name: "")
         
         let options = self.optionsFromPreset(storableOptions: storableOptions)
         
         return options
+    }
+    
+    var presets: [OptionsStorable] {
+        if let data = UserDefaults.standard.data(forKey: "presets") {
+            do {
+                let decoder = JSONDecoder()
+                let options = try decoder.decode([OptionsStorable].self, from: data)
+                return options
+            } catch {
+                logger.error("Error decoding stored presets; re-initalizing")
+                return [OptionsStorable]()
+            }
+        } else {
+            return [OptionsStorable]()
+        }
+    }
+    
+    func savePresets(presets: [OptionsStorable]) {
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(presets)
+            UserDefaults.standard.setValue(data, forKey: "presets")
+        } catch {
+            logger.error("Error saving presets. No presets will be saved.")
+        }
     }
     
     func optionsFromPreset(storableOptions: OptionsStorable) -> Options {

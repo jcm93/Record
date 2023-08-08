@@ -22,8 +22,9 @@ public struct OptionsStorable: Encodable, Decodable {
     public let encoderSetting: EncoderSetting
     public let proResSetting: ProResSetting
     public let encoderPixelFormat: CapturePixelFormat
+    public let presetName: String
     
-    init(fileType: ContainerSetting, bitrate: Int, pixelFormat: CapturePixelFormat, primaries: ColorPrimariesSetting, transfer: TransferFunctionSetting, yuv: YCbCrMatrixSetting, bitDepth: Int, usesICC: Bool, maxKeyFrameDuration: Double, maxKeyFrameInterval: Int, rateControl: RateControlSetting, bFrames: Bool, crfValue: Double, gammaValue: Double, convertsColorSpace: Bool, targetColorSpace: CaptureColorSpace, encoderSetting: EncoderSetting, proResSetting: ProResSetting, encoderPixelFormat: CapturePixelFormat) {
+    init(fileType: ContainerSetting, bitrate: Int, pixelFormat: CapturePixelFormat, primaries: ColorPrimariesSetting, transfer: TransferFunctionSetting, yuv: YCbCrMatrixSetting, bitDepth: Int, usesICC: Bool, maxKeyFrameDuration: Double, maxKeyFrameInterval: Int, rateControl: RateControlSetting, bFrames: Bool, crfValue: Double, gammaValue: Double, convertsColorSpace: Bool, targetColorSpace: CaptureColorSpace, encoderSetting: EncoderSetting, proResSetting: ProResSetting, encoderPixelFormat: CapturePixelFormat, presetName: String) {
         self.fileType = fileType
         self.bitrate = bitrate
         self.pixelFormat = pixelFormat
@@ -43,6 +44,7 @@ public struct OptionsStorable: Encodable, Decodable {
         self.encoderSetting = encoderSetting
         self.proResSetting = proResSetting
         self.encoderPixelFormat = encoderPixelFormat
+        self.presetName = presetName
     }
 }
 
