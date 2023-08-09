@@ -1,7 +1,7 @@
 import AVFoundation
 import VideoToolbox
 
-public struct OptionsStorable: Encodable, Decodable {
+public struct OptionsStorable: Encodable, Decodable, Hashable {
     
     public let fileType: ContainerSetting
     public let bitrate: Int

@@ -40,12 +40,15 @@ class ScreenRecorder: ObservableObject {
         var presets = self.presets
         presets.append(options)
         self.savePresets(presets: presets)
+        self.selectedPreset = options
     }
     
     func loadPreset(name: String) {
         let presets = self.presets
         if let selectedPreset = presets.filter({ return $0.presetName == name }).first {
             self.setOptionsFromStorable(selectedPreset)
+            self.matchesPreset = true
+            self.presetName = name
         } else {
             logger.error("Preset \(name) not found.")
         }
@@ -71,6 +74,8 @@ class ScreenRecorder: ObservableObject {
         self.encoderSetting = storedOptions.encoderSetting
         self.proResSetting = storedOptions.proResSetting
         self.pixelFormatSetting = storedOptions.encoderPixelFormat
+        self.presetName = storedOptions.presetName
+        self.matchesPreset = true
     }
     
     func getStoredOptions(name: String?) -> OptionsStorable {
@@ -116,6 +121,12 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
+    func deletePreset(presetName: String) {
+        var currentOptions = self.presets
+        currentOptions.removeAll(where: {$0.presetName == presetName})
+        self.savePresets(presets: currentOptions)
+    }
+    
     func optionsFromPreset(storableOptions: OptionsStorable) -> Options {
         let outputExtension = storableOptions.fileType == .mov ? "mov" : "mp4"
         let fileName = "Record \(Date()).\(outputExtension)"
@@ -133,6 +144,16 @@ class ScreenRecorder: ObservableObject {
     
     @Published var captureWidth: String = ""
     @Published var captureHeight: String = ""
+    
+    @Published var matchesPreset = false
+    @Published var presetName = ""
+    @Published var selectedPreset: OptionsStorable? {
+        willSet {
+            if newValue != nil {
+                setOptionsFromStorable(newValue!)
+            }
+        }
+    }
     
     @AppStorage("bitRate") var bitRate: Int = 10000 {
         didSet { updateEngine() }
@@ -233,12 +254,10 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
-    @AppStorage("outputFolder") var outputFolder: URL = Bundle.main.resourceURL! {
-        didSet { updateEngine() }
-    }
-    @AppStorage("filePath") var filePath: String = "" {
-        didSet { updateEngine() }
-    }
+    @AppStorage("outputFolder") var outputFolder: URL = Bundle.main.resourceURL!
+    
+    @AppStorage("filePath") var filePath: String = ""
+    
     @AppStorage("bitDepth") var bitDepth: Int = 10 {
         didSet { updateEngine() }
     }
@@ -274,11 +293,11 @@ class ScreenRecorder: ObservableObject {
     @Published var isAudioCaptureEnabled = true {
         didSet {
             updateEngine()
-            if isAudioCaptureEnabled {
+            /*if isAudioCaptureEnabled {
                 startAudioMetering()
             } else {
                 stopAudioMetering()
-            }
+            }*/
         }
     }
     @Published var isAppAudioExcluded = false { didSet { updateEngine() } }
@@ -312,13 +331,13 @@ class ScreenRecorder: ObservableObject {
         guard !isSetup else { return }
         // Refresh the lists of capturable content.
         await self.refreshAvailableContent()
-        Timer.publish(every: 3, on: .main, in: .common).autoconnect().sink { [weak self] _ in
+        /*Timer.publish(every: 3, on: .main, in: .common).autoconnect().sink { [weak self] _ in
             guard let self = self else { return }
             Task {
                 await self.refreshAvailableContent()
             }
         }
-        .store(in: &subscriptions)
+        .store(in: &subscriptions)*/
     }
     
     /// Starts capturing screen content.
@@ -334,7 +353,7 @@ class ScreenRecorder: ObservableObject {
         
         // If the user enables audio capture, start monitoring the audio stream.
         if isAudioCaptureEnabled {
-            startAudioMetering()
+            //startAudioMetering()
         }
         
         do {
@@ -362,7 +381,7 @@ class ScreenRecorder: ObservableObject {
     func stop() async {
         guard isRunning else { return }
         await captureEngine.stopCapture()
-        stopAudioMetering()
+        //stopAudioMetering()
         isRunning = false
     }
     
@@ -380,24 +399,26 @@ class ScreenRecorder: ObservableObject {
         
     }
     
-    private func startAudioMetering() {
+    /*private func startAudioMetering() {
         audioMeterCancellable = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect().sink { [weak self] _ in
             guard let self = self else { return }
             self.audioLevelsProvider.audioLevels = self.captureEngine.audioLevels
         }
-    }
+    }*/
     
-    private func stopAudioMetering() {
+    /*private func stopAudioMetering() {
         audioMeterCancellable?.cancel()
         audioLevelsProvider.audioLevels = AudioLevels.zero
-    }
+    }*/
     
     /// - Tag: UpdateCaptureConfig
     private func updateEngine() {
+        print("updateengine called")
         guard isRunning else { return }
         Task {
             await captureEngine.update(configuration: streamConfiguration, filter: contentFilter)
         }
+        self.selectedPreset = nil
     }
     
     /// - Tag: UpdateFilter
@@ -477,7 +498,7 @@ class ScreenRecorder: ObservableObject {
     }
     
     /// - Tag: GetAvailableContent
-    private func refreshAvailableContent() async {
+    func refreshAvailableContent() async {
         do {
             // Retrieve the available screen content to capture.
             let availableContent = try await SCShareableContent.excludingDesktopWindows(false,
