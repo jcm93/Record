@@ -58,6 +58,10 @@ class VTEncoder: NSObject {
             if noErr != err2 {
                 print("error creating pixel transfer session")
             }
+            err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DownsamplingMode, value: kVTDownsamplingMode_Average)
+            if noErr != err2 {
+                print("error setting downsampling mode on pixel transfer")
+            }
             if options.convertsColorSpace {
                 err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: options.targetColorSpace!)
                 if noErr != err2 {

@@ -146,10 +146,10 @@ class ScreenRecorder: ObservableObject {
     @Published var captureWidth: Int = 0
     @Published var captureHeight: Int = 0
     
-    @Published var scaleWidth: Int = 0
-    @Published var scaleHeight: Int = 0
+    @AppStorage("scaleWidth") var scaleWidth: Int = 0
+    @AppStorage("scaleHeight") var scaleHeight: Int = 0
     
-    @Published var doesScale: Bool = false
+    @AppStorage("doesScale") var doesScale: Bool = false
     
 
     
