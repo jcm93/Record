@@ -132,8 +132,8 @@ class ScreenRecorder: ObservableObject {
         let fileName = "Record \(Date()).\(outputExtension)"
         let outputURL = self.outputFolder.appending(path: fileName)
         let fileType = storableOptions.fileType == .mov ? AVFileType.mov : AVFileType.mp4
-        let width = Int(self.captureWidth)!
-        let height = Int(self.captureHeight)!
+        let width = self.captureWidth
+        let height = self.captureHeight
         let codec = self.getCodecType(storableOptions)
         let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: self.getCodecType(storableOptions), pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC)
         return options
@@ -142,8 +142,37 @@ class ScreenRecorder: ObservableObject {
     @Published var isRunning = false
     @Published var isRecording = false
     
-    @Published var captureWidth: String = ""
-    @Published var captureHeight: String = ""
+    @Published var captureWidth: Int = 0
+    @Published var captureHeight: Int = 0
+    
+    @Published var scaleWidth: Int = 0
+    @Published var scaleHeight: Int = 0
+    
+    @Published var doesScale: Bool = false
+    
+
+    
+    func dimensionsChanged(width: Int, height: Int) {
+        //this is a pretty silly function
+        if width == 0 && height == 0 {
+            return
+        }
+        let aspectRatio = Double(self.captureWidth) / Double(self.captureHeight)
+        if height > 0 {
+            let prospectiveWidth = aspectRatio * Double(height)
+            //ignore changes within 10 pixels for fine tuning
+            if abs(Double(scaleWidth) - prospectiveWidth) > 10 {
+                //force even numbers
+                self.scaleWidth = Int(round(prospectiveWidth / 2.0)) * 2
+            }
+        } else {
+            let prospectiveHeight = Double(width) / aspectRatio
+            if abs(Double(scaleHeight) - prospectiveHeight) > 10 {
+                self.scaleHeight = Int(round(prospectiveHeight / 2.0)) * 2
+            }
+        }
+        //this should be rewritten someday
+    }
     
     @Published var matchesPreset = false
     @Published var presetName = ""
@@ -464,12 +493,13 @@ class ScreenRecorder: ObservableObject {
         
         // Configure the window content width and height.
         if captureType == .window, let window = selectedWindow {
-            streamConfig.width = Int(window.frame.width) * 2
-            streamConfig.height = Int(window.frame.height) * 2
+            streamConfig.width = Int(window.frame.width) * scaleFactor
+            streamConfig.height = Int(window.frame.height) * scaleFactor
         }
         
-        self.captureWidth = "\(streamConfig.width)"
-        self.captureHeight = "\(streamConfig.height)"
+        self.captureWidth = streamConfig.width
+        self.captureHeight = streamConfig.height
+        //self.aspectRatio = Double(streamConfig.width) / Double(streamConfig.height)
         
         // Set the capture interval at 60 fps.
         streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
@@ -477,7 +507,7 @@ class ScreenRecorder: ObservableObject {
         
         // Increase the depth of the frame queue to ensure high fps at the expense of increasing
         // the memory footprint of WindowServer.
-        streamConfig.queueDepth = 20
+        streamConfig.queueDepth = 5
         
         return streamConfig
     }

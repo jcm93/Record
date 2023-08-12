@@ -20,6 +20,11 @@ struct ConfigurationView: View {
     @ObservedObject var screenRecorder: ScreenRecorder
     @Binding var userStopped: Bool
     
+    @FocusState private var isTextFieldFocused: Bool
+    
+    private let scaleWidth: Int = 0
+    private let scaleHeight: Int = 0
+    
     var body: some View {
         ScrollView {
             VStack {
@@ -73,9 +78,46 @@ struct ConfigurationView: View {
                                         }
                                     })
                                 }
+                                HStack {
+                                    HStack {
+                                        Text("Width:")
+                                        TextField("Width", value: $screenRecorder.captureWidth, formatter: NumberFormatter())
+                                            .disabled(true)
+                                    }
+                                    HStack {
+                                        Text("Height:")
+                                        TextField("Height", value: $screenRecorder.captureHeight, formatter: NumberFormatter())
+                                            .disabled(true)
+                                    }
+                                }
                             }
                         }
                         .labelsHidden()
+                        Toggle("Scale Output", isOn: $screenRecorder.doesScale)
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        if screenRecorder.doesScale {
+                            Group {
+                                HStack {
+                                    HStack {
+                                        Text("Width:")
+                                        TextField("Width", value: $screenRecorder.scaleWidth, formatter: NumberFormatter(), onEditingChanged: { value in
+                                            if !value {
+                                                self.screenRecorder.dimensionsChanged(width: screenRecorder.scaleWidth, height: 0)
+                                            }
+                                        })
+                                    }
+                                    HStack {
+                                        Text("Height:")
+                                        TextField("Height", value: $screenRecorder.scaleHeight, formatter: NumberFormatter(), onEditingChanged: { value in
+                                            if !value {
+                                                self.screenRecorder.dimensionsChanged(width: 0, height: screenRecorder.scaleHeight)
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+                            .labelsHidden()
+                        }
                         
                         Toggle("Exclude self from stream", isOn: $screenRecorder.isAppExcluded)
                             .disabled(screenRecorder.captureType == .window)

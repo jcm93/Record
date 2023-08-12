@@ -18,6 +18,7 @@ class VTEncoder: NSObject {
     var videoSink: VideoSink!
     var pixelTransferSession: VTPixelTransferSession?
     var stoppingEncoding = false
+    var testPixelBuffer: CVPixelBuffer!
     
     init(options: Options) async {
         super.init()
@@ -147,9 +148,12 @@ class VTEncoder: NSObject {
     }
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
-        if let pixelTransferSession = pixelTransferSession {
-            VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: buffer)
-        }
+        /*if let pixelTransferSession = pixelTransferSession {
+            if self.testPixelBuffer == nil {
+                self.testPixelBuffer = copyPixelBuffer(withNewDimensions: 1728, y: 1116, srcPixelBuffer: buffer)
+            }
+            VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: testPixelBuffer)
+        }*/
         if self.stoppingEncoding != true {
             VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
                 (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in

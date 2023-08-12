@@ -11,6 +11,7 @@ import ScreenCaptureKit
 import OSLog
 import Combine
 import VideoToolbox
+import Accelerate
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
@@ -101,7 +102,15 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
     
     var encoder: VTEncoder!
-    var pixelTransferSession: ColorConverter?
+    var destinationPixelBuffer: CVPixelBuffer?
+    var srcData: UnsafeMutableRawPointer!
+    var dstData: UnsafeMutableRawPointer!
+    var otherDestBuffer: CVPixelBuffer!
+    
+    var srcBuffer: vImage_Buffer!
+    var dstBuffer: vImage_Buffer!
+    
+    let context = CIContext()
     
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
@@ -143,6 +152,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                                                                              createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
               let attachments = attachmentsArray.first else { return nil }
         
+        
         // Validate the status of the frame. If it isn't `.complete`, return nil.
         /*guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
               let status = SCFrameStatus(rawValue: statusRawValue),
@@ -153,6 +163,36 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return nil }
+        if self.destinationPixelBuffer == nil {
+            self.destinationPixelBuffer = copyPixelBuffer(withNewDimensions: 1728, y: 1116, srcPixelBuffer: pixelBuffer)
+            //setUpScaling(pixelBuffer: pixelBuffer, destinationBuffer: self.destinationPixelBuffer)
+        }
+        
+        /*let error = vImageScale_ARGB8888(&srcBuffer, &dstBuffer, nil, vImage_Flags(0))
+        if error != kvImageNoError {
+            print("Error:", error)
+        }
+        
+        var desiredFormat = vImage_CGImageFormat(
+                bitsPerComponent: 8,
+                bitsPerPixel: 32,
+                colorSpace: CVImageBufferGetColorSpace(destinationPixelBuffer!),
+                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.first.rawValue),
+                version: 0,
+                decode: nil,
+                renderingIntent: .defaultIntent)
+        
+        let format = vImageCVImageFormat_CreateWithCVPixelBuffer(pixelBuffer).takeRetainedValue()
+        
+        vImageBuffer_CopyToCVPixelBuffer(&dstBuffer, &desiredFormat, destinationPixelBuffer!, format, nil, vImage_Flags(kvImageNoFlags))*/
+        
+        /*let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        let sx = CGFloat(1728) / CGFloat(CVPixelBufferGetWidth(pixelBuffer))
+        let sy = CGFloat(1116) / CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+        let scaleTransform = CGAffineTransform(scaleX: sx, y: sy)
+        let scaledImage = ciImage.transformed(by: scaleTransform)
+        context.render(scaledImage, to: destinationPixelBuffer!)*/
+        
         self.encoder?.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: .invalid, properties: nil, infoFlags: nil)
         
         // Get the backing IOSurface.
@@ -172,6 +212,38 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                                   scaleFactor: scaleFactor)
         return frame
     }
+    
+    func setUpScaling(pixelBuffer: CVPixelBuffer, destinationBuffer: CVPixelBuffer?) {
+        
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        
+        let colorSpace = CVImageBufferGetColorSpace(pixelBuffer)
+        var desiredFormat = vImage_CGImageFormat(
+                bitsPerComponent: 8,
+                bitsPerPixel: 32,
+                colorSpace: colorSpace,
+                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.first.rawValue),
+                version: 0,
+                decode: nil,
+                renderingIntent: .defaultIntent)
+        
+        let format = vImageCVImageFormat_CreateWithCVPixelBuffer(pixelBuffer).takeRetainedValue()
+        
+        self.srcBuffer = vImage_Buffer()
+        self.dstBuffer = vImage_Buffer()
+        
+        var error = vImageBuffer_InitWithCVPixelBuffer(&self.srcBuffer, &desiredFormat, pixelBuffer, format, nil, UInt32(0))
+        
+        if error != kvImageNoError {
+            raise(Int32(error))
+        }
+        
+        error = vImageBuffer_Init(&dstBuffer, 1080, 1728, 8, vImage_Flags(kvImageNoFlags))
+        
+        CVPixelBufferCreateWithBytes(nil, 1080, 1728, kCVPixelFormatType_32BGRA, dstBuffer.data, 1080, nil, nil, nil, &destinationPixelBuffer)
+    }
+        
     
     // Creates an AVAudioPCMBuffer instance on which to perform an average and peak audio level calculation.
     private func createPCMBuffer(for sampleBuffer: CMSampleBuffer) -> AVAudioPCMBuffer? {
