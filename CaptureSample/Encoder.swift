@@ -18,9 +18,14 @@ class VTEncoder: NSObject {
     var videoSink: VideoSink!
     var pixelTransferSession: VTPixelTransferSession?
     var stoppingEncoding = false
-    var testPixelBuffer: CVPixelBuffer!
+    var pixelTransferBuffer: CVPixelBuffer!
+    
+    var destWidth: Int
+    var destHeight: Int
     
     init(options: Options) async {
+        self.destWidth = options.destWidth
+        self.destHeight = options.destHeight
         super.init()
         let sourceImageBufferAttributes = [kCVPixelBufferPixelFormatTypeKey: options.pixelFormat as CFNumber] as CFDictionary
         
@@ -48,14 +53,16 @@ class VTEncoder: NSObject {
         } catch {
             fatalError("dong")
         }
-        if options.convertsColorSpace {
+        if options.convertsColorSpace || options.scales {
             var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
             if noErr != err2 {
                 print("error creating pixel transfer session")
             }
-            err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: options.targetColorSpace!)
-            if noErr != err2 {
-                print("error setting color primaries on pixel transfer")
+            if options.convertsColorSpace {
+                err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: options.targetColorSpace!)
+                if noErr != err2 {
+                    print("error setting color primaries on pixel transfer")
+                }
             }
         }
     }
@@ -148,17 +155,24 @@ class VTEncoder: NSObject {
     }
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
-        /*if let pixelTransferSession = pixelTransferSession {
-            if self.testPixelBuffer == nil {
-                self.testPixelBuffer = copyPixelBuffer(withNewDimensions: 1728, y: 1116, srcPixelBuffer: buffer)
-            }
-            VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: testPixelBuffer)
-        }*/
         if self.stoppingEncoding != true {
-            VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
-                (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
-                if sbuf != nil {
-                    self.videoSink.sendSampleBuffer(sbuf!)
+            if let pixelTransferSession = pixelTransferSession {
+                if self.pixelTransferBuffer == nil {
+                    self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
+                }
+                VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: pixelTransferBuffer)
+                VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelTransferBuffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+                    (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
+                    if sbuf != nil {
+                        self.videoSink.sendSampleBuffer(sbuf!)
+                    }
+                }
+            } else {
+                VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+                    (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
+                    if sbuf != nil {
+                        self.videoSink.sendSampleBuffer(sbuf!)
+                    }
                 }
             }
         }
