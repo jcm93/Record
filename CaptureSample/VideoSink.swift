@@ -8,6 +8,8 @@ public class VideoSink {
     private var sessionStarted = false
     private var hasInitAudio = false
     
+    private var bookmarkedURL: URL?
+    
     /// Creates a video sink or throws an error if it fails.
     /// - Parameters:
     ///   - filePath: The destination movie file path.
@@ -19,8 +21,18 @@ public class VideoSink {
     ///                 Set to `true` if video source operates in real-time like a live camera.
     ///                 Set to `false` for offline transcoding, which may be faster or slower than real-time.
     public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool) throws {
+        //very ugly
+        let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
+        var isStale = false
+        if bookmarkedData != nil {
+            self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+        }
+        if bookmarkedURL?.path() == fileURL.deletingLastPathComponent().path() {
+            bookmarkedURL?.startAccessingSecurityScopedResource()
+        }
         let sinkURL = fileURL
-
+        let bookmarkData = try sinkURL.deletingLastPathComponent().bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+        UserDefaults.standard.setValue(bookmarkData, forKey: "mostRecentSinkURL")
         assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
 
         let videoFormatDesc = try CMFormatDescription(videoCodecType: CMFormatDescription.MediaSubType(rawValue: codec), width: width, height: height)
@@ -46,12 +58,10 @@ public class VideoSink {
         }
         assetWriter.add(assetWriterInput)
         assetWriter.add(assetWriterAudioInput)
-
         guard assetWriter.startWriting() else {
             throw assetWriter.error!
         }
     }
-    
     
     /// Appends a video frame to the destination movie file.
     /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
@@ -83,5 +93,6 @@ public class VideoSink {
         if assetWriter.status == .failed {
             throw assetWriter.error!
         }
+        bookmarkedURL!.stopAccessingSecurityScopedResource()
     }
 }

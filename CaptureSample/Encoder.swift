@@ -44,6 +44,7 @@ class VTEncoder: NSObject {
         }
         await self.configureSession(options: options)
         do {
+            //self.restoreFileAccess(options.destMovieURL)
             self.videoSink = try VideoSink(fileURL: options.destMovieURL,
                                            fileType: options.destFileType,
                                            codec: options.codec,
