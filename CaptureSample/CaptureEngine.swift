@@ -30,8 +30,8 @@ class CaptureEngine: @unchecked Sendable {
     private let logger = Logger()
     
     private var stream: SCStream?
-    private let videoSampleBufferQueue = DispatchQueue(label: "com.example.apple-samplecode.VideoSampleBufferQueue")
-    private let audioSampleBufferQueue = DispatchQueue(label: "com.example.apple-samplecode.AudioSampleBufferQueue")
+    private let videoSampleBufferQueue = DispatchQueue(label: "com.jcm.Record.VideoSampleBufferQueue")
+    private let audioSampleBufferQueue = DispatchQueue(label: "com.jcm.Record.AudioSampleBufferQueue")
     var streamOutput: CaptureEngineStreamOutput!
     
     // Performs average and peak power calculations on the audio samples.
@@ -54,13 +54,28 @@ class CaptureEngine: @unchecked Sendable {
                 stream = SCStream(filter: filter, configuration: configuration, delegate: streamOutput)
                 
                 // Add a stream output to capture screen content.
-                try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: videoSampleBufferQueue)
-                try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: audioSampleBufferQueue)
+                try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: self.videoSampleBufferQueue)
+                try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: self.audioSampleBufferQueue)
                 stream?.startCapture()
             } catch {
                 print(error)
                 continuation.finish(throwing: error)
             }
+        }
+    }
+    
+    func altStartCapture(configuration: SCStreamConfiguration, filter: SCContentFilter, callbackFunction: @escaping (CapturedFrame) -> Void) {
+        self.streamOutput = CaptureEngineStreamOutput(continuation: nil)
+        self.streamOutput.altFrameHandler = callbackFunction
+        do {
+            stream = SCStream(filter: filter, configuration: configuration, delegate: streamOutput)
+            
+            // Add a stream output to capture screen content.
+            try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: self.videoSampleBufferQueue)
+            try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: self.audioSampleBufferQueue)
+            stream?.startCapture()
+        } catch {
+            print(error)
         }
     }
     
@@ -106,11 +121,11 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var srcData: UnsafeMutableRawPointer!
     var dstData: UnsafeMutableRawPointer!
     var otherDestBuffer: CVPixelBuffer!
-    
-    var srcBuffer: vImage_Buffer!
-    var dstBuffer: vImage_Buffer!
-    
-    let context = CIContext()
+    private let encoderQueue = DispatchQueue(label: "com.jcm.Record.EncoderQueue")
+    private let frameHandlerQueue = DispatchQueue(label: "com.jcm.Record.FrameHandlerQueue")
+    var altFrameHandler: ((CapturedFrame) -> Void)?
+    var currentFrameTimeStamp: CMTime?
+    var frameCount: Int = 0
     
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
@@ -132,8 +147,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         switch outputType {
         case .screen:
             // Create a CapturedFrame structure for a video sample buffer.
-            guard let frame = createFrame(for: sampleBuffer) else { return }
-            capturedFrameHandler?(frame)
+            if let frame = self.createFrame(for: sampleBuffer) {
+                self.capturedFrameHandler?(frame)
+                self.altFrameHandler?(frame)
+            }
         case .audio:
             // Create an AVAudioPCMBuffer from an audio sample buffer.
             self.encoder?.encodeAudioFrame(sampleBuffer)
@@ -150,50 +167,35 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         // Retrieve the array of metadata attachments from the sample buffer.
         guard let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
                                                                              createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
-              let attachments = attachmentsArray.first else { return nil }
+              let attachments = attachmentsArray.first else {
+            print("no attachment array")
+            return nil
+        }
         
         
         // Validate the status of the frame. If it isn't `.complete`, return nil.
-        /*guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
-              let status = SCFrameStatus(rawValue: statusRawValue),
-              status == .complete else {
+        let statusRawValue = attachments[SCStreamFrameInfo.status] as! Int
+        let status = SCFrameStatus(rawValue: statusRawValue)
+        if status != SCFrameStatus.complete {
             print("non-complete frame status")
+            print("status is \(statusRawValue)")
             return nil
-        }*/
+        }
         
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return nil }
-        if self.destinationPixelBuffer == nil {
-            self.destinationPixelBuffer = copyPixelBuffer(withNewDimensions: 1728, y: 1116, srcPixelBuffer: pixelBuffer)
-            //setUpScaling(pixelBuffer: pixelBuffer, destinationBuffer: self.destinationPixelBuffer)
+        
+        self.encoder?.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: sampleBuffer.duration, properties: nil, infoFlags: nil)
+        /*let secs = Double(sampleBuffer.presentationTimeStamp.value) / Double(sampleBuffer.presentationTimeStamp.timescale)
+        print(secs)
+        print(self.frameCount)
+        if self.currentFrameTimeStamp != nil {
+            if currentFrameTimeStamp!.value > sampleBuffer.presentationTimeStamp.value {
+                print("went backwards")
+            }
         }
-        
-        /*let error = vImageScale_ARGB8888(&srcBuffer, &dstBuffer, nil, vImage_Flags(0))
-        if error != kvImageNoError {
-            print("Error:", error)
-        }
-        
-        var desiredFormat = vImage_CGImageFormat(
-                bitsPerComponent: 8,
-                bitsPerPixel: 32,
-                colorSpace: CVImageBufferGetColorSpace(destinationPixelBuffer!),
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.first.rawValue),
-                version: 0,
-                decode: nil,
-                renderingIntent: .defaultIntent)
-        
-        let format = vImageCVImageFormat_CreateWithCVPixelBuffer(pixelBuffer).takeRetainedValue()
-        
-        vImageBuffer_CopyToCVPixelBuffer(&dstBuffer, &desiredFormat, destinationPixelBuffer!, format, nil, vImage_Flags(kvImageNoFlags))*/
-        
-        /*let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let sx = CGFloat(1728) / CGFloat(CVPixelBufferGetWidth(pixelBuffer))
-        let sy = CGFloat(1116) / CGFloat(CVPixelBufferGetHeight(pixelBuffer))
-        let scaleTransform = CGAffineTransform(scaleX: sx, y: sy)
-        let scaledImage = ciImage.transformed(by: scaleTransform)
-        context.render(scaledImage, to: destinationPixelBuffer!)*/
-        
-        self.encoder?.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: .invalid, properties: nil, infoFlags: nil)
+        self.currentFrameTimeStamp = sampleBuffer.presentationTimeStamp
+        self.frameCount += 1*/
         
         // Get the backing IOSurface.
         guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else { return nil }
@@ -211,37 +213,6 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                                   contentScale: contentScale,
                                   scaleFactor: scaleFactor)
         return frame
-    }
-    
-    func setUpScaling(pixelBuffer: CVPixelBuffer, destinationBuffer: CVPixelBuffer?) {
-        
-        
-        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
-        
-        let colorSpace = CVImageBufferGetColorSpace(pixelBuffer)
-        var desiredFormat = vImage_CGImageFormat(
-                bitsPerComponent: 8,
-                bitsPerPixel: 32,
-                colorSpace: colorSpace,
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.first.rawValue),
-                version: 0,
-                decode: nil,
-                renderingIntent: .defaultIntent)
-        
-        let format = vImageCVImageFormat_CreateWithCVPixelBuffer(pixelBuffer).takeRetainedValue()
-        
-        self.srcBuffer = vImage_Buffer()
-        self.dstBuffer = vImage_Buffer()
-        
-        var error = vImageBuffer_InitWithCVPixelBuffer(&self.srcBuffer, &desiredFormat, pixelBuffer, format, nil, UInt32(0))
-        
-        if error != kvImageNoError {
-            raise(Int32(error))
-        }
-        
-        error = vImageBuffer_Init(&dstBuffer, 1080, 1728, 8, vImage_Flags(kvImageNoFlags))
-        
-        CVPixelBufferCreateWithBytes(nil, 1080, 1728, kCVPixelFormatType_32BGRA, dstBuffer.data, 1080, nil, nil, nil, &destinationPixelBuffer)
     }
         
     

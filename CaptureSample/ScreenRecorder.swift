@@ -394,16 +394,27 @@ class ScreenRecorder: ObservableObject {
             updateEngine()
             // Start the stream and await new video frames.
             for try await frame in captureEngine.startCapture(configuration: config, filter: filter) {
-                capturePreview.updateFrame(frame)
+                self.capturePreview.updateFrame(frame)
                 if contentSize != frame.size {
                     // Update the content size if it changed.
                     contentSize = frame.size
                 }
             }
+            //self.captureEngine.altStartCapture(configuration: config, filter: filter, callbackFunction: self.captureUpdate)
         } catch {
             logger.error("\(error.localizedDescription)")
             // Unable to start the stream. Set the running state to false.
             isRunning = false
+        }
+    }
+    
+    func captureUpdate(frame: CapturedFrame) {
+        DispatchQueue.main.async {
+            self.capturePreview.updateFrame(frame)
+            if self.contentSize != frame.size {
+                // Update the content size if it changed.
+                self.contentSize = frame.size
+            }
         }
     }
     
@@ -502,8 +513,8 @@ class ScreenRecorder: ObservableObject {
         self.captureHeight = streamConfig.height
         //self.aspectRatio = Double(streamConfig.width) / Double(streamConfig.height)
         
-        // Set the capture interval at 60 fps.
-        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
+        // don't ask
+        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond + 1))
         self.assignPixelFormatAndColorMatrix(streamConfig)
         
         // Increase the depth of the frame queue to ensure high fps at the expense of increasing
