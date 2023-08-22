@@ -74,6 +74,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D3065D12A946B4100247474 /* Test Pattern */ = {
+			isa = PBXGroup;
+			children = (
+				0D3065C92A94667E00247474 /* TestPatternView.swift */,
+				0D3065CB2A9466A600247474 /* Renderer.swift */,
+				0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */,
+				0D3065CF2A9466D400247474 /* MetalView.swift */,
+			);
+			path = "Test Pattern";
+			sourceTree = "<group>";
+		};
 		58C6EBE29CE5FC0542EA3228 /* LICENSE */ = {
 			isa = PBXGroup;
 			children = (
@@ -134,10 +145,7 @@
 				C4B0DABD276BA4B50015082A /* CaptureEngine.swift */,
 				C471DFF92809F440001D24C9 /* PowerMeter.swift */,
 				C44093742816EC9C00FB8386 /* AudioPlayer.swift */,
-				0D3065C92A94667E00247474 /* TestPatternView.swift */,
-				0D3065CB2A9466A600247474 /* Renderer.swift */,
-				0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */,
-				0D3065CF2A9466D400247474 /* MetalView.swift */,
+				0D3065D12A946B4100247474 /* Test Pattern */,
 				C41D1B1D2814BD230033613F /* Views */,
 				C4B0DAB9276BA49F0015082A /* CaptureSampleApp.swift */,
 				C44093712816EC7800FB8386 /* Audio */,
