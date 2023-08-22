@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		0D1326782A85612B00B1E886 /* CVPixelBufferHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1326772A85612B00B1E886 /* CVPixelBufferHelpers.swift */; };
+		0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065C92A94667E00247474 /* TestPatternView.swift */; };
+		0D3065CC2A9466A600247474 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CB2A9466A600247474 /* Renderer.swift */; };
+		0D3065CE2A9466BC00247474 /* ViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */; };
+		0D3065D02A9466D400247474 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CF2A9466D400247474 /* MetalView.swift */; };
 		0D368B1D2A6CEC2600DA288D /* Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B1C2A6CEC2600DA288D /* Encoder.swift */; };
 		0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */; };
 		0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B202A6CF6BA00DA288D /* VideoSink.swift */; };
@@ -31,6 +35,10 @@
 
 /* Begin PBXFileReference section */
 		0D1326772A85612B00B1E886 /* CVPixelBufferHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CVPixelBufferHelpers.swift; sourceTree = "<group>"; };
+		0D3065C92A94667E00247474 /* TestPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestPatternView.swift; sourceTree = "<group>"; };
+		0D3065CB2A9466A600247474 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
+		0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewRepresentable.swift; sourceTree = "<group>"; };
+		0D3065CF2A9466D400247474 /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
 		0D368B1C2A6CEC2600DA288D /* Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
 		0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncoderOptions.swift; sourceTree = "<group>"; };
 		0D368B202A6CF6BA00DA288D /* VideoSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSink.swift; sourceTree = "<group>"; };
@@ -126,6 +134,10 @@
 				C4B0DABD276BA4B50015082A /* CaptureEngine.swift */,
 				C471DFF92809F440001D24C9 /* PowerMeter.swift */,
 				C44093742816EC9C00FB8386 /* AudioPlayer.swift */,
+				0D3065C92A94667E00247474 /* TestPatternView.swift */,
+				0D3065CB2A9466A600247474 /* Renderer.swift */,
+				0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */,
+				0D3065CF2A9466D400247474 /* MetalView.swift */,
 				C41D1B1D2814BD230033613F /* Views */,
 				C4B0DAB9276BA49F0015082A /* CaptureSampleApp.swift */,
 				C44093712816EC7800FB8386 /* Audio */,
@@ -237,13 +249,17 @@
 				C471DFFE280A0968001D24C9 /* AudioLevelsView.swift in Sources */,
 				C4EB90D428108656006A595C /* ConfigurationView.swift in Sources */,
 				0D4875402A81A20800F6D832 /* Enums.swift in Sources */,
+				0D3065CE2A9466BC00247474 /* ViewRepresentable.swift in Sources */,
 				C4729DA52821BFAD00AAC477 /* MaterialView.swift in Sources */,
 				C4B0DABE276BA4B50015082A /* ContentView.swift in Sources */,
 				0D368B1D2A6CEC2600DA288D /* Encoder.swift in Sources */,
+				0D3065D02A9466D400247474 /* MetalView.swift in Sources */,
 				C471DFFB2809F440001D24C9 /* PowerMeter.swift in Sources */,
 				0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */,
 				0D1326782A85612B00B1E886 /* CVPixelBufferHelpers.swift in Sources */,
+				0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */,
 				0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */,
+				0D3065CC2A9466A600247474 /* Renderer.swift in Sources */,
 				0D3898382A7582EA003D1E2D /* PixelTransfer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
