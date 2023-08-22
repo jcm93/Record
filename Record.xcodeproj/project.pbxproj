@@ -12,6 +12,7 @@
 		0D3065CC2A9466A600247474 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CB2A9466A600247474 /* Renderer.swift */; };
 		0D3065CE2A9466BC00247474 /* ViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */; };
 		0D3065D02A9466D400247474 /* MetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CF2A9466D400247474 /* MetalView.swift */; };
+		0D3065D32A946C8200247474 /* ReplayBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065D22A946C8200247474 /* ReplayBuffer.swift */; };
 		0D368B1D2A6CEC2600DA288D /* Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B1C2A6CEC2600DA288D /* Encoder.swift */; };
 		0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */; };
 		0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B202A6CF6BA00DA288D /* VideoSink.swift */; };
@@ -39,6 +40,7 @@
 		0D3065CB2A9466A600247474 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewRepresentable.swift; sourceTree = "<group>"; };
 		0D3065CF2A9466D400247474 /* MetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalView.swift; sourceTree = "<group>"; };
+		0D3065D22A946C8200247474 /* ReplayBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayBuffer.swift; sourceTree = "<group>"; };
 		0D368B1C2A6CEC2600DA288D /* Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
 		0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncoderOptions.swift; sourceTree = "<group>"; };
 		0D368B202A6CF6BA00DA288D /* VideoSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSink.swift; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 				0D1326772A85612B00B1E886 /* CVPixelBufferHelpers.swift */,
 				0D368B1C2A6CEC2600DA288D /* Encoder.swift */,
 				0D368B202A6CF6BA00DA288D /* VideoSink.swift */,
+				0D3065D22A946C8200247474 /* ReplayBuffer.swift */,
 				0D368B1E2A6CED2F00DA288D /* EncoderOptions.swift */,
 				C4B0DABD276BA4B50015082A /* CaptureEngine.swift */,
 				C471DFF92809F440001D24C9 /* PowerMeter.swift */,
@@ -264,6 +267,7 @@
 				0D3065D02A9466D400247474 /* MetalView.swift in Sources */,
 				C471DFFB2809F440001D24C9 /* PowerMeter.swift in Sources */,
 				0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */,
+				0D3065D32A946C8200247474 /* ReplayBuffer.swift in Sources */,
 				0D1326782A85612B00B1E886 /* CVPixelBufferHelpers.swift in Sources */,
 				0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */,
 				0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */,

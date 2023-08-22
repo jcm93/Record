@@ -7,6 +7,7 @@ public class VideoSink {
     private var assetWriterAudioInput: AVAssetWriterInput
     private var sessionStarted = false
     private var hasInitAudio = false
+    var replayBuffer: ReplayBuffer?
     
     private var bookmarkedURL: URL?
     
@@ -67,13 +68,20 @@ public class VideoSink {
     /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
     public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
         if !sessionStarted {
-            assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
-            sessionStarted = true
+            startSession(sbuf)
         }
         if assetWriterInput.isReadyForMoreMediaData {
             assetWriterInput.append(sbuf)
         } else {
             print(String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds))
+        }
+    }
+    
+    func startSession(_ sbuf: CMSampleBuffer) {
+        assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
+        sessionStarted = true
+        if self.replayBuffer != nil {
+            self.replayBuffer
         }
     }
     
