@@ -59,6 +59,7 @@ public class VideoSink {
         }
         assetWriter.add(assetWriterInput)
         assetWriter.add(assetWriterAudioInput)
+        self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: 5)
         guard assetWriter.startWriting() else {
             throw assetWriter.error!
         }
@@ -70,7 +71,9 @@ public class VideoSink {
         if !sessionStarted {
             startSession(sbuf)
         }
-        if assetWriterInput.isReadyForMoreMediaData {
+        if self.replayBuffer != nil {
+            self.replayBuffer?.write(sbuf)
+        } else if assetWriterInput.isReadyForMoreMediaData {
             assetWriterInput.append(sbuf)
         } else {
             print(String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds))
@@ -80,20 +83,43 @@ public class VideoSink {
     func startSession(_ sbuf: CMSampleBuffer) {
         assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
         sessionStarted = true
-        if self.replayBuffer != nil {
-            self.replayBuffer
-        }
     }
     
     public func sendAudioBuffer(_ buffer: CMSampleBuffer) {
-        guard sessionStarted else { return }
-        if assetWriterAudioInput.isReadyForMoreMediaData {
+        /*guard sessionStarted else { return }
+        if self.replayBuffer != nil {
+            self.replayBuffer?.write(buffer)
+        } else if assetWriterAudioInput.isReadyForMoreMediaData {
             assetWriterAudioInput.append(buffer)
-        }
+        }*/
     }
     
     /// Closes the destination movie file.
     public func close() async throws {
+        if self.replayBuffer != nil {
+            //very disgusting
+            var done = false
+            while !done {
+                if let frame = self.replayBuffer!.popFirst() {
+                    var written = false
+                    while !written {
+                        if frame.formatDescription?.mediaType == .audio {
+                            if assetWriterAudioInput.isReadyForMoreMediaData {
+                                print("writing frame at \(frame.presentationTimeStamp.seconds)")
+                                assetWriterAudioInput.append(frame)
+                                written = true
+                            }
+                        } else if assetWriterInput.isReadyForMoreMediaData {
+                            print("writing frame at \(frame.presentationTimeStamp.seconds)")
+                            assetWriterInput.append(frame)
+                            written = true
+                        }
+                    }
+                } else {
+                    done = true
+                }
+            }
+        }
         assetWriterInput.markAsFinished()
         assetWriterAudioInput.markAsFinished()
         await assetWriter.finishWriting()
