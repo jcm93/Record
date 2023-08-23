@@ -12,7 +12,7 @@ import VideoToolbox
 
 class ReplayBuffer {
     
-    fileprivate var startIndex = 0
+    var startIndex = 0
     
     var buffer: [CMSampleBuffer]
     
@@ -23,7 +23,7 @@ class ReplayBuffer {
         self.maxLengthInSeconds = maxLengthInSeconds
     }
     
-    func popFirst() -> CMSampleBuffer? {
+    func removeFirst() -> CMSampleBuffer? {
         if self.startIndex < self.buffer.count {
             return self.buffer.remove(at: self.startIndex)
         } else {
@@ -35,38 +35,142 @@ class ReplayBuffer {
         }
     }
     
+    func first() -> CMSampleBuffer? {
+        if self.startIndex < self.buffer.count {
+            return self.buffer[self.startIndex]
+        } else {
+            return self.buffer.first
+        }
+    }
+    
     public func write(_ element: CMSampleBuffer) {
         guard self.buffer.count != 0 else {
             self.buffer = [element]
             return
         }
-        var purged = false
+        var bufferTrimmed = false
         var inserted = false
         var readIndex = startIndex
-        while !inserted && !purged {
+        let newIsKeyframe = element.isKeyframe()
+        while !inserted && !bufferTrimmed {
             let logicalReadIndex = readIndex % self.buffer.count
-            let difference = (element.presentationTimeStamp.seconds) -
-                             (self.buffer[logicalReadIndex].presentationTimeStamp.seconds)
+            let bufferHere = self.buffer[logicalReadIndex]
+            let difference = (element.presentationTimeStamp.seconds) - (bufferHere.presentationTimeStamp.seconds)
+            let existingIsKeyframe = bufferHere.isKeyframe()
             if difference > Double(self.maxLengthInSeconds) {
                 if !inserted {
                     self.buffer[logicalReadIndex] = element
-                    inserted = true
                     self.startIndex = (self.startIndex + 1) % self.buffer.count
                     readIndex += 1
+                    inserted = true
                 } else {
-                    self.buffer.remove(at: readIndex)
+                    if !existingIsKeyframe || newIsKeyframe {
+                        self.buffer.remove(at: readIndex)
+                    } else {
+                        readIndex += 1
+                    }
                 }
             } else {
-                purged = true
-                if startIndex == 0 {
-                    self.buffer.append(element)
-                } else {
-                    self.buffer.insert(element, at: startIndex)
-                    self.startIndex = (self.startIndex + 1) % self.buffer.count
+                bufferTrimmed = true
+                if inserted != true {
+                    if startIndex == 0 {
+                        self.buffer.append(element)
+                    } else {
+                        self.buffer.insert(element, at: startIndex)
+                        self.startIndex = (self.startIndex + 1) % self.buffer.count
+                    }
+                    inserted = true
                 }
-                inserted = true
             }
         }
     }
     
+    func firstNonKeyframe() -> CMSampleBuffer? {
+        var tempReadIndex = self.startIndex
+        while true {
+            if tempReadIndex > self.startIndex + self.buffer.count {
+                return nil
+            }
+            var logicalReadIndex = tempReadIndex % self.buffer.count
+            let frame = self.buffer[logicalReadIndex]
+            if !frame.isKeyframe() {
+                return frame
+            } else {
+                tempReadIndex += 1
+            }
+        }
+    }
+}
+
+
+extension CMSampleBuffer {
+    func isKeyframe() -> Bool {
+        if self.formatDescription?.mediaType == .audio {
+            return false
+        }
+        if let attachmentArray = CMSampleBufferGetSampleAttachmentsArray(self, createIfNecessary: false) as? NSArray {
+            let attachment = attachmentArray[0] as! NSDictionary
+            // print("attach on frame \(frame): \(attachment)")
+            if let notSync = attachment[kCMSampleAttachmentKey_NotSync] as? NSNumber {
+                if !notSync.boolValue {
+                    return true
+                } else {
+                    return false
+                }
+            } else {
+                return false
+            }
+        } else {
+            return false
+        }
+    }
+    
+    func deepCopy() -> CMSampleBuffer? {
+            guard let formatDesc = CMSampleBufferGetFormatDescription(self),
+                  let data = try? self.dataBuffer?.dataBytes() else {
+                      return nil
+                  }
+            let nFrames = CMSampleBufferGetNumSamples(self)
+            let pts = CMSampleBufferGetPresentationTimeStamp(self)
+            let dataBuffer = data.withUnsafeBytes { (buffer) -> CMBlockBuffer? in
+                var blockBuffer: CMBlockBuffer?
+                let length: Int = data.count
+                guard CMBlockBufferCreateWithMemoryBlock(
+                    allocator: kCFAllocatorDefault,
+                    memoryBlock: nil,
+                    blockLength: length,
+                    blockAllocator: nil,
+                    customBlockSource: nil,
+                    offsetToData: 0,
+                    dataLength: length,
+                    flags: 0,
+                    blockBufferOut: &blockBuffer) == noErr else {
+                        print("Failed to create block")
+                        return nil
+                    }
+                guard CMBlockBufferReplaceDataBytes(
+                    with: buffer.baseAddress!,
+                    blockBuffer: blockBuffer!,
+                    offsetIntoDestination: 0,
+                    dataLength: length) == noErr else {
+                        print("Failed to move bytes for block")
+                        return nil
+                    }
+                return blockBuffer
+            }
+            guard let dataBuffer = dataBuffer else {
+                return nil
+            }
+            var newSampleBuffer: CMSampleBuffer?
+            CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+                allocator: kCFAllocatorDefault,
+                dataBuffer: dataBuffer,
+                formatDescription: formatDesc,
+                sampleCount: nFrames,
+                presentationTimeStamp: pts,
+                packetDescriptions: nil,
+                sampleBufferOut: &newSampleBuffer
+            )
+            return newSampleBuffer
+        }
 }

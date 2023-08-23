@@ -8,6 +8,12 @@ public class VideoSink {
     private var sessionStarted = false
     private var hasInitAudio = false
     var replayBuffer: ReplayBuffer?
+    var audioReplayBuffer: ReplayBuffer?
+    var replayBufferQueue = DispatchQueue(label: "com.jcm.replayBufferQueue")
+    var isStopping = false
+    var audioFrameCount = 0
+    var usingReplayBuffer = true
+    var stupidTemporaryBuffer = [CMSampleBuffer]()
     
     private var bookmarkedURL: URL?
     
@@ -59,64 +65,77 @@ public class VideoSink {
         }
         assetWriter.add(assetWriterInput)
         assetWriter.add(assetWriterAudioInput)
-        self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: 5)
-        guard assetWriter.startWriting() else {
-            throw assetWriter.error!
-        }
+        self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: 10)
+        self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: 10)
+        self.isStopping = false
     }
     
     /// Appends a video frame to the destination movie file.
     /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
     public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
-        if !sessionStarted {
-            startSession(sbuf)
-        }
-        if self.replayBuffer != nil {
-            self.replayBuffer?.write(sbuf)
-        } else if assetWriterInput.isReadyForMoreMediaData {
-            assetWriterInput.append(sbuf)
+        if self.replayBuffer != nil && !self.isStopping {
+            self.replayBufferQueue.schedule {
+                self.replayBuffer!.write(sbuf)
+            }
         } else {
-            print(String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds))
+            if !sessionStarted {
+                startSession(sbuf)
+            }
+            if assetWriterInput.isReadyForMoreMediaData {
+                assetWriterInput.append(sbuf)
+            } else {
+                print(String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds))
+            }
         }
     }
     
     func startSession(_ sbuf: CMSampleBuffer) {
+        guard assetWriter.startWriting() else {
+            fatalError("\(assetWriter.error!)")
+        }
         assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
+        print("started at \(sbuf.presentationTimeStamp.seconds)")
         sessionStarted = true
     }
     
     public func sendAudioBuffer(_ buffer: CMSampleBuffer) {
-        /*guard sessionStarted else { return }
-        if self.replayBuffer != nil {
-            self.replayBuffer?.write(buffer)
-        } else if assetWriterAudioInput.isReadyForMoreMediaData {
-            assetWriterAudioInput.append(buffer)
-        }*/
+        if self.replayBuffer != nil && !self.isStopping {
+            self.replayBufferQueue.schedule {
+                self.replayBuffer?.write(buffer)
+            }
+        } else {
+            guard sessionStarted else { return }
+            if assetWriterAudioInput.isReadyForMoreMediaData {
+                assetWriterAudioInput.append(buffer)
+            }
+        }
     }
     
     /// Closes the destination movie file.
     public func close() async throws {
+        self.isStopping = true
         if self.replayBuffer != nil {
-            //very disgusting
+            let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
+            if !self.sessionStarted { self.startSession(firstNonKeyframe!) }
             var done = false
             while !done {
-                if let frame = self.replayBuffer!.popFirst() {
-                    var written = false
-                    while !written {
-                        if frame.formatDescription?.mediaType == .audio {
-                            if assetWriterAudioInput.isReadyForMoreMediaData {
-                                print("writing frame at \(frame.presentationTimeStamp.seconds)")
-                                assetWriterAudioInput.append(frame)
-                                written = true
-                            }
-                        } else if assetWriterInput.isReadyForMoreMediaData {
-                            print("writing frame at \(frame.presentationTimeStamp.seconds)")
-                            assetWriterInput.append(frame)
-                            written = true
+                guard let frame = self.replayBuffer?.removeFirst() else {done = true; break}
+                var encoded = false
+                while !encoded {
+                    switch frame.formatDescription!.mediaType {
+                    case .audio:
+                        if assetWriterAudioInput.isReadyForMoreMediaData {
+                            assetWriterAudioInput.append(frame)
+                            encoded = true
                         }
+                    case .video:
+                        if assetWriterInput.isReadyForMoreMediaData {
+                            assetWriterInput.append(frame)
+                            encoded = true
+                        }
+                    default:
+                        print("uhhhh")
                     }
-                } else {
-                    done = true
                 }
             }
         }

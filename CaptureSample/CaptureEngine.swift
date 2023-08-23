@@ -54,8 +54,8 @@ class CaptureEngine: @unchecked Sendable {
                 stream = SCStream(filter: filter, configuration: configuration, delegate: streamOutput)
                 
                 // Add a stream output to capture screen content.
-                try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: self.videoSampleBufferQueue)
-                try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: self.audioSampleBufferQueue)
+                try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: nil)
+                try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: nil)
                 stream?.startCapture()
             } catch {
                 print(error)
@@ -126,6 +126,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var altFrameHandler: ((CapturedFrame) -> Void)?
     var currentFrameTimeStamp: CMTime?
     var frameCount: Int = 0
+    var audioCount = 0
     
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
@@ -147,13 +148,15 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         switch outputType {
         case .screen:
             // Create a CapturedFrame structure for a video sample buffer.
-            if let frame = self.createFrame(for: sampleBuffer) {
-                self.capturedFrameHandler?(frame)
-                self.altFrameHandler?(frame)
+            self.encoderQueue.schedule {
+                if let frame = self.createFrame(for: sampleBuffer) {
+                    self.capturedFrameHandler?(frame)
+                }
             }
         case .audio:
             // Create an AVAudioPCMBuffer from an audio sample buffer.
-            self.encoder?.encodeAudioFrame(sampleBuffer)
+            let copy = self.createAudioFrame(for: sampleBuffer)
+            self.encoder?.encodeAudioFrame(copy!)
             //guard let samples = createPCMBuffer(for: sampleBuffer) else { return }
             //pcmBufferHandler?(samples)
         @unknown default:
@@ -213,6 +216,12 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                                   contentScale: contentScale,
                                   scaleFactor: scaleFactor)
         return frame
+    }
+    
+    private func createAudioFrame(for sampleBuffer: CMSampleBuffer) -> CMSampleBuffer? {
+        //deep copy CMSampleBuffer
+        let copy = sampleBuffer.deepCopy()
+        return copy
     }
         
     
