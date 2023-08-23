@@ -24,8 +24,10 @@ public struct OptionsStorable: Encodable, Decodable, Hashable {
     public let encoderPixelFormat: CapturePixelFormat
     public let presetName: String
     public let scales: Bool
+    public let usesReplayBuffer: Bool
+    public let replayBufferDuration: Int
     
-    init(fileType: ContainerSetting, bitrate: Int, pixelFormat: CapturePixelFormat, primaries: ColorPrimariesSetting, transfer: TransferFunctionSetting, yuv: YCbCrMatrixSetting, bitDepth: Int, usesICC: Bool, maxKeyFrameDuration: Double, maxKeyFrameInterval: Int, rateControl: RateControlSetting, bFrames: Bool, crfValue: Double, gammaValue: Double, convertsColorSpace: Bool, targetColorSpace: CaptureColorSpace, encoderSetting: EncoderSetting, proResSetting: ProResSetting, encoderPixelFormat: CapturePixelFormat, presetName: String, scales: Bool) {
+    init(fileType: ContainerSetting, bitrate: Int, pixelFormat: CapturePixelFormat, primaries: ColorPrimariesSetting, transfer: TransferFunctionSetting, yuv: YCbCrMatrixSetting, bitDepth: Int, usesICC: Bool, maxKeyFrameDuration: Double, maxKeyFrameInterval: Int, rateControl: RateControlSetting, bFrames: Bool, crfValue: Double, gammaValue: Double, convertsColorSpace: Bool, targetColorSpace: CaptureColorSpace, encoderSetting: EncoderSetting, proResSetting: ProResSetting, encoderPixelFormat: CapturePixelFormat, presetName: String, scales: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) {
         self.fileType = fileType
         self.bitrate = bitrate
         self.pixelFormat = pixelFormat
@@ -47,6 +49,8 @@ public struct OptionsStorable: Encodable, Decodable, Hashable {
         self.encoderPixelFormat = encoderPixelFormat
         self.presetName = presetName
         self.scales = scales
+        self.usesReplayBuffer = usesReplayBuffer
+        self.replayBufferDuration = replayBufferDuration
     }
 }
 
@@ -110,6 +114,10 @@ public struct Options: @unchecked Sendable {
     public let usesICC: Bool
     
     public let scales: Bool
+    
+    public let usesReplayBuffer: Bool
+    
+    public let replayBufferDuration: Int
 
     /// A read only property that shows the configuration values user provides.
     public var description: String {
@@ -142,7 +150,7 @@ public struct Options: @unchecked Sendable {
     ///   - verbose: A Boolean value that specifies whether to print frame info.
     public init(destMovieURL: URL, destFileType: AVFileType, destWidth: Int, destHeight: Int, destBitRate: Int,
                 codec: CMVideoCodecType, pixelFormat: OSType, maxKeyFrameIntervalDuration: Double,
-                maxKeyFrameInterval: Int, rateControl: RateControlSetting, crfValue: CFNumber, verbose: Bool, iccProfile: CFData?, bitDepth: Int, colorPrimaries: CFString?, transferFunction: CFString?, yuvMatrix: CFString?, bFrames: Bool, gammaValue: Double?, convertsColorSpace: Bool, targetColorSpace: CFString?, usesICC: Bool, scales: Bool) {
+                maxKeyFrameInterval: Int, rateControl: RateControlSetting, crfValue: CFNumber, verbose: Bool, iccProfile: CFData?, bitDepth: Int, colorPrimaries: CFString?, transferFunction: CFString?, yuvMatrix: CFString?, bFrames: Bool, gammaValue: Double?, convertsColorSpace: Bool, targetColorSpace: CFString?, usesICC: Bool, scales: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) {
         self.destMovieURL = destMovieURL
         self.destFileType = destFileType
         self.destWidth = destWidth
@@ -166,5 +174,7 @@ public struct Options: @unchecked Sendable {
         self.targetColorSpace = targetColorSpace
         self.usesICC = usesICC
         self.scales = scales
+        self.usesReplayBuffer = usesReplayBuffer
+        self.replayBufferDuration = replayBufferDuration
     }
 }

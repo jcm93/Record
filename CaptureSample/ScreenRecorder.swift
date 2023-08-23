@@ -77,10 +77,12 @@ class ScreenRecorder: ObservableObject {
         self.presetName = storedOptions.presetName
         self.doesScale = storedOptions.scales
         self.matchesPreset = true
+        self.usesReplayBuffer = storedOptions.usesReplayBuffer
+        self.replayBufferDuration = storedOptions.replayBufferDuration
     }
     
     func getStoredOptions(name: String?) -> OptionsStorable {
-        let storableOptions = OptionsStorable(fileType: self.containerSetting, bitrate: self.bitRate, pixelFormat: self.capturePixelFormat, primaries: self.colorPrimariesSetting, transfer: self.transferFunctionSetting, yuv: self.yCbCrMatrixSetting, bitDepth: self.bitDepth, usesICC: self.usesICCProfile, maxKeyFrameDuration: self.maxKeyframeIntervalDuration, maxKeyFrameInterval: self.maxKeyframeInterval, rateControl: self.rateControlSetting, bFrames: self.bFramesSetting, crfValue: self.crfValue, gammaValue: self.gammaValue, convertsColorSpace: self.pixelTransferEnabled, targetColorSpace: self.convertTargetColorSpace, encoderSetting: self.encoderSetting, proResSetting: self.proResSetting, encoderPixelFormat: self.pixelFormatSetting, presetName: name ?? "", scales: self.doesScale)
+        let storableOptions = OptionsStorable(fileType: self.containerSetting, bitrate: self.bitRate, pixelFormat: self.capturePixelFormat, primaries: self.colorPrimariesSetting, transfer: self.transferFunctionSetting, yuv: self.yCbCrMatrixSetting, bitDepth: self.bitDepth, usesICC: self.usesICCProfile, maxKeyFrameDuration: self.maxKeyframeIntervalDuration, maxKeyFrameInterval: self.maxKeyframeInterval, rateControl: self.rateControlSetting, bFrames: self.bFramesSetting, crfValue: self.crfValue, gammaValue: self.gammaValue, convertsColorSpace: self.pixelTransferEnabled, targetColorSpace: self.convertTargetColorSpace, encoderSetting: self.encoderSetting, proResSetting: self.proResSetting, encoderPixelFormat: self.pixelFormatSetting, presetName: name ?? "", scales: self.doesScale, usesReplayBuffer: self.usesReplayBuffer, replayBufferDuration: self.replayBufferDuration)
         return storableOptions
     }
     
@@ -136,7 +138,7 @@ class ScreenRecorder: ObservableObject {
         let width = self.doesScale ? self.scaleWidth : self.captureWidth
         let height = self.doesScale ? self.scaleHeight : self.captureHeight
         let codec = self.getCodecType(storableOptions)
-        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: self.getCodecType(storableOptions), pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC, scales: storableOptions.scales)
+        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: self.getCodecType(storableOptions), pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC, scales: storableOptions.scales, usesReplayBuffer: storableOptions.usesReplayBuffer, replayBufferDuration: storableOptions.replayBufferDuration)
         return options
     }
     
@@ -300,6 +302,14 @@ class ScreenRecorder: ObservableObject {
     }
     
     @AppStorage("framesPerSecond") var framesPerSecond: Double = 60.0 {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("usesReplayBuffer") var usesReplayBuffer: Bool = false {
+        didSet { updateEngine() }
+    }
+    
+    @AppStorage("replayBufferDuration") var replayBufferDuration: Int = 30 {
         didSet { updateEngine() }
     }
     

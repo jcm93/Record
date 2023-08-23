@@ -382,6 +382,7 @@ struct ConfigurationView: View {
                                 Toggle("Use display ICC profile", isOn: $screenRecorder.usesICCProfile)
                                 
                             }
+                            .padding(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4))
                             .tabItem { Label("Color", systemImage: "house") }
                             
                             VStack(alignment: .leading) {
@@ -430,7 +431,22 @@ struct ConfigurationView: View {
                                         .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                                 }
                             }
+                            .padding(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4))
                             .tabItem { Label("Keyframes", systemImage: "house") }
+                            
+                            VStack(alignment: .leading) {
+                                Group {
+                                    Toggle("Enable replay buffer", isOn: $screenRecorder.usesReplayBuffer)
+                                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 6, trailing: 0))
+                                }
+                                HStack {
+                                    Text("Duration:")
+                                    PickerView(seconds: $screenRecorder.replayBufferDuration)
+                                }
+                                .labelsHidden()
+                            }
+                            .padding(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                            .tabItem { Label("Replay", systemImage: "house") }
                             
                             
                         }

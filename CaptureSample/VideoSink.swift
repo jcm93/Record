@@ -27,7 +27,7 @@ public class VideoSink {
     ///   - isRealTime: A Boolean value that indicates whether the video sink tailors its processing for real-time sources.
     ///                 Set to `true` if video source operates in real-time like a live camera.
     ///                 Set to `false` for offline transcoding, which may be faster or slower than real-time.
-    public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool) throws {
+    public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) throws {
         //very ugly
         let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
         var isStale = false
@@ -65,8 +65,10 @@ public class VideoSink {
         }
         assetWriter.add(assetWriterInput)
         assetWriter.add(assetWriterAudioInput)
-        self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: 10)
-        self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: 10)
+        if usesReplayBuffer {
+            self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
+            self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
+        }
         self.isStopping = false
     }
     

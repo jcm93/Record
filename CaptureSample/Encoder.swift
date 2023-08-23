@@ -50,7 +50,9 @@ class VTEncoder: NSObject {
                                            codec: options.codec,
                                            width: options.destWidth,
                                            height: options.destHeight,
-                                           isRealTime: true)
+                                           isRealTime: true,
+                                           usesReplayBuffer: options.usesReplayBuffer,
+                                           replayBufferDuration: options.replayBufferDuration)
         } catch {
             fatalError("dong")
         }
