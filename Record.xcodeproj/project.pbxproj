@@ -13,6 +13,9 @@
 		0D164A9E2A97E7C8003F2F7E /* EncoderConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164A9D2A97E7C8003F2F7E /* EncoderConfigurationView.swift */; };
 		0D164AA02A97E894003F2F7E /* OutputConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164A9F2A97E894003F2F7E /* OutputConfigurationView.swift */; };
 		0D164AA22A97E911003F2F7E /* AppControlsConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA12A97E911003F2F7E /* AppControlsConfigurationView.swift */; };
+		0D164AA62A97EB30003F2F7E /* ColorTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA52A97EB30003F2F7E /* ColorTabItem.swift */; };
+		0D164AA82A97EBDB003F2F7E /* KeyframesTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */; };
+		0D164AAA2A97EC32003F2F7E /* ReplayBufferTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */; };
 		0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065C92A94667E00247474 /* TestPatternView.swift */; };
 		0D3065CC2A9466A600247474 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CB2A9466A600247474 /* Renderer.swift */; };
 		0D3065CE2A9466BC00247474 /* ViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */; };
@@ -47,6 +50,9 @@
 		0D164A9D2A97E7C8003F2F7E /* EncoderConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncoderConfigurationView.swift; sourceTree = "<group>"; };
 		0D164A9F2A97E894003F2F7E /* OutputConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputConfigurationView.swift; sourceTree = "<group>"; };
 		0D164AA12A97E911003F2F7E /* AppControlsConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppControlsConfigurationView.swift; sourceTree = "<group>"; };
+		0D164AA52A97EB30003F2F7E /* ColorTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTabItem.swift; sourceTree = "<group>"; };
+		0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyframesTabItem.swift; sourceTree = "<group>"; };
+		0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayBufferTabItem.swift; sourceTree = "<group>"; };
 		0D3065C92A94667E00247474 /* TestPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestPatternView.swift; sourceTree = "<group>"; };
 		0D3065CB2A9466A600247474 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewRepresentable.swift; sourceTree = "<group>"; };
@@ -105,6 +111,9 @@
 			isa = PBXGroup;
 			children = (
 				0D164A9D2A97E7C8003F2F7E /* EncoderConfigurationView.swift */,
+				0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */,
+				0D164AA52A97EB30003F2F7E /* ColorTabItem.swift */,
+				0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */,
 			);
 			path = "Encoder Configuration View";
 			sourceTree = "<group>";
@@ -308,10 +317,13 @@
 				0DE5C82F2A95EDC60054AC23 /* PickerView.swift in Sources */,
 				0D1326782A85612B00B1E886 /* CVPixelBufferHelpers.swift in Sources */,
 				0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */,
+				0D164AA62A97EB30003F2F7E /* ColorTabItem.swift in Sources */,
 				0D164A9C2A97E783003F2F7E /* AudioConfigurationView.swift in Sources */,
 				0D164AA02A97E894003F2F7E /* OutputConfigurationView.swift in Sources */,
+				0D164AAA2A97EC32003F2F7E /* ReplayBufferTabItem.swift in Sources */,
 				0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */,
 				0D3065CC2A9466A600247474 /* Renderer.swift in Sources */,
+				0D164AA82A97EBDB003F2F7E /* KeyframesTabItem.swift in Sources */,
 				0D3898382A7582EA003D1E2D /* PixelTransfer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
