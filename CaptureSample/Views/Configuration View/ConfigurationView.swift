@@ -20,8 +20,6 @@ struct ConfigurationView: View {
     @ObservedObject var screenRecorder: ScreenRecorder
     @Binding var userStopped: Bool
     
-    @FocusState private var isTextFieldFocused: Bool
-    
     private let scaleWidth: Int = 0
     private let scaleHeight: Int = 0
     
@@ -53,15 +51,14 @@ struct ConfigurationView: View {
                             
                             EncoderConfigurationView(screenRecorder: self.screenRecorder)
                             
-                            //.background(Color(red: 0.18, green: 0.18, blue: 0.18))
+                            
+                            Spacer()
+                                .frame(height: 8)
+                            
+                            HeaderView("Output")
+                            
+                            OutputConfigurationView(screenRecorder: self.screenRecorder)
                         }
-                        
-                        Spacer()
-                            .frame(height: 8)
-                        
-                        HeaderView("Output")
-                        
-                        OutputConfigurationView(screenRecorder: self.screenRecorder)
                     }
                     
                     Spacer()

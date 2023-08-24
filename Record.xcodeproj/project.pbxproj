@@ -88,6 +88,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D164AA32A97EACB003F2F7E /* Configuration View */ = {
+			isa = PBXGroup;
+			children = (
+				C4EB90D328108656006A595C /* ConfigurationView.swift */,
+				0D164AA12A97E911003F2F7E /* AppControlsConfigurationView.swift */,
+				0D164AA42A97EAE2003F2F7E /* Encoder Configuration View */,
+				0D164A9F2A97E894003F2F7E /* OutputConfigurationView.swift */,
+				0D164A9B2A97E783003F2F7E /* AudioConfigurationView.swift */,
+				0D164A992A97E6EA003F2F7E /* VideoCaptureConfigurationView.swift */,
+			);
+			path = "Configuration View";
+			sourceTree = "<group>";
+		};
+		0D164AA42A97EAE2003F2F7E /* Encoder Configuration View */ = {
+			isa = PBXGroup;
+			children = (
+				0D164A9D2A97E7C8003F2F7E /* EncoderConfigurationView.swift */,
+			);
+			path = "Encoder Configuration View";
+			sourceTree = "<group>";
+		};
 		0D3065D12A946B4100247474 /* Test Pattern */ = {
 			isa = PBXGroup;
 			children = (
@@ -113,12 +134,7 @@
 				0DE5C82E2A95EDC60054AC23 /* PickerView.swift */,
 				C4B0DABB276BA4B50015082A /* ContentView.swift */,
 				C4B0DABC276BA4B50015082A /* CapturePreview.swift */,
-				C4EB90D328108656006A595C /* ConfigurationView.swift */,
-				0D164AA12A97E911003F2F7E /* AppControlsConfigurationView.swift */,
-				0D164A9F2A97E894003F2F7E /* OutputConfigurationView.swift */,
-				0D164A9D2A97E7C8003F2F7E /* EncoderConfigurationView.swift */,
-				0D164A9B2A97E783003F2F7E /* AudioConfigurationView.swift */,
-				0D164A992A97E6EA003F2F7E /* VideoCaptureConfigurationView.swift */,
+				0D164AA32A97EACB003F2F7E /* Configuration View */,
 				C471DFFD280A0968001D24C9 /* AudioLevelsView.swift */,
 				C4729DA42821BFAD00AAC477 /* MaterialView.swift */,
 			);
