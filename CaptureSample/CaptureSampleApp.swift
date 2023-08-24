@@ -69,7 +69,7 @@ struct CaptureSampleApp: App {
             }
         }
         Window("Test Pattern", id: "testpattern") {
-            TestPatternView(fps: Int(self.screenRecorder.framesPerSecond))
+            TestPatternView(fps: $screenRecorder.framesPerSecond)
         }
     }
 }

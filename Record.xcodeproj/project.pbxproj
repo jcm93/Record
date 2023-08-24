@@ -98,11 +98,11 @@
 			isa = PBXGroup;
 			children = (
 				C4EB90D328108656006A595C /* ConfigurationView.swift */,
-				0D164AA12A97E911003F2F7E /* AppControlsConfigurationView.swift */,
+				0D164A992A97E6EA003F2F7E /* VideoCaptureConfigurationView.swift */,
+				0D164A9B2A97E783003F2F7E /* AudioConfigurationView.swift */,
 				0D164AA42A97EAE2003F2F7E /* Encoder Configuration View */,
 				0D164A9F2A97E894003F2F7E /* OutputConfigurationView.swift */,
-				0D164A9B2A97E783003F2F7E /* AudioConfigurationView.swift */,
-				0D164A992A97E6EA003F2F7E /* VideoCaptureConfigurationView.swift */,
+				0D164AA12A97E911003F2F7E /* AppControlsConfigurationView.swift */,
 			);
 			path = "Configuration View";
 			sourceTree = "<group>";
