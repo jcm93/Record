@@ -1,0 +1,193 @@
+//
+//  VideoCaptureConfigurationView.swift
+//  Record
+//
+//  Created by John Moody on 8/24/23.
+//  Copyright © 2023 Apple. All rights reserved.
+//
+
+import SwiftUI
+import ScreenCaptureKit
+
+struct VideoCaptureConfigurationView: View {
+    @ObservedObject var screenRecorder: ScreenRecorder
+    var body: some View {
+        VStack(alignment: .imageTitleAlignmentGuide) {
+            Group {
+                HStack {
+                    Text("Capture Type:")
+                    Picker("Capture", selection: $screenRecorder.captureType) {
+                        Text("Display")
+                            .tag(CaptureType.display)
+                        Text("Window")
+                            .tag(CaptureType.window)
+                    }
+                    .pickerStyle(.radioGroup)
+                    .horizontalRadioGroupLayout()
+                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                        dimension[.leading]
+                    }                                //.padding([.trailing])
+                }
+                .labelsHidden()
+                HStack {
+                    Text("Screen Content:")
+                    switch screenRecorder.captureType {
+                    case .display:
+                        Picker("Display", selection: $screenRecorder.selectedDisplay) {
+                            ForEach(screenRecorder.availableDisplays, id: \.self) { display in
+                                Text(display.displayName)
+                                    .tag(SCDisplay?.some(display))
+                            }
+                        }
+                        .onHover(perform: { hovering in
+                            Task {
+                                await self.screenRecorder.refreshAvailableContent()
+                            }
+                        })
+                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                            dimension[.leading]
+                        }
+                        .frame(width: 150)
+                        
+                    case .window:
+                        Picker("Window", selection: $screenRecorder.selectedWindow) {
+                            ForEach(screenRecorder.availableWindows, id: \.self) { window in
+                                Text(window.displayName)
+                                    .tag(SCWindow?.some(window))
+                            }
+                        }
+                        .onHover(perform: { hovering in
+                            Task {
+                                await self.screenRecorder.refreshAvailableContent()
+                            }
+                        })
+                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                            dimension[.leading]
+                        }
+                        .frame(width: 150)
+                    }
+                }
+                .labelsHidden()
+                Group {
+                    HStack {
+                        Text("Pixel Format:")
+                        Picker("Pixel Format", selection: $screenRecorder.capturePixelFormat) {
+                            ForEach(CapturePixelFormat.allCases, id: \.self) { format in
+                                Text(format.stringValue())
+                                    .tag(format)
+                            }
+                        }
+                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                            dimension[.leading]
+                        }
+                        .frame(width: 150)
+                    }
+                    if (self.screenRecorder.capturePixelFormat == .biplanarfull420f || self.screenRecorder.capturePixelFormat == .biplanarpartial420v) {
+                        HStack {
+                            Text("Transfer Function:")
+                            Picker("Transfer Function", selection: $screenRecorder.captureYUVMatrix) {
+                                ForEach(CaptureYUVMatrix.allCases, id: \.self) { format in
+                                    Text(format.stringValue())
+                                        .tag(format)
+                                }
+                            }
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                            .frame(width: 150)
+                        }
+                    }
+                    HStack {
+                        Text("Color Space:")
+                        Picker("Color Space", selection: $screenRecorder.captureColorSpace) {
+                            ForEach(CaptureColorSpace.allCases, id: \.self) { format in
+                                Text(String(format.cfString()))
+                                    .tag(format)
+                            }
+                        }
+                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                            dimension[.leading]
+                        }
+                        .frame(width: 150)
+                    }
+                }
+                .labelsHidden()
+                .controlSize(.small)
+                HStack {
+                    Text("Dimensions:")
+                    HStack {
+                        TextField("Width", value: $screenRecorder.captureWidth, formatter: NumberFormatter())
+                            .disabled(true)
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                            .fixedSize()
+                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                    }
+                    HStack {
+                        TextField("Height", value: $screenRecorder.captureHeight, formatter: NumberFormatter())
+                            .disabled(true)
+                            .fixedSize()
+                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                    }
+                }
+                .controlSize(.small)
+                .labelsHidden()
+                Group {
+                    HStack {
+                        Text("Scaled Dimensions:")
+                        HStack {
+                            TextField("Width", value: $screenRecorder.scaleWidth, formatter: NumberFormatter(), onEditingChanged: { value in
+                                if !value {
+                                    self.screenRecorder.dimensionsChanged(width: screenRecorder.scaleWidth, height: 0)
+                                }
+                            })
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                            .fixedSize()
+                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                            .disabled(!screenRecorder.doesScale)
+                        }
+                        HStack {
+                            TextField("Height", value: $screenRecorder.scaleHeight, formatter: NumberFormatter(), onEditingChanged: { value in
+                                if !value {
+                                    self.screenRecorder.dimensionsChanged(width: 0, height: screenRecorder.scaleHeight)
+                                }
+                            })
+                            .fixedSize()
+                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                            .disabled(!screenRecorder.doesScale)
+                        }
+                    }
+                }
+                .controlSize(.small)
+                .labelsHidden()
+                Toggle("Scale Output", isOn: $screenRecorder.doesScale)
+                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                        dimension[.leading]
+                    }
+                
+                Toggle("Exclude self from stream", isOn: $screenRecorder.isAppExcluded)
+                    .disabled(screenRecorder.captureType == .window)
+                    .onChange(of: screenRecorder.isAppExcluded) { _ in
+                        // Capturing app audio is only possible when the sample is included in the stream.
+                        // Ensure the audio stops playing if the user enables the "Exclude app from stream" checkbox.
+                    }
+                    .controlSize(.small)
+                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                        dimension[.leading]
+                    }
+            }
+            .padding(EdgeInsets(top: 4, leading: -2, bottom: 0, trailing: -2))
+        }
+        .frame(width: 260)
+        .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))
+        .controlSize(.small)
+        .background(Color(red: 0.149, green: 0.149, blue: 0.149))
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(Color(red: 0.224, green: 0.224, blue: 0.244), lineWidth: 1)
+        )
+    }
+}
