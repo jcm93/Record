@@ -11,6 +11,6 @@ Record captures and encodes macOS screen content with full color fidelity.<img w
 This is an experimental commit and many things may be broken.
 # todo
 ## hdr capture
-## buffer/hotkey controls
+## hotkey controls
 ## preview
 

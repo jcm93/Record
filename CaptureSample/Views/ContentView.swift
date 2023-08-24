@@ -21,7 +21,7 @@ struct ContentView: View {
     var body: some View {
         HSplitView {
             ConfigurationView(screenRecorder: screenRecorder, userStopped: $userStopped)
-                .frame(minWidth: 280, maxWidth: 280)
+                .frame(minWidth: 330, maxWidth: 330)
                 .disabled(disableInput)
             screenRecorder.capturePreview
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
