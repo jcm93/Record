@@ -39,6 +39,7 @@ struct AppControlsConfigurationView: View {
             .controlSize(.large)
             .disabled(!screenRecorder.isRunning)
         }
+        Spacer(minLength: 10)
         HStack {
             if screenRecorder.isRecording || !screenRecorder.isRunning {
                 Button {
@@ -83,6 +84,7 @@ struct AppControlsConfigurationView: View {
                 .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 60)
+        .frame(maxWidth: .infinity)
+        .padding(EdgeInsets(top: 0, leading: 0, bottom: 15, trailing: 0))
     }
 }

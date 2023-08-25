@@ -222,6 +222,10 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
+    @AppStorage("usesTargetFPS") var usesTargetFPS = false {
+        didSet { updateEngine() }
+    }
+    
     @AppStorage("capturePixelFormat") var capturePixelFormat: CapturePixelFormat = .bgra {
         didSet { updateEngine() }
     }
@@ -523,8 +527,11 @@ class ScreenRecorder: ObservableObject {
         self.captureHeight = streamConfig.height
         //self.aspectRatio = Double(streamConfig.width) / Double(streamConfig.height)
         
-        // don't ask
-        streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond + 1))
+        if (self.usesTargetFPS) {
+            streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond + 1))
+        } else {
+            streamConfig.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(0))
+        }
         self.assignPixelFormatAndColorMatrix(streamConfig)
         
         // Increase the depth of the frame queue to ensure high fps at the expense of increasing

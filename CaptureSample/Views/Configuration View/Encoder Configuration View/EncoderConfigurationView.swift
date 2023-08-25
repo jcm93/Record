@@ -151,18 +151,6 @@ struct EncoderConfigurationView: View {
                 .controlSize(.small)
                 .labelsHidden()
             }
-            Group {
-                //Text("Quality")
-                HStack {
-                    Text("Frames per second:")
-                    TextField("Value", value: $screenRecorder.framesPerSecond, format: .number)
-                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                            dimension[.leading]
-                        }
-                }
-            }
-            .controlSize(.small)
-            .labelsHidden()
         }
         .frame(width: 260)
         .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))

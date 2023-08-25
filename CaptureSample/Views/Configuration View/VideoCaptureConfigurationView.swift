@@ -163,6 +163,27 @@ struct VideoCaptureConfigurationView: View {
                 }
                 .controlSize(.small)
                 .labelsHidden()
+                Group {
+                    //Text("Quality")
+                    HStack {
+                        Text("Target frame rate:")
+                        TextField("Value", value: $screenRecorder.framesPerSecond, format: .number)
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                    }
+                }
+                .controlSize(.small)
+                .labelsHidden()
+                .disabled(!screenRecorder.usesTargetFPS)
+                .help("Establishes a target frame rate for ScreenCaptureKit. Even with a target frame rate, frame times and rates are variable with the screen content refresh interval. Encoded FPS may be lower if the screen content contains many idle (duplicated) frames.")
+                
+                Toggle("Use target frame rate", isOn: $screenRecorder.usesTargetFPS)
+                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                        dimension[.leading]
+                    }
+                    .help("If not targeting a frame rate, the system will make as many frames available as it can, up to the maximum supported frame rate.")
+                
                 Toggle("Scale Output", isOn: $screenRecorder.doesScale)
                     .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
                         dimension[.leading]

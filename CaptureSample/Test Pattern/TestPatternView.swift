@@ -21,13 +21,20 @@ struct TestPatternView: View {
                 var image: CIImage
                 
                 // Animate a shifting red and yellow checkerboard pattern.
-                let pointsShiftPerSecond = 5.0 * Double(self.fps)
+                let pointsShiftPerSecond = 500.0
                 let checkerFilter = CIFilter.stripesGenerator()
                 checkerFilter.width = 20.0
                 checkerFilter.color0 = CIColor.black
                 checkerFilter.color1 = CIColor.gray
                 checkerFilter.center = CGPoint(x: time * pointsShiftPerSecond, y: time * pointsShiftPerSecond)
-                image = checkerFilter.outputImage ?? CIImage.empty()
+                let otherStripes = CIFilter.stripesGenerator()
+                otherStripes.width = 50.0
+                otherStripes.color0 = CIColor.black
+                otherStripes.color1 = CIColor.gray
+                otherStripes.center = CGPoint(x: time * pointsShiftPerSecond, y: time * pointsShiftPerSecond)
+                let filter = CIFilter.barsSwipeTransition()
+                filter.inputImage = checkerFilter.outputImage ?? CIImage.empty()
+                image = filter.outputImage ?? CIImage.empty()
                 
                 return image.cropped(to: CGRect(x: 0, y: 0,
                                                 width: geometry.size.width * scaleFactor,

@@ -180,8 +180,6 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         let statusRawValue = attachments[SCStreamFrameInfo.status] as! Int
         let status = SCFrameStatus(rawValue: statusRawValue)
         if status != SCFrameStatus.complete {
-            print("non-complete frame status")
-            print("status is \(statusRawValue)")
             return nil
         }
         

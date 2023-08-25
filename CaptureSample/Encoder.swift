@@ -90,27 +90,31 @@ class VTEncoder: NSObject {
         }
         
         switch options.rateControl {
-        case .cbr:
-            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ConstantBitRate, value: options.destBitRate as CFNumber)
+        case .crf:
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_Quality, value: options.crfValue)
             if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_ConstantBitRate) failed (\(err))")
+                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_Quality) failed (\(err))")
             }
-        case .abr:
-            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: options.destBitRate as CFNumber)
+        case .cbr:
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: (options.destBitRate * 1000) as CFNumber)
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AverageBitRate) failed (\(err))")
             }
-            /*let byteLimit = (Double(options.destBitRate) / 8 * 1.5) as CFNumber
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ConstantBitRate, value: kCFBooleanTrue)
+            if noErr != err {
+                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_ConstantBitRate) failed (\(err))")
+            }
+        default:
+            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: (options.destBitRate * 1000) as CFNumber)
+            if noErr != err {
+                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AverageBitRate) failed (\(err))")
+            }
+            let byteLimit = (Double(options.destBitRate * 1000) * 1.5) as CFNumber
             let secLimit = Double(1.0) as CFNumber
             let limitsArray = [ byteLimit, secLimit ] as CFArray
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_DataRateLimits, value: limitsArray)
             if noErr != err {
                 print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_DataRateLimits) failed (\(err))")
-            }*/
-        case .crf:
-            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_Quality, value: options.crfValue)
-            if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_Quality) failed (\(err))")
             }
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowTemporalCompression, value: kCFBooleanTrue)
