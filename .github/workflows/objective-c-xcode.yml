@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          xcode-version: latest
       - name: Set Default Scheme
         run: |
           sudo xcode-select -s '/Applications/Xcode_15_beta.app/Contents/Developer'
@@ -23,9 +21,9 @@ jobs:
           default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
           echo $default | cat >default
           echo Using default scheme: $default
-      - name: Build
         with:
           xcode-version: latest
+      - name: Build
         env:
           scheme: ${{ 'default' }}
         run: |
@@ -33,3 +31,5 @@ jobs:
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
           file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
           xcodebuild -verbose clean build -scheme "$scheme" -"$filetype_parameter" "$file_to_build" && exit ${PIPESTATUS[0]}
+        with:
+          xcode-version: latest
