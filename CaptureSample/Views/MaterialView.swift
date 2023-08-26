@@ -17,3 +17,16 @@ struct MaterialView: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
+
+struct SheetMaterialView: NSViewRepresentable {
+    @Environment(\.colorScheme) var colorScheme
+    
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .underWindowBackground
+        view.blendingMode = .behindWindow
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}

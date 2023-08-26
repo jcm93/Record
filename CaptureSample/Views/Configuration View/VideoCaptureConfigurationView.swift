@@ -122,13 +122,13 @@ struct VideoCaptureConfigurationView: View {
                                 dimension[.leading]
                             }
                             .fixedSize()
-                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                            //.background(Color(red: 0.086, green: 0.086, blue: 0.086))
                     }
                     HStack {
                         TextField("Height", value: $screenRecorder.captureHeight, formatter: NumberFormatter())
                             .disabled(true)
                             .fixedSize()
-                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                            //.background(Color(red: 0.086, green: 0.086, blue: 0.086))
                     }
                 }
                 .controlSize(.small)
@@ -146,7 +146,7 @@ struct VideoCaptureConfigurationView: View {
                                 dimension[.leading]
                             }
                             .fixedSize()
-                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                            //.background(Color(red: 0.086, green: 0.086, blue: 0.086))
                             .disabled(!screenRecorder.doesScale)
                         }
                         HStack {
@@ -156,7 +156,7 @@ struct VideoCaptureConfigurationView: View {
                                 }
                             })
                             .fixedSize()
-                            .background(Color(red: 0.086, green: 0.086, blue: 0.086))
+                            //.background(Color(red: 0.086, green: 0.086, blue: 0.086))
                             .disabled(!screenRecorder.doesScale)
                         }
                     }
@@ -205,10 +205,10 @@ struct VideoCaptureConfigurationView: View {
         .frame(width: 260)
         .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))
         .controlSize(.small)
-        .background(Color(red: 0.149, green: 0.149, blue: 0.149))
+        .background(.quaternary)
         .overlay(
             RoundedRectangle(cornerRadius: 5)
-                .stroke(Color(red: 0.224, green: 0.224, blue: 0.244), lineWidth: 1)
+                .stroke(Color(.quaternaryLabelColor), lineWidth: 1)
         )
     }
 }

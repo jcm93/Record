@@ -68,9 +68,10 @@ struct ConfigurationView: View {
                 .frame(minHeight: geometry.size.height)
             }
             .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 6))
-            .background(Color(red: 0.122, green: 0.122, blue: 0.122))
+            .background(MaterialView())
             .frame(width: geometry.size.width)
         }
+        .background(MaterialView())
     }
 }
 
