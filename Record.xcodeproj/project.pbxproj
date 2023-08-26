@@ -16,6 +16,7 @@
 		0D164AA62A97EB30003F2F7E /* ColorTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA52A97EB30003F2F7E /* ColorTabItem.swift */; };
 		0D164AA82A97EBDB003F2F7E /* KeyframesTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */; };
 		0D164AAA2A97EC32003F2F7E /* ReplayBufferTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */; };
+		0D164AAF2A996C6E003F2F7E /* objective-c-xcode.yml in Resources */ = {isa = PBXBuildFile; fileRef = 0D164AAE2A996C6E003F2F7E /* objective-c-xcode.yml */; };
 		0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065C92A94667E00247474 /* TestPatternView.swift */; };
 		0D3065CC2A9466A600247474 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CB2A9466A600247474 /* Renderer.swift */; };
 		0D3065CE2A9466BC00247474 /* ViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */; };
@@ -27,7 +28,6 @@
 		0D3898382A7582EA003D1E2D /* PixelTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3898372A7582EA003D1E2D /* PixelTransfer.swift */; };
 		0D4875402A81A20800F6D832 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D48753F2A81A20800F6D832 /* Enums.swift */; };
 		0DE5C82F2A95EDC60054AC23 /* PickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE5C82E2A95EDC60054AC23 /* PickerView.swift */; };
-		0DF11FDE2A6ECBA500B45306 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 0DF11FDD2A6ECBA500B45306 /* README.md */; };
 		C44093732816EC8800FB8386 /* Synth.aif in Resources */ = {isa = PBXBuildFile; fileRef = C44093722816EC8800FB8386 /* Synth.aif */; };
 		C44093752816EC9C00FB8386 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44093742816EC9C00FB8386 /* AudioPlayer.swift */; };
 		C470F0812811C5CB00D29309 /* ScreenRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C470F0802811C5CB00D29309 /* ScreenRecorder.swift */; };
@@ -53,6 +53,7 @@
 		0D164AA52A97EB30003F2F7E /* ColorTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTabItem.swift; sourceTree = "<group>"; };
 		0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyframesTabItem.swift; sourceTree = "<group>"; };
 		0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayBufferTabItem.swift; sourceTree = "<group>"; };
+		0D164AAE2A996C6E003F2F7E /* objective-c-xcode.yml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.yaml; name = "objective-c-xcode.yml"; path = ".github/workflows/objective-c-xcode.yml"; sourceTree = "<group>"; };
 		0D3065C92A94667E00247474 /* TestPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestPatternView.swift; sourceTree = "<group>"; };
 		0D3065CB2A9466A600247474 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewRepresentable.swift; sourceTree = "<group>"; };
@@ -161,6 +162,7 @@
 		C4B0DA9E276BA4460015082A = {
 			isa = PBXGroup;
 			children = (
+				0D164AAE2A996C6E003F2F7E /* objective-c-xcode.yml */,
 				0DF11FDD2A6ECBA500B45306 /* README.md */,
 				C4B0DAA9276BA4460015082A /* CaptureSample */,
 				C4B0DAA8276BA4460015082A /* Products */,
@@ -283,8 +285,8 @@
 			files = (
 				C4B0DAB2276BA4480015082A /* Preview Assets.xcassets in Resources */,
 				C4B0DAAF276BA4480015082A /* Assets.xcassets in Resources */,
-				0DF11FDE2A6ECBA500B45306 /* README.md in Resources */,
 				C44093732816EC8800FB8386 /* Synth.aif in Resources */,
+				0D164AAF2A996C6E003F2F7E /* objective-c-xcode.yml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -458,12 +460,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CaptureSample/CaptureSample.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"CaptureSample/Preview Content\"";
-				DEVELOPMENT_TEAM = 6E383BMF5Y;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -492,12 +495,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CaptureSample/CaptureSample.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"CaptureSample/Preview Content\"";
-				DEVELOPMENT_TEAM = 6E383BMF5Y;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
