@@ -31,7 +31,7 @@ struct ConfigurationView: View {
                         VStack(alignment: .leading) {
                             Group {
                                 Spacer()
-                                    .frame(height: 10)
+                                    .frame(minHeight: 10)
                                 
                                 HeaderView("Video")
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
@@ -39,14 +39,14 @@ struct ConfigurationView: View {
                                 VideoCaptureConfigurationView(screenRecorder: self.screenRecorder)
                                 
                                 Spacer()
-                                    .frame(height: 8)
+                                    .frame(minHeight: 8)
                                 
                                 HeaderView("Audio")
                                 
                                 AudioConfigurationView(screenRecorder: self.screenRecorder)
                                 
                                 Spacer()
-                                    .frame(height: 8)
+                                    .frame(minHeight: 8)
                                 
                                 HeaderView("Encoder")
                                     .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
@@ -55,7 +55,7 @@ struct ConfigurationView: View {
                                 
                                 
                                 Spacer()
-                                    .frame(height: 8)
+                                    .frame(minHeight: 8)
                                 
                                 HeaderView("Output")
                                 
