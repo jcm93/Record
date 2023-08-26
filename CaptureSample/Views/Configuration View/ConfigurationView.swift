@@ -29,35 +29,38 @@ struct ConfigurationView: View {
                 VStack {
                     Form {
                         VStack(alignment: .leading) {
-                            Spacer()
-                                .frame(height: 10)
-                            HeaderView("Video")
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
-                            
-                            VideoCaptureConfigurationView(screenRecorder: self.screenRecorder)
-                            
-                            Spacer()
-                                .frame(height: 8)
-                            
-                            HeaderView("Audio")
-                            
-                            AudioConfigurationView(screenRecorder: self.screenRecorder)
-                            
-                            Spacer()
-                                .frame(height: 8)
-                            
-                            HeaderView("Encoder")
-                                .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
-                            
-                            EncoderConfigurationView(screenRecorder: self.screenRecorder)
-                            
-                            
-                            Spacer()
-                                .frame(height: 8)
-                            
-                            HeaderView("Output")
-                            
-                            OutputConfigurationView(screenRecorder: self.screenRecorder)
+                            Group {
+                                Spacer()
+                                    .frame(height: 10)
+                                
+                                HeaderView("Video")
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
+                                
+                                VideoCaptureConfigurationView(screenRecorder: self.screenRecorder)
+                                
+                                Spacer()
+                                    .frame(height: 8)
+                                
+                                HeaderView("Audio")
+                                
+                                AudioConfigurationView(screenRecorder: self.screenRecorder)
+                                
+                                Spacer()
+                                    .frame(height: 8)
+                                
+                                HeaderView("Encoder")
+                                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0))
+                                
+                                EncoderConfigurationView(screenRecorder: self.screenRecorder)
+                                
+                                
+                                Spacer()
+                                    .frame(height: 8)
+                                
+                                HeaderView("Output")
+                                
+                                OutputConfigurationView(screenRecorder: self.screenRecorder)
+                            }
                         }
                     }
                     
