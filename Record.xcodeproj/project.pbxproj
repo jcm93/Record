@@ -17,6 +17,7 @@
 		0D164AA82A97EBDB003F2F7E /* KeyframesTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */; };
 		0D164AAA2A97EC32003F2F7E /* ReplayBufferTabItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */; };
 		0D164AAF2A996C6E003F2F7E /* objective-c-xcode.yml in Resources */ = {isa = PBXBuildFile; fileRef = 0D164AAE2A996C6E003F2F7E /* objective-c-xcode.yml */; };
+		0D164AB12A9AB15D003F2F7E /* ConfigurationSubViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D164AB02A9AB15D003F2F7E /* ConfigurationSubViewModifier.swift */; };
 		0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065C92A94667E00247474 /* TestPatternView.swift */; };
 		0D3065CC2A9466A600247474 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CB2A9466A600247474 /* Renderer.swift */; };
 		0D3065CE2A9466BC00247474 /* ViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */; };
@@ -54,6 +55,7 @@
 		0D164AA72A97EBDB003F2F7E /* KeyframesTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyframesTabItem.swift; sourceTree = "<group>"; };
 		0D164AA92A97EC32003F2F7E /* ReplayBufferTabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayBufferTabItem.swift; sourceTree = "<group>"; };
 		0D164AAE2A996C6E003F2F7E /* objective-c-xcode.yml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.yaml; name = "objective-c-xcode.yml"; path = ".github/workflows/objective-c-xcode.yml"; sourceTree = "<group>"; };
+		0D164AB02A9AB15D003F2F7E /* ConfigurationSubViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationSubViewModifier.swift; sourceTree = "<group>"; };
 		0D3065C92A94667E00247474 /* TestPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestPatternView.swift; sourceTree = "<group>"; };
 		0D3065CB2A9466A600247474 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		0D3065CD2A9466BC00247474 /* ViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewRepresentable.swift; sourceTree = "<group>"; };
@@ -99,6 +101,7 @@
 			isa = PBXGroup;
 			children = (
 				C4EB90D328108656006A595C /* ConfigurationView.swift */,
+				0D164AB02A9AB15D003F2F7E /* ConfigurationSubViewModifier.swift */,
 				0D164A992A97E6EA003F2F7E /* VideoCaptureConfigurationView.swift */,
 				0D164A9B2A97E783003F2F7E /* AudioConfigurationView.swift */,
 				0D164AA42A97EAE2003F2F7E /* Encoder Configuration View */,
@@ -299,6 +302,7 @@
 			files = (
 				C4B0DABF276BA4B50015082A /* CapturePreview.swift in Sources */,
 				C4B0DAC0276BA4B50015082A /* CaptureEngine.swift in Sources */,
+				0D164AB12A9AB15D003F2F7E /* ConfigurationSubViewModifier.swift in Sources */,
 				C44093752816EC9C00FB8386 /* AudioPlayer.swift in Sources */,
 				0D164A9E2A97E7C8003F2F7E /* EncoderConfigurationView.swift in Sources */,
 				C470F0812811C5CB00D29309 /* ScreenRecorder.swift in Sources */,

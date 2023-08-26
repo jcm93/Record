@@ -86,6 +86,8 @@ class ScreenRecorder: ObservableObject {
         return storableOptions
     }
     
+    @Published var dummy: String = ""
+    
     var options: Options {
         //self.streamConfiguration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
         if self.usesICCProfile {

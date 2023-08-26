@@ -75,7 +75,6 @@ struct KeyframesTabItem: View {
             }
         }
         .padding(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4))
-        .tabItem { Label("Keyframes", systemImage: "house") }
     }
 }
 

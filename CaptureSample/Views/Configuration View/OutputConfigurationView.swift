@@ -29,14 +29,7 @@ struct OutputConfigurationView: View {
                 }
             }
         }
-        .frame(width: 260)
-        .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))
-        .background(.quaternary)
-        .overlay(
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(Color(.quaternaryLabelColor), lineWidth: 1)
-        )
-        .controlSize(.small)
+        .modifier(ConfigurationSubViewStyle())
         .labelsHidden()
     }
     

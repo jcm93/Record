@@ -10,6 +10,9 @@ import SwiftUI
 
 struct EncoderConfigurationView: View {
     @ObservedObject var screenRecorder: ScreenRecorder
+    
+    @State var currentTab: Int = 0
+    
     var body: some View {
         VStack(alignment: .imageTitleAlignmentGuide) {
             Group {
@@ -153,25 +156,42 @@ struct EncoderConfigurationView: View {
                 .labelsHidden()
             }
         }
-        .frame(width: 260)
-        .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))
-        .background(.quaternary)
-        .overlay(
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(Color(.quaternaryLabelColor), lineWidth: 1)
-        )
+        .modifier(ConfigurationSubViewStyle())
         
-        TabView {
-            
-            ColorTabItem(screenRecorder: self.screenRecorder)
-            
-            KeyframesTabItem(screenRecorder: self.screenRecorder)
-            
-            ReplayBufferTabItem(screenRecorder: self.screenRecorder)
-            
+        ZStack {
+            VStack(alignment: .center) {
+                Picker("Setting", selection: $currentTab) {
+                    Text("Color")
+                        .tag(0)
+                        .zIndex(5.0)
+                    Text("Keyframes")
+                        .tag(1)
+                        .zIndex(5.0)
+                    Text("Replay")
+                        .tag(2)
+                        .zIndex(5.0)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/)
+                .labelsHidden()
+                .offset(CGSize(width: 0, height: 0))
+                
+                Group {
+                    if currentTab == 0 {
+                        ColorTabItem(screenRecorder: self.screenRecorder)
+                            .modifier(ConfigurationSubViewStyle())
+                    } else if currentTab == 1 {
+                        KeyframesTabItem(screenRecorder: self.screenRecorder)
+                            .modifier(ConfigurationSubViewStyle())
+                    } else {
+                        ReplayBufferTabItem(screenRecorder: self.screenRecorder)
+                            .modifier(ConfigurationSubViewStyle())
+                    }
+                }
+                .offset(CGSize(width: 0, height: -18))
+                .zIndex(-20.0)
+            }
         }
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(width: 290)
-        .controlSize(.small)
     }
 }

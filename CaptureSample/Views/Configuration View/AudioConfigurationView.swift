@@ -16,13 +16,6 @@ struct AudioConfigurationView: View {
                 .padding(EdgeInsets(top: 0, leading: 48, bottom: 0, trailing: 0))
                 .controlSize(.small)
         }
-        .frame(width: 260)
-        .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))
-        .background(.quaternary)
-        //.background(Color(red: 0.149, green: 0.149, blue: 0.149))
-        .overlay(
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(Color(.quaternaryLabelColor), lineWidth: 1)
-        )
+        .modifier(ConfigurationSubViewStyle())
     }
 }
