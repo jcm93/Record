@@ -20,7 +20,7 @@ struct CaptureSampleApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(screenRecorder)
-                .frame(minWidth: 960, minHeight: 724)
+                .frame(minWidth: 1440, minHeight: 900)
                 .background(.black)
                 .alert("Enter Name", isPresented: $isShowingAlert, actions: {
                     TextField("Preset Name", text: $presetName)
