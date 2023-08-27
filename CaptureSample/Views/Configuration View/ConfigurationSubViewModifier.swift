@@ -13,7 +13,7 @@ struct ConfigurationSubViewStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .frame(width: 260)
-            .padding(EdgeInsets(top: 15, leading: 15, bottom: 15, trailing: 15))
+            .padding(EdgeInsets(top: 13, leading: 15, bottom: 13, trailing: 15))
             .controlSize(.small)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
             .overlay(

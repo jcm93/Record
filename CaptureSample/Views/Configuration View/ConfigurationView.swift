@@ -51,17 +51,16 @@ struct ConfigurationView: View {
                         
                         EncoderConfigurationView(screenRecorder: self.screenRecorder)
                         
-                        
-                        Spacer()
-                            .frame(minHeight: 8)
-                        
-                        HeaderView("Output")
-                        
-                        OutputConfigurationView(screenRecorder: self.screenRecorder)
+                        Group {
+                            HeaderView("Output")
+                            
+                            OutputConfigurationView(screenRecorder: self.screenRecorder)
+                        }
+                        .offset(CGSize(width: 0, height: -18))
                     }
                     
                     Spacer()
-                        .frame(minHeight: 15)
+                        .frame(minHeight: 7)
                     
                     AppControlsConfigurationView(screenRecorder: self.screenRecorder, userStopped: self.$userStopped)
                 }
