@@ -56,7 +56,6 @@ struct ConfigurationView: View {
                             
                             OutputConfigurationView(screenRecorder: self.screenRecorder)
                         }
-                        .offset(CGSize(width: 0, height: -18))
                     }
                     
                     Spacer()

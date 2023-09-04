@@ -31,5 +31,6 @@ struct ReplayBufferTabItem: View {
             .labelsHidden()
         }
         .padding(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+        .tabItem { Label("Replay", systemImage: "house") }
     }
 }

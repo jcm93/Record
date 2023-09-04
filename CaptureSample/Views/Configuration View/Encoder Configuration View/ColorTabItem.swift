@@ -147,7 +147,7 @@ struct ColorTabItem: View {
             }
             .padding(EdgeInsets(top: 0, leading: -2, bottom: 4, trailing: -2))
         }
-        .frame(width: 260)
         .padding(EdgeInsets(top: 8, leading: 15, bottom: 0, trailing: 15))
+        .tabItem { Label("Color", systemImage: "house") }
     }
 }
