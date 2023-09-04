@@ -155,8 +155,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
             }
         case .audio:
             // Create an AVAudioPCMBuffer from an audio sample buffer.
-            let copy = self.createAudioFrame(for: sampleBuffer)
-            self.encoder?.encodeAudioFrame(copy!)
+            self.encoderQueue.schedule {
+                let copy = self.createAudioFrame(for: sampleBuffer)
+                self.encoder?.encodeAudioFrame(copy!)
+            }
             //guard let samples = createPCMBuffer(for: sampleBuffer) else { return }
             //pcmBufferHandler?(samples)
         @unknown default:
