@@ -77,14 +77,14 @@ public class VideoSink {
     
     /// Appends a video frame to the destination movie file.
     /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
-    public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
+    public func sendSampleBuffer(_ sbuf: CMSampleBuffer) throws {
         if self.replayBuffer != nil && !self.isStopping {
             self.replayBufferQueue.schedule {
                 self.replayBuffer!.write(sbuf)
             }
         } else {
             if !sessionStarted {
-                startSession(sbuf)
+                try startSession(sbuf)
             }
             if assetWriterInput.isReadyForMoreMediaData {
                 assetWriterInput.append(sbuf)
@@ -95,9 +95,9 @@ public class VideoSink {
         }
     }
     
-    func startSession(_ sbuf: CMSampleBuffer) {
+    func startSession(_ sbuf: CMSampleBuffer) throws {
         guard assetWriter.startWriting() else {
-            fatalError("\(assetWriter.error!)")
+            throw assetWriter.error!
         }
         assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
         print("started at \(sbuf.presentationTimeStamp.seconds)")
@@ -122,7 +122,7 @@ public class VideoSink {
         self.isStopping = true
         if self.replayBuffer != nil {
             let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
-            if !self.sessionStarted { self.startSession(firstNonKeyframe!) }
+            if !self.sessionStarted { try self.startSession(firstNonKeyframe!) }
             var done = false
             while !done {
                 guard let frame = self.replayBuffer?.removeFirst() else {done = true; break}

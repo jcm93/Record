@@ -448,6 +448,13 @@ class ScreenRecorder: ObservableObject {
     func record() async {
         guard isRunning else { return }
         guard !isRecording else { return }
+        guard self.filePath != "" else {
+            self.isRecording = false
+            self.errorText = "No output folder selected."
+            //todo add an alert
+            self.isShowingError = true
+            return
+        }
         logger.notice("\(self.options.description, privacy: .public)")
         do {
             try await captureEngine.startRecording(options: self.options)
@@ -456,14 +463,21 @@ class ScreenRecorder: ObservableObject {
             self.isRecording = false
             self.errorText = error.localizedDescription
             //todo add an alert
+            self.isShowingError = true
         }
     }
     
     func stopRecord() async {
-        guard isRecording else { return }
-        await captureEngine.stopRecording()
-        self.isRecording = false
-        
+        do {
+            guard isRecording else { return }
+            try await captureEngine.stopRecording()
+            self.isRecording = false
+        } catch {
+            self.errorText = "Error while stopping recording. \(error)"
+            self.isShowingError = true
+            logger.critical("Error while stopping recording. \(error, privacy: .public)")
+            self.isRecording = false
+        }
     }
     
     /*private func startAudioMetering() {

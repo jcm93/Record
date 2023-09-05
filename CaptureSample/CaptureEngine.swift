@@ -93,7 +93,7 @@ class CaptureEngine: @unchecked Sendable {
         self.streamOutput.encoder = try await VTEncoder(options: options)
     }
     
-    func stopRecording() async {
+    func stopRecording() async throws {
         try await self.streamOutput.encoder.stopEncoding()
         self.streamOutput.encoder = nil
     }
@@ -121,14 +121,17 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var dstData: UnsafeMutableRawPointer!
     var otherDestBuffer: CVPixelBuffer!
     private let encoderQueue = DispatchQueue(label: "com.jcm.Record.EncoderQueue")
-    private let frameHandlerQueue = DispatchQueue(label: "com.jcm.Record.FrameHandlerQueue")
     var altFrameHandler: ((CapturedFrame) -> Void)?
     var currentFrameTimeStamp: CMTime?
     var frameCount: Int = 0
     var audioCount = 0
     
+    private let logger = Logger.capture
+    
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    
+    var encoderError: Error?
     
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.continuation = continuation
@@ -165,6 +168,19 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         }
     }
     
+    func handleEncoderError(_ error: Error) {
+        self.encoderError = error
+        Task {
+            do {
+                try await self.encoder.stopEncoding()
+                self.encoder = nil
+                self.handleEncoderError(error)
+            } catch {
+                self.logger.critical("Error while shutting down encoder due to error. \(error, privacy: .public)")
+            }
+        }
+    }
+    
     /// Create a `CapturedFrame` for the video sample buffer.
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         
@@ -187,17 +203,11 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return nil }
         
-        self.encoder?.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: sampleBuffer.duration, properties: nil, infoFlags: nil)
-        /*let secs = Double(sampleBuffer.presentationTimeStamp.value) / Double(sampleBuffer.presentationTimeStamp.timescale)
-        print(secs)
-        print(self.frameCount)
-        if self.currentFrameTimeStamp != nil {
-            if currentFrameTimeStamp!.value > sampleBuffer.presentationTimeStamp.value {
-                print("went backwards")
-            }
+        do {
+            try self.encoder?.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: sampleBuffer.duration, properties: nil, infoFlags: nil)
+        } catch {
+            self.handleEncoderError(error)
         }
-        self.currentFrameTimeStamp = sampleBuffer.presentationTimeStamp
-        self.frameCount += 1*/
         
         // Get the backing IOSurface.
         guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else { return nil }
