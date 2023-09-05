@@ -33,7 +33,7 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
-    private let logger = Logger()
+    private let logger = Logger.capture
     
     func savePreset(name: String) {
         let options = self.getStoredOptions(name: name)
@@ -445,6 +445,7 @@ class ScreenRecorder: ObservableObject {
     func record() async {
         guard isRunning else { return }
         guard !isRecording else { return }
+        logger.notice("\(self.options.description, privacy: .public)")
         await captureEngine.startRecording(options: self.options)
         self.isRecording = true
     }
@@ -470,7 +471,6 @@ class ScreenRecorder: ObservableObject {
     
     /// - Tag: UpdateCaptureConfig
     private func updateEngine() {
-        print("updateengine called")
         guard isRunning else { return }
         Task {
             await captureEngine.update(configuration: streamConfiguration, filter: contentFilter)

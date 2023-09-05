@@ -23,6 +23,8 @@ class VTEncoder: NSObject {
     var destWidth: Int
     var destHeight: Int
     
+    private let logger = Logger.encoder
+    
     init(options: Options) async {
         self.destWidth = options.destWidth
         self.destHeight = options.destHeight

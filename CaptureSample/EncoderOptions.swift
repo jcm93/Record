@@ -122,14 +122,30 @@ public struct Options: @unchecked Sendable {
     /// A read only property that shows the configuration values user provides.
     public var description: String {
         return """
+        Encoder session started with options:
             bitrate           : \(destBitRate) bps
             cbr               : \(rateControl)
-            codec             : \(codec)
+            codec             : \(codec.description)
             dimensions        : \(destWidth) x \(destHeight)
             keyframe-duration : \(maxKeyFrameIntervalDuration) sec
             keyframe-interval : \(maxKeyFrameInterval) frames
             out               : \(destMovieURL)
             pixel-format      : \(pixelFormat)
+            rate-control      : \(rateControl)
+            icc-profile       : \(iccProfile.debugDescription)
+            bit-depth         : \(bitDepth)
+            color-primaries   : \(colorPrimaries)
+            transfer-function : \(transferFunction)
+            yuv-matrix        : \(yuvMatrix)
+            b-frames          : \(bFrames)
+            crf-value         : \(crfValue)
+            gamma-value       : \(gammaValue)
+            converts-color    : \(convertsColorSpace)
+            target-space      : \(targetColorSpace)
+            uses-ICC          : \(usesICC)
+            scales-output     : \(scales)
+            uses-buffer       : \(usesReplayBuffer)
+            replay-duration   : \(replayBufferDuration)
         """
     }
 

@@ -1,4 +1,5 @@
 import AVFoundation
+import OSLog
 
 /// A type that receives compressed frames and creates a destination movie file.
 public class VideoSink {
@@ -16,6 +17,8 @@ public class VideoSink {
     var stupidTemporaryBuffer = [CMSampleBuffer]()
     
     private var bookmarkedURL: URL?
+    
+    private let logger = Logger.videoSink
     
     /// Creates a video sink or throws an error if it fails.
     /// - Parameters:
@@ -86,7 +89,8 @@ public class VideoSink {
             if assetWriterInput.isReadyForMoreMediaData {
                 assetWriterInput.append(sbuf)
             } else {
-                print(String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds))
+                let debugString = String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds)
+                self.logger.fault("\(debugString, privacy: .public)")
             }
         }
     }

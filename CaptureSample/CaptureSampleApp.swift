@@ -5,6 +5,7 @@ Abstract:
 The entry point into this app.
 */
 import SwiftUI
+import OSLog
 
 @main
 struct CaptureSampleApp: App {
@@ -72,4 +73,14 @@ struct CaptureSampleApp: App {
             TestPatternView(fps: $screenRecorder.framesPerSecond)
         }
     }
+}
+
+extension Logger {
+    private static var subsystem = Bundle.main.bundleIdentifier!
+
+    static let encoder = Logger(subsystem: subsystem, category: "encoder")
+
+    static let videoSink = Logger(subsystem: subsystem, category: "videoSink")
+    
+    static let capture = Logger(subsystem: subsystem, category: "capture")
 }
