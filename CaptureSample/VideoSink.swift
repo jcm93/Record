@@ -152,6 +152,6 @@ public class VideoSink {
         if assetWriter.status == .failed {
             throw assetWriter.error!
         }
-        bookmarkedURL!.stopAccessingSecurityScopedResource()
+        bookmarkedURL?.stopAccessingSecurityScopedResource()
     }
 }
