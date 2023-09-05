@@ -11,6 +11,7 @@ import VideoToolbox
 import AVFAudio
 import CoreGraphics
 import AppKit
+import OSLog
 
 class VTEncoder: NSObject {
     
