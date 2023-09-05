@@ -58,13 +58,13 @@ jobs:
           if [ $scheme = default ]; then scheme=$(cat default); fi
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
           file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
-          xcodebuild -arch arm64 -derivedDataPath build -scheme "$scheme" -configuration Release clean build -"$filetype_parameter" "$file_to_build" && exit ${PIPESTATUS[0]}
+          xcodebuild -arch arm64 -derivedDataPath build -scheme "$scheme" -configuration Debug clean build -"$filetype_parameter" "$file_to_build" && exit ${PIPESTATUS[0]}
       - name: Compress Record.app
         run: |
-          cd build/Build/Products/Release/
+          cd build/Build/Products/Debug/
           tar -cvJf Record.tar.xz Record.app
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: Record.tar.xz
-          path: build/Build/Products/Release/Record.tar.xz
+          path: build/Build/Products/Debug/Record.tar.xz
