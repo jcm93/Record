@@ -26,7 +26,7 @@ class VTEncoder: NSObject {
     
     private let logger = Logger.encoder
     
-    init?(options: Options) async {
+    init?(options: Options) async throws {
         self.destWidth = options.destWidth
         self.destHeight = options.destHeight
         super.init()
@@ -44,7 +44,8 @@ class VTEncoder: NSObject {
                                              compressionSessionOut: &self.session)
         guard err == noErr, self.session != nil else {
             logger.critical("Failed to create encoding session: \(err, privacy: .public)")
-            fatalError("VTCompressionSession creation failed (\(err))!")
+            let error = NSError(domain: NSOSStatusErrorDomain, code: Int(err))
+            throw error
         }
         await self.configureSession(options: options)
         do {
@@ -59,7 +60,8 @@ class VTEncoder: NSObject {
                                            replayBufferDuration: options.replayBufferDuration)
         } catch {
             logger.critical("Failed to create video sink: \(err, privacy: .public)")
-            return nil
+            let error = NSError(domain: NSOSStatusErrorDomain, code: Int(err))
+            throw error
         }
         if options.convertsColorSpace || options.scales {
             var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)

@@ -89,8 +89,8 @@ class CaptureEngine: @unchecked Sendable {
         powerMeter.processSilence()
     }
     
-    func startRecording(options: Options) async {
-        self.streamOutput.encoder = await VTEncoder(options: options)
+    func startRecording(options: Options) async throws {
+        self.streamOutput.encoder = try await VTEncoder(options: options)
     }
     
     func stopRecording() async {

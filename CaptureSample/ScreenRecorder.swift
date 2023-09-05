@@ -189,6 +189,9 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
+    @Published var errorText = ""
+    @Published var isShowingError = false
+    
     @AppStorage("bitRate") var bitRate: Int = 10000 {
         didSet { updateEngine() }
     }
@@ -446,8 +449,14 @@ class ScreenRecorder: ObservableObject {
         guard isRunning else { return }
         guard !isRecording else { return }
         logger.notice("\(self.options.description, privacy: .public)")
-        await captureEngine.startRecording(options: self.options)
-        self.isRecording = true
+        do {
+            try await captureEngine.startRecording(options: self.options)
+            self.isRecording = true
+        } catch {
+            self.isRecording = false
+            self.errorText = error.localizedDescription
+            //todo add an alert
+        }
     }
     
     func stopRecord() async {

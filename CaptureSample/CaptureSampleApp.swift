@@ -11,6 +11,7 @@ import OSLog
 struct CaptureSampleApp: App {
     @State private var isShowingAlert = false
     @State private var isShowingDeleteAlert = false
+    @State private var isShowingErrorAlert = false
     
     @State private var presetName: String = ""
     
@@ -43,6 +44,13 @@ struct CaptureSampleApp: App {
                     }
                 }, message: {
                     Text("Are you sure you want to remove the preset \"\(self.screenRecorder.selectedPreset?.presetName ?? "")\"?")
+                })
+                .alert("Error", isPresented: $screenRecorder.isShowingError, actions: {
+                    Button("OK") {
+                        self.screenRecorder.isShowingError = false
+                    }
+                }, message: {
+                    Text("\(self.screenRecorder.errorText)")
                 })
         }
         .commands {
