@@ -90,7 +90,6 @@ class CaptureEngine: @unchecked Sendable {
     }
     
     func startRecording(options: Options) async {
-        //let options = Options(destMovieURL: "./poopy.mp4", destFileType: .mp4, destWidth: 3456, destHeight: 2234, destBitRate: 15000000, codec: kCMVideoCodecType_HEVC, pixelFormat: kCVPixelFormatType_32BGRA, maxKeyFrameIntervalDuration: 0.0, maxKeyFrameInterval: 2, cbr: false, verbose: true, iccProfile: nil, bitDepth: 8)
         self.streamOutput.encoder = await VTEncoder(options: options)
     }
     

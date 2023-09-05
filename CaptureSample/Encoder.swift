@@ -26,7 +26,7 @@ class VTEncoder: NSObject {
     
     private let logger = Logger.encoder
     
-    init(options: Options) async {
+    init?(options: Options) async {
         self.destWidth = options.destWidth
         self.destHeight = options.destHeight
         super.init()
@@ -43,6 +43,7 @@ class VTEncoder: NSObject {
                                              refcon: nil,
                                              compressionSessionOut: &self.session)
         guard err == noErr, self.session != nil else {
+            logger.critical("Failed to create encoding session: \(err, privacy: .public)")
             fatalError("VTCompressionSession creation failed (\(err))!")
         }
         await self.configureSession(options: options)
@@ -57,21 +58,22 @@ class VTEncoder: NSObject {
                                            usesReplayBuffer: options.usesReplayBuffer,
                                            replayBufferDuration: options.replayBufferDuration)
         } catch {
-            fatalError("dong")
+            logger.critical("Failed to create video sink: \(err, privacy: .public)")
+            return nil
         }
         if options.convertsColorSpace || options.scales {
             var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
             if noErr != err2 {
-                print("error creating pixel transfer session")
+                logger.fault("Error creating pixel transfer session: \(err2, privacy: .public)")
             }
             err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DownsamplingMode, value: kVTDownsamplingMode_Average)
             if noErr != err2 {
-                print("error setting downsampling mode on pixel transfer")
+                logger.fault("Error setting downsampling mode on pixel transfer: \(err2, privacy: .public)")
             }
             if options.convertsColorSpace {
                 err2 = VTSessionSetProperty(self.pixelTransferSession!, key: kVTPixelTransferPropertyKey_DestinationColorPrimaries, value: options.targetColorSpace!)
                 if noErr != err2 {
-                    print("error setting color primaries on pixel transfer")
+                    logger.fault("Error setting color primaries on pixel transfer: \(err2, privacy: .public)")
                 }
             }
         }
@@ -85,85 +87,85 @@ class VTEncoder: NSObject {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_HEVC_Main_AutoLevel)
         }
         if noErr != err {
-            print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_ProfileLevel) failed (\(err))")
+            logger.fault("Failed to set profile level: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanFalse)
         if noErr != err {
-            print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_RealTime) failed (\(err))")
+            logger.fault("Failed to set realtime status: \(err, privacy: .public)")
         }
         
         switch options.rateControl {
         case .crf:
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_Quality, value: options.crfValue)
             if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_Quality) failed (\(err))")
+                logger.fault("Failed to set CRF value: \(err, privacy: .public)")
             }
         case .cbr:
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: (options.destBitRate * 1000) as CFNumber)
             if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AverageBitRate) failed (\(err))")
+                logger.fault("Failed to set target average bitrate: \(err, privacy: .public)")
             }
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ConstantBitRate, value: kCFBooleanTrue)
             if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_ConstantBitRate) failed (\(err))")
+                logger.fault("Failed to enable CBR: \(err, privacy: .public)")
             }
         default:
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AverageBitRate, value: (options.destBitRate * 1000) as CFNumber)
             if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AverageBitRate) failed (\(err))")
+                logger.fault("Failed to set target average bitrate: \(err, privacy: .public)")
             }
             let byteLimit = (Double(options.destBitRate * 1000) * 1.5) as CFNumber
             let secLimit = Double(1.0) as CFNumber
             let limitsArray = [ byteLimit, secLimit ] as CFArray
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_DataRateLimits, value: limitsArray)
             if noErr != err {
-                print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_DataRateLimits) failed (\(err))")
+                logger.fault("Failed to set advanced bitrate limits: \(err, privacy: .public)")
             }
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowTemporalCompression, value: kCFBooleanTrue)
         if noErr != err {
-            print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AllowTemporalCompression) failed (\(err))")
+            logger.fault("Failed to enable temporal compression: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_AllowFrameReordering, value: options.bFrames ? kCFBooleanTrue : kCFBooleanFalse)
         if noErr != err {
-            print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_AllowFrameReordering) failed (\(err))")
+            logger.fault("Failed to set b-frames status: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameInterval, value: options.maxKeyFrameInterval as CFNumber)
         if noErr != err {
-            print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_MaxKeyFrameInterval) failed (\(err))")
+            logger.fault("Failed to set max keyframe interval: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration,
                                    value: options.maxKeyFrameIntervalDuration as CFNumber)
         if noErr != err {
-            print("Warning: VTSessionSetProperty(kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration) failed (\(err))")
+            logger.fault("Failed to set max keyframe interval duration: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ColorPrimaries, value: options.colorPrimaries)
         if noErr != err {
-            print("setting color primaries failed")
+            logger.fault("Failed to set color primaries: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_OutputBitDepth, value: options.bitDepth as CFNumber)
         if noErr != err {
-            print("setting output bit depth failed")
+            logger.fault("Failed to set bit depth: \(err, privacy: .public)")
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_YCbCrMatrix, value: options.yuvMatrix)
         if noErr != err {
-            print("setting ycbcr matrix failed")
+            logger.fault("Failed to set YCbCr matrix: \(err, privacy: .public)")
         }
         if options.usesICC {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ICCProfile, value: options.iccProfile)
             if noErr != err {
-                print("setting icc profile failed")
+                logger.fault("Failed to set ICC profile: \(err, privacy: .public)")
             }
         }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_TransferFunction, value: options.transferFunction)
         if noErr != err {
-            print("setting transfer function failed")
+            logger.fault("Failed to set transfer function: \(err, privacy: .public)")
         }
         print("set settings")
         if options.gammaValue != nil && options.transferFunction == TransferFunctionSetting.useGamma.stringValue() {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: options.gammaValue! as CFNumber)
             if noErr != err {
-                print("setting gamma failed")
+                logger.fault("Failed to set gamma value: \(err, privacy: .public)")
             }
         }
     }
@@ -209,8 +211,7 @@ class VTEncoder: NSObject {
             try await self.videoSink.close()
             self.stoppingEncoding = false
         } catch {
-            print(error)
-            fatalError("error")
+            logger.critical("Failed to close file: \(error, privacy: .public)")
         }
     }
     
