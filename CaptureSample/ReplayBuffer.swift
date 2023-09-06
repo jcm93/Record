@@ -52,20 +52,20 @@ class ReplayBuffer {
         var inserted = false
         var readIndex = startIndex
         let newIsKeyframe = element.isKeyframe()
-        while !inserted && !bufferTrimmed {
+        while !(inserted && bufferTrimmed) {
             let logicalReadIndex = readIndex % self.buffer.count
             let bufferHere = self.buffer[logicalReadIndex]
             let difference = (element.presentationTimeStamp.seconds) - (bufferHere.presentationTimeStamp.seconds)
             let existingIsKeyframe = bufferHere.isKeyframe()
             if difference > Double(self.maxLengthInSeconds) {
                 if !inserted {
-                    self.buffer[logicalReadIndex] = element
+                    self.buffer.insert(element, at: logicalReadIndex)
                     self.startIndex = (self.startIndex + 1) % self.buffer.count
                     readIndex += 1
                     inserted = true
                 } else {
                     if !existingIsKeyframe || newIsKeyframe {
-                        self.buffer.remove(at: readIndex)
+                        self.buffer.remove(at: logicalReadIndex)
                     } else {
                         readIndex += 1
                     }
@@ -106,7 +106,7 @@ class ReplayBuffer {
 extension CMSampleBuffer {
     func isKeyframe() -> Bool {
         if self.formatDescription?.mediaType == .audio {
-            return false
+            return true
         }
         if let attachmentArray = CMSampleBufferGetSampleAttachmentsArray(self, createIfNecessary: false) as? NSArray {
             let attachment = attachmentArray[0] as! NSDictionary
