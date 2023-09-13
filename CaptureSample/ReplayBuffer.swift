@@ -13,6 +13,7 @@ import VideoToolbox
 class ReplayBuffer {
     
     var startIndex = 0
+    var isStopping = false
     
     var buffer: [CMSampleBuffer]
     
@@ -53,6 +54,7 @@ class ReplayBuffer {
         var readIndex = startIndex
         let newIsKeyframe = element.isKeyframe()
         while !(inserted && bufferTrimmed) {
+            guard !self.isStopping else { return }
             let logicalReadIndex = readIndex % self.buffer.count
             let bufferHere = self.buffer[logicalReadIndex]
             let difference = (element.presentationTimeStamp.seconds) - (bufferHere.presentationTimeStamp.seconds)

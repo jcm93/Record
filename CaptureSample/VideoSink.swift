@@ -3,9 +3,9 @@ import OSLog
 
 /// A type that receives compressed frames and creates a destination movie file.
 public class VideoSink {
-    private let assetWriter: AVAssetWriter
-    private let assetWriterInput: AVAssetWriterInput
-    private var assetWriterAudioInput: AVAssetWriterInput
+    private var assetWriter: AVAssetWriter!
+    private var assetWriterInput: AVAssetWriterInput!
+    private var assetWriterAudioInput: AVAssetWriterInput!
     private var sessionStarted = false
     private var hasInitAudio = false
     var replayBuffer: ReplayBuffer?
@@ -20,6 +20,15 @@ public class VideoSink {
     
     private let logger = Logger.videoSink
     
+    var fileURL: URL
+    var fileType: AVFileType
+    var codec: CMVideoCodecType
+    var width: Int
+    var height: Int
+    var isRealTime: Bool
+    var usesReplayBuffer: Bool
+    var replayBufferDuration: Int
+    
     /// Creates a video sink or throws an error if it fails.
     /// - Parameters:
     ///   - filePath: The destination movie file path.
@@ -31,6 +40,24 @@ public class VideoSink {
     ///                 Set to `true` if video source operates in real-time like a live camera.
     ///                 Set to `false` for offline transcoding, which may be faster or slower than real-time.
     public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) throws {
+        self.fileURL = fileURL
+        self.fileType = fileType
+        self.codec = codec
+        self.width = width
+        self.height = height
+        self.isRealTime = isRealTime
+        self.usesReplayBuffer = usesReplayBuffer
+        self.replayBufferDuration = replayBufferDuration
+        if usesReplayBuffer {
+            self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
+            self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
+        } else {
+            try prepareToWrite()
+        }
+        self.isStopping = false
+    }
+    
+    func prepareToWrite() throws {
         //very ugly
         let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
         var isStale = false
@@ -62,16 +89,12 @@ public class VideoSink {
         let cmFormat = try CMFormatDescription(audioStreamBasicDescription: audioFormatDescription)
         assetWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: outputSettings, sourceFormatHint: cmFormat)
         
-        if isRealTime {
-            assetWriterInput.expectsMediaDataInRealTime = true
-            assetWriterAudioInput.expectsMediaDataInRealTime = true
-        }
+
+        assetWriterInput.expectsMediaDataInRealTime = true
+        assetWriterAudioInput.expectsMediaDataInRealTime = true
+
         assetWriter.add(assetWriterInput)
         assetWriter.add(assetWriterAudioInput)
-        if usesReplayBuffer {
-            self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
-            self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
-        }
         self.isStopping = false
     }
     
@@ -120,7 +143,9 @@ public class VideoSink {
     /// Closes the destination movie file.
     public func close() async throws {
         self.isStopping = true
+        self.replayBuffer?.isStopping = true
         if self.replayBuffer != nil {
+            try self.prepareToWrite()
             let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
             if !self.sessionStarted { try self.startSession(firstNonKeyframe!) }
             var done = false
