@@ -20,20 +20,9 @@ class AudioLevelsProvider: ObservableObject {
 @MainActor
 class ScreenRecorder: ObservableObject {
     
-    /// The supported capture types.
-    
-    func getCodecType(_ storableOptions: OptionsStorable) -> CMVideoCodecType {
-        switch storableOptions.encoderSetting {
-        case .H264:
-            return kCMVideoCodecType_H264
-        case .H265:
-            return kCMVideoCodecType_HEVC
-        case .ProRes:
-            return storableOptions.proResSetting.codecValue()
-        }
-    }
-    
     private let logger = Logger.capture
+    
+    //MARK: Presets, options storage
     
     func savePreset(name: String) {
         let options = self.getStoredOptions(name: name)
@@ -89,15 +78,12 @@ class ScreenRecorder: ObservableObject {
     @Published var dummy: String = ""
     
     var options: Options {
-        //self.streamConfiguration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.framesPerSecond))
         if self.usesICCProfile {
             self.iccProfile = NSScreen.main?.colorSpace?.cgColorSpace?.copyICCData()
         }
         
         let storableOptions = self.getStoredOptions(name: "")
-        
         let options = self.optionsFromPreset(storableOptions: storableOptions)
-        
         return options
     }
     
@@ -139,10 +125,12 @@ class ScreenRecorder: ObservableObject {
         let fileType = storableOptions.fileType == .mov ? AVFileType.mov : AVFileType.mp4
         let width = self.doesScale ? self.scaleWidth : self.captureWidth
         let height = self.doesScale ? self.scaleHeight : self.captureHeight
-        let codec = self.getCodecType(storableOptions)
-        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: self.getCodecType(storableOptions), pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC, scales: storableOptions.scales, usesReplayBuffer: storableOptions.usesReplayBuffer, replayBufferDuration: storableOptions.replayBufferDuration)
+        let codec = getCodecType(storableOptions)
+        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: codec, pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC, scales: storableOptions.scales, usesReplayBuffer: storableOptions.usesReplayBuffer, replayBufferDuration: storableOptions.replayBufferDuration)
         return options
     }
+    
+    //MARK: Observed variables
     
     @Published var isRunning = false
     @Published var isRecording = false
@@ -154,30 +142,6 @@ class ScreenRecorder: ObservableObject {
     @AppStorage("scaleHeight") var scaleHeight: Int = 0
     
     @AppStorage("doesScale") var doesScale: Bool = false
-    
-
-    
-    func dimensionsChanged(width: Int, height: Int) {
-        //this is a pretty silly function
-        if width == 0 && height == 0 {
-            return
-        }
-        let aspectRatio = Double(self.captureWidth) / Double(self.captureHeight)
-        if height > 0 {
-            let prospectiveWidth = aspectRatio * Double(height)
-            //ignore changes within 10 pixels for fine tuning
-            if abs(Double(scaleWidth) - prospectiveWidth) > 10 {
-                //force even numbers
-                self.scaleWidth = Int(round(prospectiveWidth / 2.0)) * 2
-            }
-        } else {
-            let prospectiveHeight = Double(width) / aspectRatio
-            if abs(Double(scaleHeight) - prospectiveHeight) > 10 {
-                self.scaleHeight = Int(round(prospectiveHeight / 2.0)) * 2
-            }
-        }
-        //this should be rewritten someday
-    }
     
     @Published var matchesPreset = false
     @Published var presetName = ""
@@ -210,7 +174,6 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
-    // MARK: - Video Properties
     @Published var captureType: CaptureType = .display {
         didSet { updateEngine() }
     }
@@ -350,10 +313,8 @@ class ScreenRecorder: ObservableObject {
         }
     }
     @Published var isAppAudioExcluded = false { didSet { updateEngine() } }
-    @Published private(set) var audioLevelsProvider = AudioLevelsProvider()
-    // A value that specifies how often to retrieve calculated audio levels.
-    private let audioLevelRefreshRate: TimeInterval = 0.1
-    private var audioMeterCancellable: AnyCancellable?
+    
+    //MARK: Capture functions
     
     // The object that manages the SCStream.
     private let captureEngine = CaptureEngine()
@@ -363,6 +324,28 @@ class ScreenRecorder: ObservableObject {
     
     // Combine subscribers.
     private var subscriptions = Set<AnyCancellable>()
+    
+    func dimensionsChanged(width: Int, height: Int) {
+        //this is a pretty silly function
+        if width == 0 && height == 0 {
+            return
+        }
+        let aspectRatio = Double(self.captureWidth) / Double(self.captureHeight)
+        if height > 0 {
+            let prospectiveWidth = aspectRatio * Double(height)
+            //ignore changes within 10 pixels for fine tuning
+            if abs(Double(scaleWidth) - prospectiveWidth) > 10 {
+                //force even numbers
+                self.scaleWidth = Int(round(prospectiveWidth / 2.0)) * 2
+            }
+        } else {
+            let prospectiveHeight = Double(width) / aspectRatio
+            if abs(Double(scaleHeight) - prospectiveHeight) > 10 {
+                self.scaleHeight = Int(round(prospectiveHeight / 2.0)) * 2
+            }
+        }
+        //this should be rewritten someday
+    }
     
     var canRecord: Bool {
         get async {
@@ -380,13 +363,6 @@ class ScreenRecorder: ObservableObject {
         guard !isSetup else { return }
         // Refresh the lists of capturable content.
         await self.refreshAvailableContent()
-        /*Timer.publish(every: 3, on: .main, in: .common).autoconnect().sink { [weak self] _ in
-            guard let self = self else { return }
-            Task {
-                await self.refreshAvailableContent()
-            }
-        }
-        .store(in: &subscriptions)*/
     }
     
     /// Starts capturing screen content.
@@ -419,21 +395,10 @@ class ScreenRecorder: ObservableObject {
                     contentSize = frame.size
                 }
             }
-            //self.captureEngine.altStartCapture(configuration: config, filter: filter, callbackFunction: self.captureUpdate)
         } catch {
             logger.error("\(error.localizedDescription)")
             // Unable to start the stream. Set the running state to false.
             isRunning = false
-        }
-    }
-    
-    func captureUpdate(frame: CapturedFrame) {
-        DispatchQueue.main.async {
-            self.capturePreview.updateFrame(frame)
-            if self.contentSize != frame.size {
-                // Update the content size if it changed.
-                self.contentSize = frame.size
-            }
         }
     }
     
@@ -462,7 +427,6 @@ class ScreenRecorder: ObservableObject {
         } catch {
             self.isRecording = false
             self.errorText = error.localizedDescription
-            //todo add an alert
             self.isShowingError = true
         }
     }

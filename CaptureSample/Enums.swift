@@ -321,5 +321,15 @@ public enum CaptureColorSpace: Int, Codable, CaseIterable {
             return CGColorSpace.extendedLinearITUR_2020
         }
     }
-    
+}
+
+public func getCodecType(_ storableOptions: OptionsStorable) -> CMVideoCodecType {
+    switch storableOptions.encoderSetting {
+    case .H264:
+        return kCMVideoCodecType_H264
+    case .H265:
+        return kCMVideoCodecType_HEVC
+    case .ProRes:
+        return storableOptions.proResSetting.codecValue()
+    }
 }

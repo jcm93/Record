@@ -13,6 +13,11 @@ import CoreGraphics
 import AppKit
 import OSLog
 
+enum EncoderError: Error {
+    case videoSinkAlreadyActive
+    case initialFrameNotEncoded
+}
+
 class VTEncoder: NSObject {
     
     var session: VTCompressionSession!
@@ -24,8 +29,10 @@ class VTEncoder: NSObject {
     var destWidth: Int
     var destHeight: Int
     
-    var shouldDestroy = false
+    var criticalErrorEncountered = false
     var currentError: Error?
+    
+    var hasStarted = false
     
     private let logger = Logger.encoder
     
@@ -51,21 +58,14 @@ class VTEncoder: NSObject {
             throw error
         }
         await self.configureSession(options: options)
-        do {
-            //self.restoreFileAccess(options.destMovieURL)
-            self.videoSink = try VideoSink(fileURL: options.destMovieURL,
-                                           fileType: options.destFileType,
-                                           codec: options.codec,
-                                           width: options.destWidth,
-                                           height: options.destHeight,
-                                           isRealTime: true,
-                                           usesReplayBuffer: options.usesReplayBuffer,
-                                           replayBufferDuration: options.replayBufferDuration)
-        } catch {
-            logger.critical("Failed to create video sink: \(err, privacy: .public)")
-            let error = NSError(domain: NSOSStatusErrorDomain, code: Int(err))
-            throw error
-        }
+        self.videoSink = VideoSink(fileURL: options.destMovieURL,
+                                       fileType: options.destFileType,
+                                       codec: options.codec,
+                                       width: options.destWidth,
+                                       height: options.destHeight,
+                                       isRealTime: true,
+                                       usesReplayBuffer: options.usesReplayBuffer,
+                                       replayBufferDuration: options.replayBufferDuration)
         if options.convertsColorSpace || options.scales {
             var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
             if noErr != err2 {
@@ -175,46 +175,62 @@ class VTEncoder: NSObject {
         }
     }
     
-    func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) throws {
-        if self.shouldDestroy {
+    func startSession(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) throws {
+        guard !self.criticalErrorEncountered else {
             throw self.currentError!
         }
+        guard !self.videoSink.hasStarted else {
+            throw EncoderError.videoSinkAlreadyActive
+        }
+        let pixelBufferToEncodeFrom = self.pixelTransferSession != nil ? self.pixelTransferBuffer! : buffer
+        if let pixelTransferSession = pixelTransferSession {
+            if self.pixelTransferBuffer == nil {
+                self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
+            }
+            VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: pixelTransferBuffer)
+        }
+        VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+            (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
+            if sbuf != nil {
+                do {
+                    try self.videoSink.startSession(sbuf!)
+                    self.hasStarted = true
+                } catch {
+                    self.currentError = error
+                    self.criticalErrorEncountered = true
+                    self.logger.critical("Failed to initialize video sink: \(error, privacy: .public)")
+                }
+            } else {
+                self.criticalErrorEncountered = true
+                self.currentError = EncoderError.initialFrameNotEncoded
+                self.logger.critical("Failed to encode initial frame of session.")
+            }
+        }
+    }
+    
+    func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
         if self.stoppingEncoding != true {
+            let pixelBufferToEncodeFrom = self.pixelTransferSession != nil ? self.pixelTransferBuffer! : buffer
             if let pixelTransferSession = pixelTransferSession {
                 if self.pixelTransferBuffer == nil {
                     self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
                 }
                 VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: pixelTransferBuffer)
-                VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelTransferBuffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
-                    (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
-                    if sbuf != nil {
-                        do {
-                            try self.videoSink.sendSampleBuffer(sbuf!)
-                        } catch {
-                            self.currentError = error
-                            self.shouldDestroy = true
-                            self.logger.critical("Failed to send video sample buffer: \(error, privacy: .public)")
-                        }
-                    }
-                }
-            } else {
-                VTCompressionSessionEncodeFrame(self.session, imageBuffer: buffer, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
-                    (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
-                    if sbuf != nil {
-                        do {
-                            try self.videoSink.sendSampleBuffer(sbuf!)
-                        } catch {
-                            self.currentError = error
-                            self.shouldDestroy = true
-                            self.logger.critical("Failed to send video sample buffer: \(error, privacy: .public)")
-                        }
-                    }
+            }
+            VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+                (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
+                if sbuf != nil {
+                    self.videoSink.sendSampleBuffer(sbuf!)
                 }
             }
+        } else {
+            /// User stopped the recording session, so don't add any more frames to it.
+            return
         }
     }
     
     func encodeAudioFrame(_ buffer: CMSampleBuffer) {
+        //todo should also throw
         self.videoSink.sendAudioBuffer(buffer)
     }
     
@@ -228,6 +244,7 @@ class VTEncoder: NSObject {
         }
         //CFRelease(self.session)
         try await self.videoSink.close()
+        self.hasStarted = false
         self.stoppingEncoding = false
     }
     

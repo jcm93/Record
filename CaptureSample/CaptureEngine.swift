@@ -9,9 +9,7 @@ import Foundation
 import AVFAudio
 import ScreenCaptureKit
 import OSLog
-import Combine
 import VideoToolbox
-import Accelerate
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
@@ -64,21 +62,6 @@ class CaptureEngine: @unchecked Sendable {
         }
     }
     
-    func altStartCapture(configuration: SCStreamConfiguration, filter: SCContentFilter, callbackFunction: @escaping (CapturedFrame) -> Void) {
-        self.streamOutput = CaptureEngineStreamOutput(continuation: nil)
-        self.streamOutput.altFrameHandler = callbackFunction
-        do {
-            stream = SCStream(filter: filter, configuration: configuration, delegate: streamOutput)
-            
-            // Add a stream output to capture screen content.
-            try stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: self.videoSampleBufferQueue)
-            try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: self.audioSampleBufferQueue)
-            stream?.startCapture()
-        } catch {
-            print(error)
-        }
-    }
-    
     func stopCapture() async {
         do {
             try await stream?.stopCapture()
@@ -119,12 +102,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var destinationPixelBuffer: CVPixelBuffer?
     var srcData: UnsafeMutableRawPointer!
     var dstData: UnsafeMutableRawPointer!
-    var otherDestBuffer: CVPixelBuffer!
-    private let encoderQueue = DispatchQueue(label: "com.jcm.Record.EncoderQueue")
-    var altFrameHandler: ((CapturedFrame) -> Void)?
-    var currentFrameTimeStamp: CMTime?
-    var frameCount: Int = 0
-    var audioCount = 0
+    private let frameHandlerQueue = DispatchQueue(label: "com.jcm.Record.FrameHandlerQueue")
     
     private let logger = Logger.capture
     
@@ -139,52 +117,44 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     
     /// - Tag: DidOutputSampleBuffer
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of outputType: SCStreamOutputType) {
-        
-        // Return early if the sample buffer is invalid.
-        guard sampleBuffer.isValid else {
-            print("invalid sample")
-            return
-        }
-        
-        // Determine which type of data the sample buffer contains.
-        switch outputType {
-        case .screen:
-            // Create a CapturedFrame structure for a video sample buffer.
-            self.encoderQueue.schedule {
+        /// This is either called from VideoSampleBufferQueue, or AudioSampleBufferQueue.
+        /// We assume that we don't want to perform lots of work on these queues, so they
+        /// can be maximally available to handle new frames as they're delivered by SCK.
+        /// Therefore, immediately dispatch to the frame handler queue.
+
+        self.frameHandlerQueue.schedule {
+            guard sampleBuffer.isValid else {
+                print("invalid sample")
+                return
+            }
+            switch outputType {
+            case .screen:
                 if let frame = self.createFrame(for: sampleBuffer) {
                     self.capturedFrameHandler?(frame)
                 }
+            case .audio:
+                if let copy = self.createAudioFrame(for: sampleBuffer) {
+                    self.encoder?.encodeAudioFrame(copy)
+                }
+            @unknown default:
+                fatalError("Encountered unknown stream output type: \(outputType)")
             }
-        case .audio:
-            // Create an AVAudioPCMBuffer from an audio sample buffer.
-            self.encoderQueue.schedule {
-                let copy = self.createAudioFrame(for: sampleBuffer)
-                self.encoder?.encodeAudioFrame(copy!)
-            }
-            //guard let samples = createPCMBuffer(for: sampleBuffer) else { return }
-            //pcmBufferHandler?(samples)
-        @unknown default:
-            fatalError("Encountered unknown stream output type: \(outputType)")
         }
     }
     
-    func handleEncoderError(_ error: Error) {
+    func handleEncoderInitializationError(_ error: Error) {
+        /// we don't need to interrupt the capture stream entirely, but it's
+        /// the only good way we have to propagate the error from here, so
+        /// we may as well.
         self.encoderError = error
-        Task {
-            do {
-                try await self.encoder.stopEncoding()
-                self.encoder = nil
-                self.handleEncoderError(error)
-            } catch {
-                self.logger.critical("Error while shutting down encoder due to error. \(error, privacy: .public)")
-            }
-        }
+        self.encoder = nil
+        self.continuation?.finish(throwing: self.encoderError!)
+        //tear down the video sink here todo
     }
     
     /// Create a `CapturedFrame` for the video sample buffer.
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         
-        // Retrieve the array of metadata attachments from the sample buffer.
         guard let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
                                                                              createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
               let attachments = attachmentsArray.first else {
@@ -193,20 +163,32 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         }
         
         
-        // Validate the status of the frame. If it isn't `.complete`, return nil.
+        /// Discard frames that are either blank or identical to the previous one (`.idle`).
         let statusRawValue = attachments[SCStreamFrameInfo.status] as! Int
         let status = SCFrameStatus(rawValue: statusRawValue)
         if status != SCFrameStatus.complete {
             return nil
         }
         
-        // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return nil }
         
-        do {
-            try self.encoder?.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: sampleBuffer.duration, properties: nil, infoFlags: nil)
-        } catch {
-            self.handleEncoderError(error)
+        if let encoder = self.encoder {
+            /// `VTCompressionSessionEncodeFrame` itself does not throw errors, it just comes back with `nil` if
+            /// a problem is encountered. Rather, this is a way to propagate errors on the video sink, in case
+            /// there is a problem identified while writing to the file that the user will want to be made aware
+            /// of. It is only possible to throw an error here while starting a session with AssetWriter, so
+            /// maybe this should be revised to be handled differently and not throw, with the first frame of
+            /// the session handled separately. TODO
+            
+            if self.encoder.hasStarted {
+                encoder.encodeFrame(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: sampleBuffer.duration, properties: nil, infoFlags: nil)
+            } else {
+                do {
+                    try encoder.startSession(buffer: pixelBuffer, timeStamp: sampleBuffer.presentationTimeStamp, duration: sampleBuffer.duration, properties: nil, infoFlags: nil)
+                } catch {
+                    self.handleEncoderInitializationError(error)
+                }
+            }
         }
         
         // Get the backing IOSurface.
@@ -228,7 +210,14 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     }
     
     private func createAudioFrame(for sampleBuffer: CMSampleBuffer) -> CMSampleBuffer? {
-        //deep copy CMSampleBuffer
+        /// If we are using the replay buffer, we want to store some number of frames
+        /// for later. We can't store the frames provided by SCK directly, though,
+        /// because SCK repurposes the underlying buffers. If we incidentally hold
+        /// references to them, SCK gives up and dies and stops providing audio.
+        /// Instead, create a deep copy of the sample buffer and use that. This copy
+        /// procedure is unnecessary if we are not using the replay buffer, but the
+        /// penalty for copying is small enough that we just do it anyway.
+
         let copy = sampleBuffer.deepCopy()
         return copy
     }

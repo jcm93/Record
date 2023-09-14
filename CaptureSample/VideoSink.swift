@@ -15,6 +15,7 @@ public class VideoSink {
     var audioFrameCount = 0
     var usingReplayBuffer = true
     var stupidTemporaryBuffer = [CMSampleBuffer]()
+    var hasStarted = false
     
     private var bookmarkedURL: URL?
     
@@ -39,7 +40,7 @@ public class VideoSink {
     ///   - isRealTime: A Boolean value that indicates whether the video sink tailors its processing for real-time sources.
     ///                 Set to `true` if video source operates in real-time like a live camera.
     ///                 Set to `false` for offline transcoding, which may be faster or slower than real-time.
-    public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) throws {
+    public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) {
         self.fileURL = fileURL
         self.fileType = fileType
         self.codec = codec
@@ -51,13 +52,43 @@ public class VideoSink {
         if usesReplayBuffer {
             self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
             self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
-        } else {
-            try prepareToWrite()
         }
         self.isStopping = false
     }
     
-    func prepareToWrite() throws {
+    /// Appends a video frame to the destination movie file.
+    /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
+    public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
+        if self.replayBuffer != nil && !self.isStopping {
+            self.replayBufferQueue.schedule {
+                self.replayBuffer!.write(sbuf)
+            }
+        } else {
+            if assetWriterInput.isReadyForMoreMediaData {
+                assetWriterInput.append(sbuf)
+            } else {
+                let debugString = String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds)
+                self.logger.fault("\(debugString, privacy: .public)")
+            }
+        }
+    }
+    
+    func startSession(_ sbuf: CMSampleBuffer) throws {
+        if self.replayBuffer == nil {
+            try initializeAssetWriters(sbuf)
+        }
+        print("started at \(sbuf.presentationTimeStamp.seconds)")
+        if sbuf.formatDescription?.mediaType == .audio {
+            sendAudioBuffer(sbuf)
+        } else {
+            sendSampleBuffer(sbuf)
+        }
+        sessionStarted = true
+    }
+    
+    func initializeAssetWriters(_ sbuf: CMSampleBuffer) throws {
+        ///todo rewrite so that errors are handled, especially around `startAccessingSecurityScopedResource()`
+        ///if initialization here fails, need to tear down the sink from VT
         //very ugly
         let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
         var isStale = false
@@ -96,35 +127,10 @@ public class VideoSink {
         assetWriter.add(assetWriterInput)
         assetWriter.add(assetWriterAudioInput)
         self.isStopping = false
-    }
-    
-    /// Appends a video frame to the destination movie file.
-    /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
-    public func sendSampleBuffer(_ sbuf: CMSampleBuffer) throws {
-        if self.replayBuffer != nil && !self.isStopping {
-            self.replayBufferQueue.schedule {
-                self.replayBuffer!.write(sbuf)
-            }
-        } else {
-            if !sessionStarted {
-                try startSession(sbuf)
-            }
-            if assetWriterInput.isReadyForMoreMediaData {
-                assetWriterInput.append(sbuf)
-            } else {
-                let debugString = String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds)
-                self.logger.fault("\(debugString, privacy: .public)")
-            }
-        }
-    }
-    
-    func startSession(_ sbuf: CMSampleBuffer) throws {
         guard assetWriter.startWriting() else {
             throw assetWriter.error!
         }
         assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
-        print("started at \(sbuf.presentationTimeStamp.seconds)")
-        sessionStarted = true
     }
     
     public func sendAudioBuffer(_ buffer: CMSampleBuffer) {
