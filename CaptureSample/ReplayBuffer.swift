@@ -14,8 +14,11 @@ class ReplayBuffer {
     
     var startIndex = 0
     var isStopping = false
+    var isSaving = true
     
     var buffer: [CMSampleBuffer]
+    
+    var queuedBuffers = [CMSampleBuffer]()
     
     var maxLengthInSeconds: Int
     
@@ -41,6 +44,18 @@ class ReplayBuffer {
             return self.buffer[self.startIndex]
         } else {
             return self.buffer.first
+        }
+    }
+    
+    public func addSampleBuffer(_ sbuf: CMSampleBuffer) {
+        if self.isSaving {
+            self.queuedBuffers.append(sbuf)
+        } else {
+            //clear out the queue
+            for queuedBuffer in queuedBuffers {
+                self.write(queuedBuffer)
+            }
+            self.write(sbuf)
         }
     }
     

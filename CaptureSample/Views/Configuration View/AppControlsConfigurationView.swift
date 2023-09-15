@@ -72,6 +72,15 @@ struct AppControlsConfigurationView: View {
                 .controlSize(.large)
                 .buttonStyle(.borderedProminent)
                 .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
+                Button {
+                    Task { await screenRecorder.saveReplayBuffer() }
+                    
+                } label: {
+                    Text("Save Replay Buffer")
+                }
+                .controlSize(.large)
+                .buttonStyle(.borderedProminent)
+                .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
             } else {
                 Button {
                     Task { await screenRecorder.stopRecord() }

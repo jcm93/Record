@@ -444,6 +444,19 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
+    func saveReplayBuffer() async {
+        do {
+            guard isRecording else { return }
+            try await captureEngine.saveReplayBuffer()
+            self.isRecording = false
+        } catch {
+            self.errorText = "Error while stopping recording. \(error)"
+            self.isShowingError = true
+            logger.critical("Error while stopping recording. \(error, privacy: .public)")
+            self.isRecording = false
+        }
+    }
+    
     /*private func startAudioMetering() {
         audioMeterCancellable = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect().sink { [weak self] _ in
             guard let self = self else { return }

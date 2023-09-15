@@ -182,14 +182,14 @@ class VTEncoder: NSObject {
         guard !self.videoSink.hasStarted else {
             throw EncoderError.videoSinkAlreadyActive
         }
-        let pixelBufferToEncodeFrom = self.pixelTransferSession != nil ? self.pixelTransferBuffer! : buffer
+        let pixelBufferToEncodeFrom = self.pixelTransferBuffer != nil ? self.pixelTransferBuffer : buffer
         if let pixelTransferSession = pixelTransferSession {
             if self.pixelTransferBuffer == nil {
                 self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
             }
             VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: pixelTransferBuffer)
         }
-        VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+        VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom!, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
             (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
             if sbuf != nil {
                 do {
@@ -232,6 +232,10 @@ class VTEncoder: NSObject {
     func encodeAudioFrame(_ buffer: CMSampleBuffer) {
         //todo should also throw
         self.videoSink.sendAudioBuffer(buffer)
+    }
+    
+    func saveReplayBuffer() async throws {
+        try self.videoSink.saveReplayBuffer()
     }
     
     func stopEncoding() async throws {

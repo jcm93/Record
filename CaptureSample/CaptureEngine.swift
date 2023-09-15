@@ -81,6 +81,10 @@ class CaptureEngine: @unchecked Sendable {
         self.streamOutput.encoder = nil
     }
     
+    func saveReplayBuffer() async throws {
+        try await self.streamOutput.encoder.saveReplayBuffer()
+    }
+    
     /// - Tag: UpdateStreamConfiguration
     func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
         do {
@@ -146,10 +150,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         /// we don't need to interrupt the capture stream entirely, but it's
         /// the only good way we have to propagate the error from here, so
         /// we may as well.
+        self.continuation?.finish(throwing: self.encoderError!)
+        // video sink should have already shut itself down if it throws an error, so we can just nil out the encoder.
         self.encoderError = error
         self.encoder = nil
-        self.continuation?.finish(throwing: self.encoderError!)
-        //tear down the video sink here todo
     }
     
     /// Create a `CapturedFrame` for the video sample buffer.

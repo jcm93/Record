@@ -29,6 +29,7 @@ public class VideoSink {
     var isRealTime: Bool
     var usesReplayBuffer: Bool
     var replayBufferDuration: Int
+    var accessingBookmarkURL = false
     
     /// Creates a video sink or throws an error if it fails.
     /// - Parameters:
@@ -61,7 +62,7 @@ public class VideoSink {
     public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
         if self.replayBuffer != nil && !self.isStopping {
             self.replayBufferQueue.schedule {
-                self.replayBuffer!.write(sbuf)
+                self.replayBuffer!.addSampleBuffer(sbuf)
             }
         } else {
             if assetWriterInput.isReadyForMoreMediaData {
@@ -75,7 +76,8 @@ public class VideoSink {
     
     func startSession(_ sbuf: CMSampleBuffer) throws {
         if self.replayBuffer == nil {
-            try initializeAssetWriters(sbuf)
+            try initializeAssetWriters()
+            self.assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
         }
         print("started at \(sbuf.presentationTimeStamp.seconds)")
         if sbuf.formatDescription?.mediaType == .audio {
@@ -86,16 +88,24 @@ public class VideoSink {
         sessionStarted = true
     }
     
-    func initializeAssetWriters(_ sbuf: CMSampleBuffer) throws {
-        ///todo rewrite so that errors are handled, especially around `startAccessingSecurityScopedResource()`
-        ///if initialization here fails, need to tear down the sink from VT
-        //very ugly
+    func initializeAssetWriters() throws {
+        defer {
+            if self.accessingBookmarkURL {
+                self.bookmarkedURL?.stopAccessingSecurityScopedResource()
+                self.accessingBookmarkURL = false
+            }
+            self.assetWriter?.cancelWriting()
+            //this should be all the cleanup we need? everything else with `try`
+            //shouldn't have any side effects, unlike AVAssetWriter and security-scoped bookmark
+        }
+        //pretty ugly still
         let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
         var isStale = false
         if bookmarkedData != nil {
             self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
         }
         if bookmarkedURL?.path() == fileURL.deletingLastPathComponent().path() {
+            self.accessingBookmarkURL = true
             bookmarkedURL?.startAccessingSecurityScopedResource()
         }
         let sinkURL = fileURL
@@ -130,13 +140,12 @@ public class VideoSink {
         guard assetWriter.startWriting() else {
             throw assetWriter.error!
         }
-        assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
     }
     
     public func sendAudioBuffer(_ buffer: CMSampleBuffer) {
         if self.replayBuffer != nil && !self.isStopping {
             self.replayBufferQueue.schedule {
-                self.replayBuffer?.write(buffer)
+                self.replayBuffer!.addSampleBuffer(buffer)
             }
         } else {
             guard sessionStarted else { return }
@@ -146,36 +155,38 @@ public class VideoSink {
         }
     }
     
+    func saveReplayBuffer() throws {
+        self.replayBuffer!.isSaving = true
+        try self.initializeAssetWriters()
+        let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
+        if !self.sessionStarted { try self.startSession(firstNonKeyframe!) }
+        if let replayBuffer = self.replayBuffer {
+            for frameNumber in 0..<replayBuffer.buffer.count {
+                let logicalReadIndex = (replayBuffer.startIndex + frameNumber) % replayBuffer.buffer.count
+                let frame = replayBuffer.buffer[logicalReadIndex]
+                switch frame.formatDescription!.mediaType {
+                case .audio:
+                    self.assetWriterAudioInput.requestMediaDataWhenReady(on: self.replayBufferQueue) { [weak self] in
+                        guard let self = self else { return }
+                        self.assetWriterAudioInput.append(frame)
+                    }
+                case .video:
+                    self.assetWriterInput.requestMediaDataWhenReady(on: self.replayBufferQueue) { [weak self] in
+                        guard let self = self else { return }
+                        self.assetWriterInput.append(frame)
+                    }
+                default:
+                    fatalError("Encountered unknown frame type")
+                }
+            }
+        }
+        self.replayBuffer?.isSaving = false
+    }
+    
     /// Closes the destination movie file.
     public func close() async throws {
         self.isStopping = true
         self.replayBuffer?.isStopping = true
-        if self.replayBuffer != nil {
-            try self.prepareToWrite()
-            let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
-            if !self.sessionStarted { try self.startSession(firstNonKeyframe!) }
-            var done = false
-            while !done {
-                guard let frame = self.replayBuffer?.removeFirst() else {done = true; break}
-                var encoded = false
-                while !encoded {
-                    switch frame.formatDescription!.mediaType {
-                    case .audio:
-                        if assetWriterAudioInput.isReadyForMoreMediaData {
-                            assetWriterAudioInput.append(frame)
-                            encoded = true
-                        }
-                    case .video:
-                        if assetWriterInput.isReadyForMoreMediaData {
-                            assetWriterInput.append(frame)
-                            encoded = true
-                        }
-                    default:
-                        print("uhhhh")
-                    }
-                }
-            }
-        }
         assetWriterInput.markAsFinished()
         assetWriterAudioInput.markAsFinished()
         await assetWriter.finishWriting()
