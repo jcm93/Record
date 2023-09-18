@@ -78,6 +78,7 @@ public class VideoSink {
         if self.replayBuffer == nil {
             try initializeAssetWriters()
             self.assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
+            self.sessionStarted = true
         }
         print("started at \(sbuf.presentationTimeStamp.seconds)")
         if sbuf.formatDescription?.mediaType == .audio {
@@ -85,39 +86,31 @@ public class VideoSink {
         } else {
             sendSampleBuffer(sbuf)
         }
-        sessionStarted = true
+        self.hasStarted = true
     }
     
     func initializeAssetWriters() throws {
-        defer {
-            if self.accessingBookmarkURL {
-                self.bookmarkedURL?.stopAccessingSecurityScopedResource()
-                self.accessingBookmarkURL = false
-            }
-            self.assetWriter?.cancelWriting()
-            //this should be all the cleanup we need? everything else with `try`
-            //shouldn't have any side effects, unlike AVAssetWriter and security-scoped bookmark
-        }
         //pretty ugly still
-        let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
-        var isStale = false
-        if bookmarkedData != nil {
-            self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-        }
-        if bookmarkedURL?.path() == fileURL.deletingLastPathComponent().path() {
-            self.accessingBookmarkURL = true
-            bookmarkedURL?.startAccessingSecurityScopedResource()
-        }
-        let sinkURL = fileURL
-        let bookmarkData = try sinkURL.deletingLastPathComponent().bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-        UserDefaults.standard.setValue(bookmarkData, forKey: "mostRecentSinkURL")
-        assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
-
-        let videoFormatDesc = try CMFormatDescription(videoCodecType: CMFormatDescription.MediaSubType(rawValue: codec), width: width, height: height)
-
-        assetWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: nil, sourceFormatHint: videoFormatDesc)
-        let audioFormatDescription = AudioStreamBasicDescription(mSampleRate: 48000.0, mFormatID: kAudioFormatLinearPCM, mFormatFlags: 0x29, mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
-        let outputSettings = [
+        do {
+            let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
+            var isStale = false
+            if bookmarkedData != nil {
+                self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+            }
+            if bookmarkedURL?.path() == fileURL.deletingLastPathComponent().path() {
+                self.accessingBookmarkURL = true
+                bookmarkedURL?.startAccessingSecurityScopedResource()
+            }
+            let sinkURL = fileURL.uniquing()
+            let bookmarkData = try sinkURL.deletingLastPathComponent().bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+            UserDefaults.standard.setValue(bookmarkData, forKey: "mostRecentSinkURL")
+            assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
+            
+            let videoFormatDesc = try CMFormatDescription(videoCodecType: CMFormatDescription.MediaSubType(rawValue: codec), width: width, height: height)
+            
+            assetWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: nil, sourceFormatHint: videoFormatDesc)
+            let audioFormatDescription = AudioStreamBasicDescription(mSampleRate: 48000.0, mFormatID: kAudioFormatLinearPCM, mFormatFlags: 0x29, mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
+            let outputSettings = [
                 AVFormatIDKey: UInt(kAudioFormatLinearPCM),
                 AVSampleRateKey: 48000,
                 AVNumberOfChannelsKey: 2,
@@ -127,18 +120,28 @@ public class VideoSink {
                 AVLinearPCMIsFloatKey: false,
                 AVLinearPCMIsBigEndianKey: false
             ] as [String : Any]
-        let cmFormat = try CMFormatDescription(audioStreamBasicDescription: audioFormatDescription)
-        assetWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: outputSettings, sourceFormatHint: cmFormat)
-        
-
-        assetWriterInput.expectsMediaDataInRealTime = true
-        assetWriterAudioInput.expectsMediaDataInRealTime = true
-
-        assetWriter.add(assetWriterInput)
-        assetWriter.add(assetWriterAudioInput)
-        self.isStopping = false
-        guard assetWriter.startWriting() else {
-            throw assetWriter.error!
+            let cmFormat = try CMFormatDescription(audioStreamBasicDescription: audioFormatDescription)
+            assetWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: outputSettings, sourceFormatHint: cmFormat)
+            
+            
+            assetWriterInput.expectsMediaDataInRealTime = true
+            assetWriterAudioInput.expectsMediaDataInRealTime = true
+            
+            assetWriter.add(assetWriterInput)
+            assetWriter.add(assetWriterAudioInput)
+            self.isStopping = false
+            guard assetWriter.startWriting() else {
+                throw assetWriter.error!
+            }
+        } catch {
+            print("critical error starting asset writers \(error)")
+            if self.accessingBookmarkURL {
+                self.bookmarkedURL?.stopAccessingSecurityScopedResource()
+                self.accessingBookmarkURL = false
+            }
+            self.assetWriter?.cancelWriting()
+            //this should be all the cleanup we need? everything else with `try`
+            //shouldn't have any side effects, unlike AVAssetWriter and security-scoped bookmark
         }
     }
     
@@ -159,28 +162,51 @@ public class VideoSink {
         self.replayBuffer!.isSaving = true
         try self.initializeAssetWriters()
         let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
-        if !self.sessionStarted { try self.startSession(firstNonKeyframe!) }
-        if let replayBuffer = self.replayBuffer {
-            for frameNumber in 0..<replayBuffer.buffer.count {
-                let logicalReadIndex = (replayBuffer.startIndex + frameNumber) % replayBuffer.buffer.count
-                let frame = replayBuffer.buffer[logicalReadIndex]
-                switch frame.formatDescription!.mediaType {
-                case .audio:
-                    self.assetWriterAudioInput.requestMediaDataWhenReady(on: self.replayBufferQueue) { [weak self] in
-                        guard let self = self else { return }
-                        self.assetWriterAudioInput.append(frame)
-                    }
-                case .video:
-                    self.assetWriterInput.requestMediaDataWhenReady(on: self.replayBufferQueue) { [weak self] in
-                        guard let self = self else { return }
-                        self.assetWriterInput.append(frame)
-                    }
-                default:
-                    fatalError("Encountered unknown frame type")
+        if !self.sessionStarted { self.assetWriter.startSession(atSourceTime: firstNonKeyframe!.presentationTimeStamp) }
+        guard let replayBuffer = self.replayBuffer else { throw EncoderError.replayBufferIsNil }
+        var frameIndex = replayBuffer.startIndex
+        var finished = false
+        var retryCount = 0
+        var frameCount = 0
+        while !finished {
+            guard retryCount < 1000 else {
+                fatalError("failed to save the replay buffer")
+            }
+            if frameCount >= replayBuffer.buffer.count {
+                self.assetWriterAudioInput.markAsFinished()
+                self.assetWriterInput.markAsFinished()
+                finished = true
+            }
+            let frameIndex = replayBuffer.startIndex + frameCount
+            let logicalFrameIndex = frameIndex % replayBuffer.buffer.count
+            let frame = replayBuffer.buffer[logicalFrameIndex]
+            switch frame.formatDescription!.mediaType {
+            case .audio:
+                if self.assetWriterAudioInput.isReadyForMoreMediaData {
+                    self.assetWriterAudioInput.append(frame)
+                    frameCount += 1
+                    retryCount = 0
+                } else {
+                    retryCount += 1
+                    Thread.sleep(forTimeInterval: 0.1)
                 }
+            case .video:
+                if self.assetWriterInput.isReadyForMoreMediaData {
+                    self.assetWriterInput.append(frame)
+                    frameCount += 1
+                    retryCount = 0
+                } else {
+                    retryCount += 1
+                    Thread.sleep(forTimeInterval: 0.1)
+                }
+            default:
+                fatalError("encountered unknown frame type")
             }
         }
-        self.replayBuffer?.isSaving = false
+        Task {
+            await assetWriter.finishWriting()
+        }
+        replayBuffer.isSaving = false
     }
     
     /// Closes the destination movie file.
@@ -195,5 +221,21 @@ public class VideoSink {
             throw assetWriter.error!
         }
         bookmarkedURL?.stopAccessingSecurityScopedResource()
+    }
+}
+
+extension URL {
+    func uniquing() -> URL {
+        let fileManager = FileManager.default
+        var uniqueInt = Int.random(in: 0...100000)
+        var newURL = self
+        //while fileManager.fileExists(atPath: self.path()) {
+        let ext = self.pathExtension
+        newURL = self.deletingPathExtension()
+        let newLastComponent = self.lastPathComponent.appending(" \(uniqueInt)")
+        newURL = newURL.deletingLastPathComponent()
+        newURL = newURL.appending(path: newLastComponent).appendingPathExtension(ext)
+        //}
+        return newURL
     }
 }

@@ -16,6 +16,7 @@ import OSLog
 enum EncoderError: Error {
     case videoSinkAlreadyActive
     case initialFrameNotEncoded
+    case replayBufferIsNil
 }
 
 class VTEncoder: NSObject {
@@ -33,6 +34,7 @@ class VTEncoder: NSObject {
     var currentError: Error?
     
     var hasStarted = false
+    var isStarting = false
     
     private let logger = Logger.encoder
     
@@ -176,6 +178,10 @@ class VTEncoder: NSObject {
     }
     
     func startSession(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) throws {
+        guard !self.isStarting else {
+            return
+        }
+        self.isStarting = true
         guard !self.criticalErrorEncountered else {
             throw self.currentError!
         }
@@ -195,15 +201,18 @@ class VTEncoder: NSObject {
                 do {
                     try self.videoSink.startSession(sbuf!)
                     self.hasStarted = true
+                    self.isStarting = false
                 } catch {
                     self.currentError = error
                     self.criticalErrorEncountered = true
                     self.logger.critical("Failed to initialize video sink: \(error, privacy: .public)")
+                    self.isStarting = false
                 }
             } else {
                 self.criticalErrorEncountered = true
                 self.currentError = EncoderError.initialFrameNotEncoded
                 self.logger.critical("Failed to encode initial frame of session.")
+                self.isStarting = false
             }
         }
     }

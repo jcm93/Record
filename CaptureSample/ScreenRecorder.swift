@@ -448,7 +448,6 @@ class ScreenRecorder: ObservableObject {
         do {
             guard isRecording else { return }
             try await captureEngine.saveReplayBuffer()
-            self.isRecording = false
         } catch {
             self.errorText = "Error while stopping recording. \(error)"
             self.isShowingError = true

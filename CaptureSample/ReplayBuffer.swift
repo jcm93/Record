@@ -13,8 +13,11 @@ import VideoToolbox
 class ReplayBuffer {
     
     var startIndex = 0
+    var tempStartIndex = 0
     var isStopping = false
-    var isSaving = true
+    var isSaving = false
+    
+    var framesWritten = 0
     
     var buffer: [CMSampleBuffer]
     
@@ -55,11 +58,15 @@ class ReplayBuffer {
             for queuedBuffer in queuedBuffers {
                 self.write(queuedBuffer)
             }
+            queuedBuffers = [CMSampleBuffer]()
             self.write(sbuf)
         }
     }
     
     public func write(_ element: CMSampleBuffer) {
+        defer {
+            self.tempStartIndex = self.startIndex
+        }
         guard self.buffer.count != 0 else {
             self.buffer = [element]
             return
