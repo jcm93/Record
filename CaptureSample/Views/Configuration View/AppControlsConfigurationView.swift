@@ -41,20 +41,9 @@ struct AppControlsConfigurationView: View {
         }
         Spacer(minLength: 10)
         HStack {
-            if screenRecorder.isRecording || !screenRecorder.isRunning {
+            if !screenRecorder.isRecording {
                 Button {
                     Task { await screenRecorder.record() }
-                    
-                } label: {
-                    Text("Start Recording")
-                }
-                .controlSize(.large)
-                .buttonStyle(.bordered)
-                .disabled(screenRecorder.isRecording || !screenRecorder.isRunning)
-            } else {
-                Button {
-                    Task { await screenRecorder.record() }
-                    
                 } label: {
                     Text("Start Recording")
                 }
@@ -62,34 +51,24 @@ struct AppControlsConfigurationView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(screenRecorder.isRecording || !screenRecorder.isRunning)
             }
-            if screenRecorder.isRecording {
-                Button {
-                    Task { await screenRecorder.stopRecord() }
-                    
-                } label: {
-                    Text("Stop Recording")
-                }
-                .controlSize(.large)
-                .buttonStyle(.borderedProminent)
-                .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
+            if screenRecorder.usesReplayBuffer && screenRecorder.isRecording {
                 Button {
                     Task { await screenRecorder.saveReplayBuffer() }
-                    
                 } label: {
                     Text("Save Replay Buffer")
                 }
                 .controlSize(.large)
                 .buttonStyle(.borderedProminent)
                 .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
-            } else {
+            }
+            if screenRecorder.isRecording {
                 Button {
                     Task { await screenRecorder.stopRecord() }
-                    
                 } label: {
                     Text("Stop Recording")
                 }
                 .controlSize(.large)
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
                 .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
             }
         }

@@ -202,7 +202,8 @@ public class VideoSink {
                     Thread.sleep(forTimeInterval: 0.1)
                 }
             default:
-                fatalError("encountered unknown frame type")
+                logger.notice("Encountered unknown media type in replay buffer; skipping")
+                frameCount += 1
             }
         }
         Task {
@@ -215,11 +216,11 @@ public class VideoSink {
     public func close() async throws {
         self.isStopping = true
         self.replayBuffer?.isStopping = true
-        assetWriterInput.markAsFinished()
-        assetWriterAudioInput.markAsFinished()
-        await assetWriter.finishWriting()
+        assetWriterInput?.markAsFinished()
+        assetWriterAudioInput?.markAsFinished()
+        await assetWriter?.finishWriting()
 
-        if assetWriter.status == .failed {
+        if assetWriter?.status == .failed {
             throw assetWriter.error!
         }
         bookmarkedURL?.stopAccessingSecurityScopedResource()
@@ -229,7 +230,7 @@ public class VideoSink {
 private extension URL {
     func appendingRecordFilename(fileExtension: String) -> URL {
         let date = Date()
-        let filename = "Record " + (date.formatted(date: .omitted, time: .shortened) + ", " + date.formatted(date: .abbreviated, time: .omitted)).replacingOccurrences(of: ":", with: "-")
+        let filename = (date.formatted(date: .omitted, time: .shortened) + ", " + date.formatted(date: .abbreviated, time: .omitted)).replacingOccurrences(of: ":", with: "-")
         let newURL = self.appending(component: filename).appendingPathExtension(fileExtension)
         return newURL
     }
