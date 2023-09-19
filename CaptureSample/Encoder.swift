@@ -17,6 +17,7 @@ enum EncoderError: Error {
     case videoSinkAlreadyActive
     case initialFrameNotEncoded
     case replayBufferIsNil
+    case replayBufferRetryLimitExceeded
 }
 
 class VTEncoder: NSObject {
@@ -60,7 +61,7 @@ class VTEncoder: NSObject {
             throw error
         }
         await self.configureSession(options: options)
-        self.videoSink = VideoSink(fileURL: options.destMovieURL,
+        self.videoSink = VideoSink(outputFolder: options.outputFolder,
                                        fileType: options.destFileType,
                                        codec: options.codec,
                                        width: options.destWidth,

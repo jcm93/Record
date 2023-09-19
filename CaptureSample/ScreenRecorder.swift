@@ -119,14 +119,12 @@ class ScreenRecorder: ObservableObject {
     }
     
     func optionsFromPreset(storableOptions: OptionsStorable) -> Options {
-        let outputExtension = storableOptions.fileType == .mov ? "mov" : "mp4"
-        let fileName = "Record \(Date()).\(outputExtension)"
-        let outputURL = self.outputFolder.appending(path: fileName)
+        let outputURL = self.outputFolder
         let fileType = storableOptions.fileType == .mov ? AVFileType.mov : AVFileType.mp4
         let width = self.doesScale ? self.scaleWidth : self.captureWidth
         let height = self.doesScale ? self.scaleHeight : self.captureHeight
         let codec = getCodecType(storableOptions)
-        let options = Options(destMovieURL: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: codec, pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC, scales: storableOptions.scales, usesReplayBuffer: storableOptions.usesReplayBuffer, replayBufferDuration: storableOptions.replayBufferDuration)
+        let options = Options(outputFolder: outputURL, destFileType: fileType, destWidth: width, destHeight: height, destBitRate: storableOptions.bitrate, codec: codec, pixelFormat: storableOptions.encoderPixelFormat.osTypeFormat(), maxKeyFrameIntervalDuration: storableOptions.maxKeyFrameDuration, maxKeyFrameInterval: storableOptions.maxKeyFrameInterval, rateControl: storableOptions.rateControl, crfValue: storableOptions.crfValue as CFNumber, verbose: false, iccProfile: self.iccProfile, bitDepth: storableOptions.bitDepth, colorPrimaries: storableOptions.primaries.stringValue(), transferFunction: storableOptions.transfer.stringValue(), yuvMatrix: storableOptions.yuv.stringValue(), bFrames: storableOptions.bFrames, gammaValue: storableOptions.gammaValue, convertsColorSpace: storableOptions.convertsColorSpace, targetColorSpace: storableOptions.targetColorSpace.cfString(), usesICC: storableOptions.usesICC, scales: storableOptions.scales, usesReplayBuffer: storableOptions.usesReplayBuffer, replayBufferDuration: storableOptions.replayBufferDuration)
         return options
     }
     

@@ -57,7 +57,7 @@ public struct OptionsStorable: Encodable, Decodable, Hashable {
 public struct Options: @unchecked Sendable {
 
     /// The destination movie file to write output video frames to.
-    public let destMovieURL: URL
+    public let outputFolder: URL
 
     /// The destination movie file type.
     public let destFileType: AVFileType
@@ -129,7 +129,7 @@ public struct Options: @unchecked Sendable {
             dimensions        : \(destWidth) x \(destHeight)
             keyframe-duration : \(maxKeyFrameIntervalDuration) sec
             keyframe-interval : \(maxKeyFrameInterval) frames
-            out               : \(destMovieURL)
+            out               : \(outputFolder)
             pixel-format      : \(pixelFormat)
             rate-control      : \(rateControl)
             icc-profile       : \(iccProfile.debugDescription)
@@ -164,10 +164,10 @@ public struct Options: @unchecked Sendable {
     ///   - maxKeyFrameInterval: The max key frame interval in number of frames.
     ///   - cbr: A Boolean value that specifies whether to pad the encoded frame for constant bit rate.
     ///   - verbose: A Boolean value that specifies whether to print frame info.
-    public init(destMovieURL: URL, destFileType: AVFileType, destWidth: Int, destHeight: Int, destBitRate: Int,
+    public init(outputFolder: URL, destFileType: AVFileType, destWidth: Int, destHeight: Int, destBitRate: Int,
                 codec: CMVideoCodecType, pixelFormat: OSType, maxKeyFrameIntervalDuration: Double,
                 maxKeyFrameInterval: Int, rateControl: RateControlSetting, crfValue: CFNumber, verbose: Bool, iccProfile: CFData?, bitDepth: Int, colorPrimaries: CFString?, transferFunction: CFString?, yuvMatrix: CFString?, bFrames: Bool, gammaValue: Double?, convertsColorSpace: Bool, targetColorSpace: CFString?, usesICC: Bool, scales: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) {
-        self.destMovieURL = destMovieURL
+        self.outputFolder = outputFolder
         self.destFileType = destFileType
         self.destWidth = destWidth
         self.destHeight = destHeight

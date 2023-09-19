@@ -14,4 +14,5 @@ This is an experimental commit and many things may be broken.
 ## hdr capture
 ## hotkey controls
 ## encoder preview
+## audio settings / audio metering
 

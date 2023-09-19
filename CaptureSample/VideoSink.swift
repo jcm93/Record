@@ -21,14 +21,15 @@ public class VideoSink {
     
     private let logger = Logger.videoSink
     
-    var fileURL: URL
-    var fileType: AVFileType
-    var codec: CMVideoCodecType
-    var width: Int
-    var height: Int
-    var isRealTime: Bool
-    var usesReplayBuffer: Bool
-    var replayBufferDuration: Int
+    private let outputFolder: URL
+    private let fileType: AVFileType
+    private let codec: CMVideoCodecType
+    private let width: Int
+    private let height: Int
+    private let isRealTime: Bool
+    private let usesReplayBuffer: Bool
+    private let replayBufferDuration: Int
+    
     var accessingBookmarkURL = false
     
     /// Creates a video sink or throws an error if it fails.
@@ -41,8 +42,8 @@ public class VideoSink {
     ///   - isRealTime: A Boolean value that indicates whether the video sink tailors its processing for real-time sources.
     ///                 Set to `true` if video source operates in real-time like a live camera.
     ///                 Set to `false` for offline transcoding, which may be faster or slower than real-time.
-    public init(fileURL: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) {
-        self.fileURL = fileURL
+    public init(outputFolder: URL, fileType: AVFileType, codec: CMVideoCodecType, width: Int, height: Int, isRealTime: Bool, usesReplayBuffer: Bool, replayBufferDuration: Int) {
+        self.outputFolder = outputFolder
         self.fileType = fileType
         self.codec = codec
         self.width = width
@@ -97,12 +98,13 @@ public class VideoSink {
             if bookmarkedData != nil {
                 self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
             }
-            if bookmarkedURL?.path() == fileURL.deletingLastPathComponent().path() {
+            if bookmarkedURL?.path() == outputFolder.path() {
                 self.accessingBookmarkURL = true
                 bookmarkedURL?.startAccessingSecurityScopedResource()
             }
-            let sinkURL = fileURL.uniquing()
-            let bookmarkData = try sinkURL.deletingLastPathComponent().bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+            let fileExtension = self.fileType == .mov ? "mov" : "mp4"
+            let sinkURL = outputFolder.appendingRecordFilename(fileExtension: fileExtension)
+            let bookmarkData = try outputFolder.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
             UserDefaults.standard.setValue(bookmarkData, forKey: "mostRecentSinkURL")
             assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
             
@@ -170,7 +172,7 @@ public class VideoSink {
         var frameCount = 0
         while !finished {
             guard retryCount < 1000 else {
-                fatalError("failed to save the replay buffer")
+                throw EncoderError.replayBufferRetryLimitExceeded
             }
             if frameCount >= replayBuffer.buffer.count {
                 self.assetWriterAudioInput.markAsFinished()
@@ -224,18 +226,11 @@ public class VideoSink {
     }
 }
 
-extension URL {
-    func uniquing() -> URL {
-        let fileManager = FileManager.default
-        var uniqueInt = Int.random(in: 0...100000)
-        var newURL = self
-        //while fileManager.fileExists(atPath: self.path()) {
-        let ext = self.pathExtension
-        newURL = self.deletingPathExtension()
-        let newLastComponent = self.lastPathComponent.appending(" \(uniqueInt)")
-        newURL = newURL.deletingLastPathComponent()
-        newURL = newURL.appending(path: newLastComponent).appendingPathExtension(ext)
-        //}
+private extension URL {
+    func appendingRecordFilename(fileExtension: String) -> URL {
+        let date = Date()
+        let filename = "Record " + (date.formatted(date: .omitted, time: .shortened) + ", " + date.formatted(date: .abbreviated, time: .omitted)).replacingOccurrences(of: ":", with: "-")
+        let newURL = self.appending(component: filename).appendingPathExtension(fileExtension)
         return newURL
     }
 }
