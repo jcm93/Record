@@ -18,6 +18,7 @@ struct CaptureSampleApp: App {
     @State var selectedPreset: OptionsStorable!
     
     @StateObject var screenRecorder = ScreenRecorder()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -74,6 +75,11 @@ struct CaptureSampleApp: App {
                     Button("Delete Preset") {
                         isShowingDeleteAlert.toggle()
                     }
+                }
+            }
+            CommandMenu("Hotkeys") {
+                Button("Configure Hotkeys...") {
+                    
                 }
             }
         }

@@ -16,7 +16,7 @@ struct ConfigurationView: View {
     
     private let alignmentOffset: CGFloat = 10
     
-    @StateObject private var audioPlayer = AudioPlayer()
+    //@StateObject private var audioPlayer = AudioPlayer()
     @ObservedObject var screenRecorder: ScreenRecorder
     @Binding var userStopped: Bool
     
