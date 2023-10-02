@@ -15,4 +15,7 @@ This is an experimental commit and many things may be broken.
 ## hotkey controls
 ## encoder preview
 ## audio settings / audio metering
+## advanced capture options (include some apps, not others)
+## compositing?
+## streaming?
 

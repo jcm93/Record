@@ -244,7 +244,7 @@ class VTEncoder: NSObject {
         self.videoSink.sendAudioBuffer(buffer)
     }
     
-    func saveReplayBuffer() async throws {
+    func saveReplayBuffer() throws {
         try self.videoSink.saveReplayBuffer()
     }
     

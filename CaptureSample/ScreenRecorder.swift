@@ -442,10 +442,10 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
-    func saveReplayBuffer() async {
+    func saveReplayBuffer() {
         do {
             guard isRecording else { return }
-            try await captureEngine.saveReplayBuffer()
+            try captureEngine.saveReplayBuffer()
         } catch {
             self.errorText = "Error while stopping recording. \(error)"
             self.isShowingError = true

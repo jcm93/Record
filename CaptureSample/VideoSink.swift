@@ -8,7 +8,7 @@ public class VideoSink {
     private var assetWriterAudioInput: AVAssetWriterInput!
     private var sessionStarted = false
     private var hasInitAudio = false
-    var replayBuffer: ReplayBuffer?
+    var videoReplayBuffer: ReplayBuffer?
     var audioReplayBuffer: ReplayBuffer?
     var replayBufferQueue = DispatchQueue(label: "com.jcm.replayBufferQueue")
     var isStopping = false
@@ -52,8 +52,8 @@ public class VideoSink {
         self.usesReplayBuffer = usesReplayBuffer
         self.replayBufferDuration = replayBufferDuration
         if usesReplayBuffer {
-            self.replayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
-            self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: replayBufferDuration)
+            self.videoReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: Double(replayBufferDuration))
+            self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: Double(replayBufferDuration))
         }
         self.isStopping = false
     }
@@ -61,9 +61,9 @@ public class VideoSink {
     /// Appends a video frame to the destination movie file.
     /// - Parameter sbuf: A video frame in a `CMSampleBuffer`.
     public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
-        if self.replayBuffer != nil && !self.isStopping {
+        if self.videoReplayBuffer != nil && !self.isStopping {
             self.replayBufferQueue.schedule {
-                self.replayBuffer!.addSampleBuffer(sbuf)
+                self.videoReplayBuffer!.addSampleBuffer(sbuf)
             }
         } else {
             if assetWriterInput.isReadyForMoreMediaData {
@@ -76,7 +76,7 @@ public class VideoSink {
     }
     
     func startSession(_ sbuf: CMSampleBuffer) throws {
-        if self.replayBuffer == nil {
+        if self.videoReplayBuffer == nil {
             try initializeAssetWriters()
             self.assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
             self.sessionStarted = true
@@ -92,6 +92,7 @@ public class VideoSink {
     
     func initializeAssetWriters() throws {
         //pretty ugly still
+        print("initialize asset writers called")
         do {
             let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
             var isStale = false
@@ -131,7 +132,6 @@ public class VideoSink {
             
             assetWriter.add(assetWriterInput)
             assetWriter.add(assetWriterAudioInput)
-            self.isStopping = false
             guard assetWriter.startWriting() else {
                 throw assetWriter.error!
             }
@@ -148,9 +148,9 @@ public class VideoSink {
     }
     
     public func sendAudioBuffer(_ buffer: CMSampleBuffer) {
-        if self.replayBuffer != nil && !self.isStopping {
+        if self.audioReplayBuffer != nil && !self.isStopping {
             self.replayBufferQueue.schedule {
-                self.replayBuffer!.addSampleBuffer(buffer)
+                self.audioReplayBuffer!.addSampleBuffer(buffer)
             }
         } else {
             guard sessionStarted else { return }
@@ -161,61 +161,91 @@ public class VideoSink {
     }
     
     func saveReplayBuffer() throws {
-        self.replayBuffer!.isSaving = true
+        guard let videoReplayBuffer = self.videoReplayBuffer, let audioReplayBuffer = self.audioReplayBuffer else { throw EncoderError.replayBufferIsNil }
         try self.initializeAssetWriters()
-        let firstNonKeyframe = self.replayBuffer!.firstNonKeyframe()
+        let firstNonKeyframe = self.videoReplayBuffer!.firstNonKeyframe()
         if !self.sessionStarted { self.assetWriter.startSession(atSourceTime: firstNonKeyframe!.presentationTimeStamp) }
-        guard let replayBuffer = self.replayBuffer else { throw EncoderError.replayBufferIsNil }
-        var frameIndex = replayBuffer.startIndex
-        var finished = false
-        var retryCount = 0
-        var frameCount = 0
-        while !finished {
-            guard retryCount < 1000 else {
-                throw EncoderError.replayBufferRetryLimitExceeded
+        defer {
+            Task {
+                self.assetWriterAudioInput.markAsFinished()
+                self.assetWriterInput.markAsFinished()
+                await assetWriter.finishWriting()
             }
-            if frameCount >= replayBuffer.buffer.count {
+        }
+        var finished = false
+        var previousFrame: CMSampleBuffer?
+        var videoReadIndex = 0
+        var audioReadIndex = 0
+        var retryCount = 0
+        while !finished {
+            guard retryCount < 15 else {
+                finished = true
+                self.assetWriterAudioInput.markAsFinished()
+                self.assetWriterInput.markAsFinished()
+                Task {
+                    await assetWriter.finishWriting()
+                }
+                print(EncoderError.replayBufferRetryLimitExceeded)
+                return
+            }
+            if videoReadIndex >= videoReplayBuffer.buffer.count && audioReadIndex >= audioReplayBuffer.buffer.count {
                 self.assetWriterAudioInput.markAsFinished()
                 self.assetWriterInput.markAsFinished()
                 finished = true
+                print("finished")
+                continue
             }
-            let frameIndex = replayBuffer.startIndex + frameCount
-            let logicalFrameIndex = frameIndex % replayBuffer.buffer.count
-            let frame = replayBuffer.buffer[logicalFrameIndex]
+            let videoFrame = videoReplayBuffer.sampleAtIndex(index: videoReadIndex)
+            let audioFrame = audioReplayBuffer.sampleAtIndex(index: audioReadIndex)
+            let frame = videoFrame.isBefore(otherBuffer: audioFrame) ? videoFrame : audioFrame
+            if let pFrame = previousFrame {
+                guard CMTimeCompare(frame.presentationTimeStamp, pFrame.presentationTimeStamp) > 0 else {
+                    print("time issue")
+                    finished = true
+                    continue
+                }
+            }
             switch frame.formatDescription!.mediaType {
             case .audio:
                 if self.assetWriterAudioInput.isReadyForMoreMediaData {
-                    self.assetWriterAudioInput.append(frame)
-                    frameCount += 1
+                    let result = self.assetWriterAudioInput.append(frame)
+                    if !result {
+                        print("assetwriteraudioinput failed to write frame")
+                    }
+                    previousFrame = frame
+                    audioReadIndex += 1
                     retryCount = 0
                 } else {
+                    print("retry required on audio; sleeping")
                     retryCount += 1
                     Thread.sleep(forTimeInterval: 0.1)
                 }
             case .video:
                 if self.assetWriterInput.isReadyForMoreMediaData {
-                    self.assetWriterInput.append(frame)
-                    frameCount += 1
+                    let result = self.assetWriterInput.append(frame)
+                    if !result {
+                        print("assetwriterinput failed to write frame")
+                    }
+                    previousFrame = frame
+                    videoReadIndex += 1
                     retryCount = 0
                 } else {
+                    print("retry required on video; sleeping")
                     retryCount += 1
                     Thread.sleep(forTimeInterval: 0.1)
                 }
             default:
                 logger.notice("Encountered unknown media type in replay buffer; skipping")
-                frameCount += 1
             }
         }
-        Task {
-            await assetWriter.finishWriting()
-        }
-        replayBuffer.isSaving = false
+        print("Replay buffer wrote \(videoReadIndex) frames; finishing writing")
     }
     
     /// Closes the destination movie file.
     public func close() async throws {
         self.isStopping = true
-        self.replayBuffer?.isStopping = true
+        self.videoReplayBuffer?.isStopping = true
+        self.audioReplayBuffer?.isStopping = true
         assetWriterInput?.markAsFinished()
         assetWriterAudioInput?.markAsFinished()
         await assetWriter?.finishWriting()
@@ -230,7 +260,7 @@ public class VideoSink {
 private extension URL {
     func appendingRecordFilename(fileExtension: String) -> URL {
         let date = Date()
-        let filename = (date.formatted(date: .omitted, time: .shortened) + ", " + date.formatted(date: .abbreviated, time: .omitted)).replacingOccurrences(of: ":", with: "-")
+        let filename = (date.formatted(date: .omitted, time: .complete) + ", " + date.formatted(date: .abbreviated, time: .omitted)).replacingOccurrences(of: ":", with: "-")
         let newURL = self.appending(component: filename).appendingPathExtension(fileExtension)
         return newURL
     }

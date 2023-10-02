@@ -13,7 +13,6 @@ import VideoToolbox
 class ReplayBuffer {
     
     var startIndex = 0
-    var tempStartIndex = 0
     var isStopping = false
     var isSaving = false
     
@@ -23,9 +22,9 @@ class ReplayBuffer {
     
     var queuedBuffers = [CMSampleBuffer]()
     
-    var maxLengthInSeconds: Int
+    var maxLengthInSeconds: Double
     
-    init(buffer: [CMSampleBuffer], maxLengthInSeconds: Int) {
+    init(buffer: [CMSampleBuffer], maxLengthInSeconds: Double) {
         self.buffer = buffer
         self.maxLengthInSeconds = maxLengthInSeconds
     }
@@ -50,63 +49,41 @@ class ReplayBuffer {
         }
     }
     
+    func sampleAtIndex(index: Int) -> CMSampleBuffer {
+        let realIndex = (self.startIndex + index) % self.buffer.count
+        return self.buffer[realIndex]
+    }
+    
     public func addSampleBuffer(_ sbuf: CMSampleBuffer) {
-        if self.isSaving {
-            self.queuedBuffers.append(sbuf)
-        } else {
-            //clear out the queue
-            for queuedBuffer in queuedBuffers {
-                self.write(queuedBuffer)
-            }
-            queuedBuffers = [CMSampleBuffer]()
-            self.write(sbuf)
+        //clear out the queue
+        for queuedBuffer in queuedBuffers {
+            self.write(queuedBuffer)
         }
+        queuedBuffers = [CMSampleBuffer]()
+        self.write(sbuf)
     }
     
     public func write(_ element: CMSampleBuffer) {
-        defer {
-            self.tempStartIndex = self.startIndex
-        }
-        guard self.buffer.count != 0 else {
-            self.buffer = [element]
+        guard buffer.count != 0 else {
+            buffer = [element]
+            self.startIndex = 0
             return
         }
         var bufferTrimmed = false
-        var inserted = false
-        var readIndex = startIndex
-        let newIsKeyframe = element.isKeyframe()
-        while !(inserted && bufferTrimmed) {
-            guard !self.isStopping else { return }
-            let logicalReadIndex = readIndex % self.buffer.count
-            let bufferHere = self.buffer[logicalReadIndex]
-            let difference = (element.presentationTimeStamp.seconds) - (bufferHere.presentationTimeStamp.seconds)
-            let existingIsKeyframe = bufferHere.isKeyframe()
-            if difference > Double(self.maxLengthInSeconds) {
-                if !inserted {
-                    self.buffer.insert(element, at: logicalReadIndex)
-                    self.startIndex = (self.startIndex + 1) % self.buffer.count
-                    readIndex += 1
-                    inserted = true
-                } else {
-                    if !existingIsKeyframe || newIsKeyframe {
-                        self.buffer.remove(at: logicalReadIndex)
-                    } else {
-                        readIndex += 1
-                    }
-                }
-            } else {
+        while !bufferTrimmed {
+            let first = buffer[startIndex]
+            let seconds = element.secondsAfter(otherBuffer: first)
+            guard seconds > self.maxLengthInSeconds else {
                 bufferTrimmed = true
-                if inserted != true {
-                    if startIndex == 0 {
-                        self.buffer.append(element)
-                    } else {
-                        self.buffer.insert(element, at: startIndex)
-                        self.startIndex = (self.startIndex + 1) % self.buffer.count
-                    }
-                    inserted = true
-                }
+                continue
+            }
+            buffer.remove(at: startIndex)
+            if self.startIndex == buffer.count {
+                self.startIndex = 0
             }
         }
+        buffer.insert(element, at: self.startIndex)
+        self.startIndex = (self.startIndex + 1) % buffer.count
     }
     
     func firstNonKeyframe() -> CMSampleBuffer? {
@@ -128,6 +105,16 @@ class ReplayBuffer {
 
 
 extension CMSampleBuffer {
+    
+    func isBefore(otherBuffer: CMSampleBuffer) -> Bool {
+        let result = CMTimeCompare(self.presentationTimeStamp, otherBuffer.presentationTimeStamp)
+        return result < 0 ? true : false
+    }
+    
+    func secondsAfter(otherBuffer: CMSampleBuffer) -> Double {
+        return CMTimeSubtract(self.presentationTimeStamp, otherBuffer.presentationTimeStamp).seconds
+    }
+    
     func isKeyframe() -> Bool {
         if self.formatDescription?.mediaType == .audio {
             return true

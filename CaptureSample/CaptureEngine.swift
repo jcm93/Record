@@ -81,8 +81,8 @@ class CaptureEngine: @unchecked Sendable {
         self.streamOutput.encoder = nil
     }
     
-    func saveReplayBuffer() async throws {
-        try await self.streamOutput.encoder.saveReplayBuffer()
+    func saveReplayBuffer() throws {
+        try self.streamOutput.saveReplayBuffer()
     }
     
     /// - Tag: UpdateStreamConfiguration
@@ -108,6 +108,8 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var dstData: UnsafeMutableRawPointer!
     private let frameHandlerQueue = DispatchQueue(label: "com.jcm.Record.FrameHandlerQueue")
     
+    var framesWritten = 0
+    
     private let logger = Logger.capture
     
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
@@ -125,6 +127,11 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         /// We assume that we don't want to perform lots of work on these queues, so they
         /// can be maximally available to handle new frames as they're delivered by SCK.
         /// Therefore, immediately dispatch to the frame handler queue.
+    
+        /*if sampleBuffer.formatDescription?.mediaType == .video {
+            print("\(framesWritten): \(sampleBuffer.presentationTimeStamp.seconds)")
+            self.framesWritten += 1
+        }*/
 
         self.frameHandlerQueue.schedule {
             guard sampleBuffer.isValid else {
@@ -156,6 +163,16 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         self.encoder = nil
     }
     
+    func saveReplayBuffer() throws {
+        self.frameHandlerQueue.schedule {
+            do {
+                try self.encoder.saveReplayBuffer()
+            } catch {
+                self.encoderError = error
+                self.continuation?.finish(throwing: error)
+            }
+        }
+    }
     /// Create a `CapturedFrame` for the video sample buffer.
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         

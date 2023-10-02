@@ -53,7 +53,7 @@ struct AppControlsConfigurationView: View {
             }
             if screenRecorder.usesReplayBuffer && screenRecorder.isRecording {
                 Button {
-                    Task { await screenRecorder.saveReplayBuffer() }
+                    Task { screenRecorder.saveReplayBuffer() }
                 } label: {
                     Text("Save Replay Buffer")
                 }
