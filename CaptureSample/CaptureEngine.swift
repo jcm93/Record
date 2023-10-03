@@ -77,6 +77,7 @@ class CaptureEngine: @unchecked Sendable {
     }
     
     func stopRecording() async throws {
+        try await self.streamOutput.stopReplayBuffer()
         try await self.streamOutput.encoder.stopEncoding()
         self.streamOutput.encoder = nil
     }
@@ -172,6 +173,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                 self.continuation?.finish(throwing: error)
             }
         }
+    }
+    
+    func stopReplayBuffer() throws {
+        try self.encoder.videoSink.stopReplayBuffer()
     }
     /// Create a `CapturedFrame` for the video sample buffer.
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {

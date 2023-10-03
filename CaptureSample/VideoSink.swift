@@ -241,6 +241,11 @@ public class VideoSink {
         print("Replay buffer wrote \(videoReadIndex) frames; finishing writing")
     }
     
+    func stopReplayBuffer() throws {
+        self.videoReplayBuffer = nil
+        self.audioReplayBuffer = nil
+    }
+    
     /// Closes the destination movie file.
     public func close() async throws {
         self.isStopping = true
@@ -248,7 +253,9 @@ public class VideoSink {
         self.audioReplayBuffer?.isStopping = true
         assetWriterInput?.markAsFinished()
         assetWriterAudioInput?.markAsFinished()
-        await assetWriter?.finishWriting()
+        if assetWriter.status == .writing {
+            await assetWriter?.finishWriting()
+        }
 
         if assetWriter?.status == .failed {
             throw assetWriter.error!
