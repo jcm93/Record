@@ -8,22 +8,30 @@
 
 import SwiftUI
 
-class HotkeyPreferenceController {
+/*class HotkeyPreferenceController {
     
-    private let screenRecorder: ScreenRecorder
+    var screenRecorder: ScreenRecorder!
     
-    private var callbacks = [String : (() -> Void)]()
+    //private var callbacks = [String : (() -> Void)]()
     
-    init(screenRecorder: ScreenRecorder) {
+    private let eventTap = RecordEventTap(screenRecorder: self)
+    
+    init(screenRecorder: ScreenRecorder!, callbacks: [String : () -> Void] = [String : (() -> Void)]()) {
         self.screenRecorder = screenRecorder
+        self.callbacks = callbacks
+    }
+    
+    func setUpEventTap() {
+        eventTap.hotkeyManager = self
     }
     
     func callback(forCharacters characters: String) -> (() -> Void)? {
-        return self.callbacks[characters]
+        //return self.callbacks[characters]
+        return nil
     }
     
     func setCallback(_ callback: @escaping () -> Void, forString hotkeyString: String) {
-        self.callbacks[hotkeyString] = callback
+       //self.callbacks[hotkeyString] = callback
     }
 }
 
@@ -33,7 +41,9 @@ struct HotkeysPreferencesView: View {
     private let controller: HotkeyPreferenceController
     
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack {
+            
+        }
     }
 }
 
@@ -49,4 +59,4 @@ struct HotkeySelectorView: View {
                 .frame(width: 50)
         }
     }
-}
+}*/

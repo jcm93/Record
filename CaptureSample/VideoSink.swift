@@ -66,7 +66,7 @@ public class VideoSink {
                 self.videoReplayBuffer!.addSampleBuffer(sbuf)
             }
         } else {
-            if assetWriterInput.isReadyForMoreMediaData {
+            if assetWriterInput != nil && assetWriterInput.isReadyForMoreMediaData {
                 assetWriterInput.append(sbuf)
             } else {
                 let debugString = String(format: "Error: VideoSink dropped a frame [PTS: %.3f]", sbuf.presentationTimeStamp.seconds)
@@ -253,7 +253,7 @@ public class VideoSink {
         self.audioReplayBuffer?.isStopping = true
         assetWriterInput?.markAsFinished()
         assetWriterAudioInput?.markAsFinished()
-        if assetWriter.status == .writing {
+        if assetWriter != nil && assetWriter.status == .writing {
             await assetWriter?.finishWriting()
         }
 

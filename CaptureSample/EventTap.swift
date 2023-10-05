@@ -14,13 +14,10 @@ enum EventTapError: Error {
 
 class RecordEventTap {
     
-    private let screenRecorder: ScreenRecorder? = nil
-    private let hotkeyManager: HotkeyPreferenceController
+    private var screenRecorder: ScreenRecorder! = nil
+    var callback: (() -> Void)? = nil
     
-    init(hotkeyManager: HotkeyPreferenceController) throws {
-        
-
-        self.hotkeyManager = hotkeyManager
+    init() throws {
         
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
         
@@ -28,7 +25,6 @@ class RecordEventTap {
                                          place: CGEventTapPlacement.headInsertEventTap,
                                          options: CGEventTapOptions.listenOnly,
                                          eventsOfInterest: mask,
-                                         //dentist appointment time
                                          ///adapted from https://github.com/mickael-menu/ShadowVim/blob/a4fbea4c9322eb9c0db904808c0c54466605c133/Sources/Toolkit/Input/EventTap.swift#L51 (github code search)
                                          callback: { proxy, type, event, refcon in
                                                 Unmanaged<RecordEventTap>.fromOpaque(refcon!)
@@ -51,15 +47,13 @@ class RecordEventTap {
     func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> CGEvent? {
         //per documentation, if we are only a passive listener, we can return nil without affecting the event stream
         
-        guard let charactersPressed = NSEvent(cgEvent: event)?.charactersIgnoringModifiers else {
+        guard let keyCode = NSEvent(cgEvent: event)?.keyCode else {
             return nil
         }
         
-        guard let callback = self.hotkeyManager.callback(forCharacters: charactersPressed) else {
-            return nil
+        if keyCode == 0x6F {
+            callback!()
         }
-        
-        callback()
         return nil
     }
 }

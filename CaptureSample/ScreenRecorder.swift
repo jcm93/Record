@@ -20,6 +20,10 @@ class AudioLevelsProvider: ObservableObject {
 @MainActor
 class ScreenRecorder: ObservableObject {
     
+    //MARK: event tap
+    
+    var eventTap: RecordEventTap! = nil
+    
     private let logger = Logger.capture
     
     //MARK: Presets, options storage
@@ -473,6 +477,14 @@ class ScreenRecorder: ObservableObject {
             await captureEngine.update(configuration: streamConfiguration, filter: contentFilter)
         }
         self.selectedPreset = nil
+        if self.eventTap == nil {
+            do {
+                self.eventTap = try RecordEventTap()
+            } catch {
+                print(error)
+            }
+        }
+        self.eventTap?.callback = self.saveReplayBuffer
     }
     
     /// - Tag: UpdateFilter

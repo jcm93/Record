@@ -29,6 +29,7 @@
 		0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B202A6CF6BA00DA288D /* VideoSink.swift */; };
 		0D4875402A81A20800F6D832 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D48753F2A81A20800F6D832 /* Enums.swift */; };
 		0D52D73F2AB9283F0091AD97 /* EventTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D52D73E2AB9283F0091AD97 /* EventTap.swift */; };
+		0D5C3BB62ACE437800417FEB /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 0D5C3BB52ACE437800417FEB /* KeyboardShortcuts */; };
 		0DE5C82F2A95EDC60054AC23 /* PickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE5C82E2A95EDC60054AC23 /* PickerView.swift */; };
 		C470F0812811C5CB00D29309 /* ScreenRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C470F0802811C5CB00D29309 /* ScreenRecorder.swift */; };
 		C471DFFB2809F440001D24C9 /* PowerMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C471DFF92809F440001D24C9 /* PowerMeter.swift */; };
@@ -89,6 +90,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D5C3BB62ACE437800417FEB /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -228,6 +230,7 @@
 			);
 			name = Record;
 			packageProductDependencies = (
+				0D5C3BB52ACE437800417FEB /* KeyboardShortcuts */,
 			);
 			productName = CaptureIt;
 			productReference = C4B0DAA7276BA4460015082A /* Record.app */;
@@ -260,6 +263,7 @@
 			);
 			mainGroup = C4B0DA9E276BA4460015082A;
 			packageReferences = (
+				0D5C3BB42ACE437800417FEB /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			productRefGroup = C4B0DAA8276BA4460015082A /* Products */;
 			projectDirPath = "";
@@ -535,6 +539,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0D5C3BB42ACE437800417FEB /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.15.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0D5C3BB52ACE437800417FEB /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D5C3BB42ACE437800417FEB /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C4B0DA9F276BA4460015082A /* Project object */;
 }
