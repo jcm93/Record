@@ -64,13 +64,13 @@ class ReplayBuffer {
     }
     
     public func write(_ element: CMSampleBuffer) {
-        guard buffer.count != 0 else {
-            buffer = [element]
-            self.startIndex = 0
-            return
-        }
         var bufferTrimmed = false
         while !bufferTrimmed {
+            guard buffer.count != 0 else {
+                buffer = [element]
+                self.startIndex = 0
+                return
+            }
             let first = buffer[startIndex]
             let seconds = element.secondsAfter(otherBuffer: first)
             guard seconds > self.maxLengthInSeconds else {
