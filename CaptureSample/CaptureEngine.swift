@@ -118,6 +118,8 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     
     var encoderError: Error?
     
+    var errorHandler: ((Error) -> Void)? = nil
+    
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.continuation = continuation
     }
@@ -164,19 +166,22 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         self.encoder = nil
     }
     
-    func saveReplayBuffer() throws {
+    func saveReplayBuffer() {
         self.frameHandlerQueue.schedule {
             do {
                 try self.encoder.saveReplayBuffer()
             } catch {
-                self.encoderError = error
-                self.continuation?.finish(throwing: error)
+                self.errorHandler!(error)
             }
         }
     }
     
-    func stopReplayBuffer() throws {
-        try self.encoder.videoSink.stopReplayBuffer()
+    func stopReplayBuffer() {
+        do {
+            try self.encoder.videoSink.stopReplayBuffer()
+        } catch {
+            self.errorHandler!(error)
+        }
     }
     /// Create a `CapturedFrame` for the video sample buffer.
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {

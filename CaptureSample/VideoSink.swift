@@ -185,8 +185,7 @@ public class VideoSink {
                 Task {
                     await assetWriter.finishWriting()
                 }
-                print(EncoderError.replayBufferRetryLimitExceeded)
-                return
+                throw EncoderError.replayBufferRetryLimitExceeded
             }
             if videoReadIndex >= videoReplayBuffer.buffer.count && audioReadIndex >= audioReplayBuffer.buffer.count {
                 self.assetWriterAudioInput.markAsFinished()

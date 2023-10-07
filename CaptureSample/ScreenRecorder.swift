@@ -402,6 +402,7 @@ class ScreenRecorder: ObservableObject {
             // Unable to start the stream. Set the running state to false.
             isRunning = false
         }
+        self.captureEngine.streamOutput.errorHandler = handleEncoderError
     }
     
     /// Stops capturing screen content.
@@ -456,6 +457,11 @@ class ScreenRecorder: ObservableObject {
             logger.critical("Error while stopping recording. \(error, privacy: .public)")
             self.isRecording = false
         }
+    }
+    
+    func handleEncoderError(error: Error) {
+        self.errorText = error.localizedDescription
+        self.isShowingError = true
     }
     
     /*private func startAudioMetering() {
