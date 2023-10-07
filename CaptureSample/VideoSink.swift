@@ -63,7 +63,10 @@ public class VideoSink {
     public func sendSampleBuffer(_ sbuf: CMSampleBuffer) {
         if self.videoReplayBuffer != nil && !self.isStopping {
             self.replayBufferQueue.schedule {
-                self.videoReplayBuffer!.addSampleBuffer(sbuf)
+                //nil check again; by the time this reaches the replay queue it might be nil
+                if self.videoReplayBuffer != nil && !self.isStopping {
+                    self.videoReplayBuffer!.addSampleBuffer(sbuf)
+                }
             }
         } else {
             if assetWriterInput != nil && assetWriterInput.isReadyForMoreMediaData {
@@ -173,7 +176,8 @@ public class VideoSink {
             }
         }
         var finished = false
-        var previousFrame: CMSampleBuffer?
+        var previousVideoFrame: CMSampleBuffer?
+        var previousAudioFrame: CMSampleBuffer?
         var videoReadIndex = 0
         var audioReadIndex = 0
         var retryCount = 0
@@ -197,21 +201,21 @@ public class VideoSink {
             let videoFrame = videoReplayBuffer.sampleAtIndex(index: videoReadIndex)
             let audioFrame = audioReplayBuffer.sampleAtIndex(index: audioReadIndex)
             let frame = videoFrame.isBefore(otherBuffer: audioFrame) ? videoFrame : audioFrame
-            if let pFrame = previousFrame {
-                guard CMTimeCompare(frame.presentationTimeStamp, pFrame.presentationTimeStamp) > 0 else {
-                    print("time issue")
-                    finished = true
-                    continue
-                }
-            }
             switch frame.formatDescription!.mediaType {
             case .audio:
+                if let pFrame = previousAudioFrame {
+                    guard CMTimeCompare(frame.presentationTimeStamp, pFrame.presentationTimeStamp) > 0 else {
+                        logger.fault("trying to encode an audio frame ordered before the previous frame encoded; this is a fault. exiting replay buffer save early")
+                        finished = true
+                        continue
+                    }
+                }
                 if self.assetWriterAudioInput.isReadyForMoreMediaData {
                     let result = self.assetWriterAudioInput.append(frame)
                     if !result {
                         print("assetwriteraudioinput failed to write frame")
                     }
-                    previousFrame = frame
+                    previousAudioFrame = frame
                     audioReadIndex += 1
                     retryCount = 0
                 } else {
@@ -220,12 +224,19 @@ public class VideoSink {
                     Thread.sleep(forTimeInterval: 0.1)
                 }
             case .video:
+                if let pFrame = previousVideoFrame {
+                    guard CMTimeCompare(frame.presentationTimeStamp, pFrame.presentationTimeStamp) > 0 else {
+                        logger.fault("trying to encode a video frame ordered before the previous frame encoded; this is a fault. exiting replay buffer save early")
+                        finished = true
+                        continue
+                    }
+                }
                 if self.assetWriterInput.isReadyForMoreMediaData {
                     let result = self.assetWriterInput.append(frame)
                     if !result {
                         print("assetwriterinput failed to write frame")
                     }
-                    previousFrame = frame
+                    previousVideoFrame = frame
                     videoReadIndex += 1
                     retryCount = 0
                 } else {

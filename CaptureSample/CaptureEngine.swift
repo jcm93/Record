@@ -116,9 +116,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     // Store the the startCapture continuation, so you can cancel it if an error occurs.
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     
-    var encoderError: Error?
-    
-    var errorHandler: ((Error) -> Void)? = nil
+    var errorHandler: ((Error) -> Void)?
     
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.continuation = continuation
@@ -151,18 +149,14 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                     self.encoder?.encodeAudioFrame(copy)
                 }
             @unknown default:
-                fatalError("Encountered unknown stream output type: \(outputType)")
+                self.errorHandler!(EncoderError.unknownFrameType)
             }
         }
     }
     
     func handleEncoderInitializationError(_ error: Error) {
-        /// we don't need to interrupt the capture stream entirely, but it's
-        /// the only good way we have to propagate the error from here, so
-        /// we may as well.
-        self.continuation?.finish(throwing: self.encoderError!)
+        self.errorHandler!(error)
         // video sink should have already shut itself down if it throws an error, so we can just nil out the encoder.
-        self.encoderError = error
         self.encoder = nil
     }
     

@@ -18,6 +18,7 @@ enum EncoderError: Error {
     case initialFrameNotEncoded
     case replayBufferIsNil
     case replayBufferRetryLimitExceeded
+    case unknownFrameType
 }
 
 class VTEncoder: NSObject {
@@ -245,6 +246,7 @@ class VTEncoder: NSObject {
     }
     
     func saveReplayBuffer() throws {
+        print("stopping buffer")
         try self.videoSink.saveReplayBuffer()
     }
     
