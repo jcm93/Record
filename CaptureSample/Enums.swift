@@ -333,3 +333,9 @@ public func getCodecType(_ storableOptions: OptionsStorable) -> CMVideoCodecType
         return storableOptions.proResSetting.codecValue()
     }
 }
+
+extension FourCharCode {
+    public var fourCCDescription: String {
+        return NSFileTypeForHFSTypeCode(self)
+    }
+}

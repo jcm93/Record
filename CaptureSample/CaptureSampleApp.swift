@@ -7,6 +7,8 @@ The entry point into this app.
 import SwiftUI
 import OSLog
 
+let startupTime = Date()
+
 @main
 struct CaptureSampleApp: App {
     @State private var isShowingAlert = false
@@ -15,9 +17,15 @@ struct CaptureSampleApp: App {
     
     @State private var presetName: String = ""
     
+    @State private var isExporting = false
+    
     @State var selectedPreset: OptionsStorable!
     
+    var logger = Logger.application
+    
     @StateObject var screenRecorder = ScreenRecorder()
+    
+    @State private var currentLog: TextDocument?
     
     var body: some Scene {
         WindowGroup {
@@ -77,24 +85,9 @@ struct CaptureSampleApp: App {
                     }
                 }
             }
-            CommandMenu("Hotkeys") {
-                Button("Configure Hotkeys...") {
-                    
-                }
-            }
         }
         Window("Test Pattern", id: "testpattern") {
             TestPatternView(fps: $screenRecorder.framesPerSecond)
         }
     }
-}
-
-extension Logger {
-    private static var subsystem = Bundle.main.bundleIdentifier!
-
-    static let encoder = Logger(subsystem: subsystem, category: "encoder")
-
-    static let videoSink = Logger(subsystem: subsystem, category: "videoSink")
-    
-    static let capture = Logger(subsystem: subsystem, category: "capture")
 }

@@ -7,9 +7,17 @@
 //
 
 import SwiftUI
+import OSLog
 
 struct OutputConfigurationView: View {
+    
+    @State private var currentLog: TextDocument?
     @ObservedObject var screenRecorder: ScreenRecorder
+    
+    @State private var isExporting = false
+    
+    var logger = Logger.application
+    
     var body: some View {
         VStack(alignment: .imageTitleAlignmentGuide) {
             HStack {
@@ -28,6 +36,23 @@ struct OutputConfigurationView: View {
                     }
                 }
             }
+            Button("Save Current Log") {
+                Task {
+                    self.currentLog = await logger.generateLog()
+                    if self.currentLog != nil {
+                        isExporting = true
+                    }
+                }
+            }
+            .fileExporter(isPresented: $isExporting, document: self.currentLog, contentType: .plainText, onCompletion: {
+                result in
+                switch result {
+                case .success:
+                    logger.notice("Successfully output log to file")
+                case .failure:
+                    logger.notice("Did not output log to file")
+                }
+            })
         }
         .modifier(ConfigurationSubViewStyle())
         .labelsHidden()

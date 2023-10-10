@@ -196,31 +196,34 @@ public struct Options: @unchecked Sendable {
     }
     
     func logStart(_ logger: Logger) {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .full
         logger.notice("""
         Encoder session started with options:
             bitrate           : \(destBitRate * 1000, format: .bitrate)
-            cbr               : \(rateControl == .cbr)
-            codec             : \(codec)
+            cbr               : \(rateControl == .cbr, format: .answer)
+            codec             : \((codec as FourCharCode).fourCCDescription)
             dimensions        : \(destWidth) x \(destHeight)
-            keyframe-duration : \(maxKeyFrameIntervalDuration) seconds
+            keyframe-duration : \(formatter.string(from: TimeInterval(maxKeyFrameIntervalDuration))!)
             keyframe-interval : \(maxKeyFrameInterval) frames
-            out               : \(outputFolder, privacy: .private(mask: .hash))
-            pixel-format      : \(pixelFormat)
+            out               : \(outputFolder, privacy: .private)
+            pixel-format      : \((pixelFormat as FourCharCode).fourCCDescription)
             rate-control      : \(rateControl.rawValue)
             icc-profile       : \(iccProfile.debugDescription)
             bit-depth         : \(bitDepth)
             color-primaries   : \(colorPrimaries ?? "untagged" as CFString)
             transfer-function : \(transferFunction ?? "untagged" as CFString)
             yuv-matrix        : \(yuvMatrix)
-            b-frames          : \(bFrames)
+            b-frames          : \(bFrames, format: .answer)
             crf-value         : \(crfValue)
             gamma-value       : \(gammaValue ?? 0.0, format: .hybrid)
             converts-color    : \(convertsColorSpace)
             target-space      : \(targetColorSpace ?? "nil" as CFString)
-            uses-ICC          : \(usesICC)
-            scales-output     : \(scales)
-            uses-buffer       : \(usesReplayBuffer)
-            replay-duration   : \(replayBufferDuration)
+            uses-ICC          : \(usesICC, format: .answer)
+            scales-output     : \(scales, format: .answer)
+            uses-buffer       : \(usesReplayBuffer, format: .answer)
+            replay-duration   : \(formatter.string(from: TimeInterval(replayBufferDuration))!)
         """)
     }
 }
