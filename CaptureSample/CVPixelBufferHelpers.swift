@@ -76,7 +76,6 @@ public func createPixelBuffer(width: Int, height: Int, pixelFormat: OSType) -> C
   var pixelBuffer: CVPixelBuffer?
   let status = CVPixelBufferCreate(nil, width, height, pixelFormat, attributes, &pixelBuffer)
   if status != kCVReturnSuccess {
-    print("Error: could not create pixel buffer", status)
     return nil
   }
   return pixelBuffer

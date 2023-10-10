@@ -170,7 +170,6 @@ class VTEncoder: NSObject {
         if noErr != err {
             logger.fault("Failed to set transfer function: \(err, privacy: .public)")
         }
-        print("set settings")
         if options.gammaValue != nil && options.transferFunction == TransferFunctionSetting.useGamma.stringValue() {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_GammaLevel, value: options.gammaValue! as CFNumber)
             if noErr != err {
@@ -246,7 +245,7 @@ class VTEncoder: NSObject {
     }
     
     func saveReplayBuffer() throws {
-        print("stopping buffer")
+        logger.notice("Saving replay buffer.")
         try self.videoSink.saveReplayBuffer()
     }
     

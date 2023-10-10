@@ -156,7 +156,6 @@ extension CMSampleBuffer {
                     dataLength: length,
                     flags: 0,
                     blockBufferOut: &blockBuffer) == noErr else {
-                        print("Failed to create block")
                         return nil
                     }
                 guard CMBlockBufferReplaceDataBytes(
@@ -164,7 +163,6 @@ extension CMSampleBuffer {
                     blockBuffer: blockBuffer!,
                     offsetIntoDestination: 0,
                     dataLength: length) == noErr else {
-                        print("Failed to move bytes for block")
                         return nil
                     }
                 return blockBuffer

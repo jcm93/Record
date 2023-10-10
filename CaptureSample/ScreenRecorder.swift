@@ -423,7 +423,7 @@ class ScreenRecorder: ObservableObject {
             self.isShowingError = true
             return
         }
-        logger.notice("\(self.options.description, privacy: .public)")
+        self.options.logStart(logger)
         do {
             try await captureEngine.startRecording(options: self.options)
             self.isRecording = true
@@ -487,7 +487,7 @@ class ScreenRecorder: ObservableObject {
             do {
                 self.eventTap = try RecordEventTap()
             } catch {
-                print(error)
+                logger.fault("Hotkey listener was not initialized: \(error, privacy: .public)")
             }
         }
         self.eventTap?.callback = self.saveReplayBuffer

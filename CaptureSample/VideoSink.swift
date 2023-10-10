@@ -84,7 +84,7 @@ public class VideoSink {
             self.assetWriter.startSession(atSourceTime: sbuf.presentationTimeStamp)
             self.sessionStarted = true
         }
-        print("started at \(sbuf.presentationTimeStamp.seconds)")
+        logger.notice("Recording session started. Initial timestamp: \(sbuf.presentationTimeStamp.seconds, privacy: .public)")
         if sbuf.formatDescription?.mediaType == .audio {
             sendAudioBuffer(sbuf)
         } else {
@@ -95,7 +95,7 @@ public class VideoSink {
     
     func initializeAssetWriters() throws {
         //pretty ugly still
-        print("initialize asset writers called")
+        logger.notice("Initializing file asset writers.")
         do {
             let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
             var isStale = false
@@ -139,13 +139,13 @@ public class VideoSink {
                 throw assetWriter.error!
             }
         } catch {
-            print("critical error starting asset writers \(error)")
+            logger.fault("Critical error initializing asset writers: \(error, privacy: .public)")
             if self.accessingBookmarkURL {
                 self.bookmarkedURL?.stopAccessingSecurityScopedResource()
                 self.accessingBookmarkURL = false
             }
             self.assetWriter?.cancelWriting()
-            //this should be all the cleanup we need? everything else with `try`
+            //this should be all the cleanup we need. everything else with `try`
             //shouldn't have any side effects, unlike AVAssetWriter and security-scoped bookmark
         }
     }
@@ -178,9 +178,7 @@ public class VideoSink {
         var finished = false
         var previousVideoFrame: CMSampleBuffer?
         var previousAudioFrame: CMSampleBuffer?
-        var videoReadIndex = 0
-        var audioReadIndex = 0
-        var retryCount = 0
+        var videoReadIndex = 0, audioReadIndex = 0, retryCount = 0
         while !finished {
             guard retryCount < 15 else {
                 finished = true
@@ -195,7 +193,7 @@ public class VideoSink {
                 self.assetWriterAudioInput.markAsFinished()
                 self.assetWriterInput.markAsFinished()
                 finished = true
-                print("finished")
+                logger.notice("Wrote all samples in replay buffer; finishing up.")
                 continue
             }
             let videoFrame = videoReplayBuffer.sampleAtIndex(index: videoReadIndex)
@@ -213,13 +211,12 @@ public class VideoSink {
                 if self.assetWriterAudioInput.isReadyForMoreMediaData {
                     let result = self.assetWriterAudioInput.append(frame)
                     if !result {
-                        print("assetwriteraudioinput failed to write frame")
+                        logger.notice("Audio asset writer failed to write a frame. Retrying; retry count is \(retryCount, privacy: .public) out of 15.")
                     }
                     previousAudioFrame = frame
                     audioReadIndex += 1
                     retryCount = 0
                 } else {
-                    print("retry required on audio; sleeping")
                     retryCount += 1
                     Thread.sleep(forTimeInterval: 0.1)
                 }
@@ -234,13 +231,12 @@ public class VideoSink {
                 if self.assetWriterInput.isReadyForMoreMediaData {
                     let result = self.assetWriterInput.append(frame)
                     if !result {
-                        print("assetwriterinput failed to write frame")
+                        logger.notice("Video asset writer failed to write a frame. Retrying; retry count is \(retryCount, privacy: .public) out of 15.")
                     }
                     previousVideoFrame = frame
                     videoReadIndex += 1
                     retryCount = 0
                 } else {
-                    print("retry required on video; sleeping")
                     retryCount += 1
                     Thread.sleep(forTimeInterval: 0.1)
                 }
@@ -248,7 +244,11 @@ public class VideoSink {
                 logger.notice("Encountered unknown media type in replay buffer; skipping")
             }
         }
-        print("Replay buffer wrote \(videoReadIndex) frames; finishing writing")
+        logger.notice("""
+                        Replay buffer wrote:
+                        \(videoReadIndex, privacy: .public) out of \(String(self.videoReplayBuffer?.buffer.count ?? 0), privacy: .public) video frames,
+                        \(audioReadIndex) out of \(String(self.audioReplayBuffer?.buffer.count ?? 0), privacy: .public) audio frames.
+                        """)
     }
     
     func stopReplayBuffer() throws {

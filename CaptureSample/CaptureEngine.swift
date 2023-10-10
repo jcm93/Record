@@ -56,7 +56,7 @@ class CaptureEngine: @unchecked Sendable {
                 try stream?.addStreamOutput(streamOutput, type: .audio, sampleHandlerQueue: nil)
                 stream?.startCapture()
             } catch {
-                print(error)
+                logger.critical("Could not initialize ScreenCaptureKit stream with error: \(error, privacy: .public)")
                 continuation.finish(throwing: error)
             }
         }
@@ -128,15 +128,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         /// We assume that we don't want to perform lots of work on these queues, so they
         /// can be maximally available to handle new frames as they're delivered by SCK.
         /// Therefore, immediately dispatch to the frame handler queue.
-    
-        /*if sampleBuffer.formatDescription?.mediaType == .video {
-            print("\(framesWritten): \(sampleBuffer.presentationTimeStamp.seconds)")
-            self.framesWritten += 1
-        }*/
 
         self.frameHandlerQueue.schedule {
             guard sampleBuffer.isValid else {
-                print("invalid sample")
+                self.logger.notice("ScreenCaptureKit emitted an invalid frame; skipping it. Timestamp: \(sampleBuffer.presentationTimeStamp.seconds, privacy: .public)")
                 return
             }
             switch outputType {
@@ -183,7 +178,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         guard let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
                                                                              createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
               let attachments = attachmentsArray.first else {
-            print("no attachment array")
+            logger.notice("ScreenCaptureKit emitted a frame with no attachment array. Skipping. Timestamp: \(sampleBuffer.presentationTimeStamp.seconds, privacy: .public)")
             return nil
         }
         

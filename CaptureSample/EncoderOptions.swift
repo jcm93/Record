@@ -1,5 +1,6 @@
 import AVFoundation
 import VideoToolbox
+import OSLog
 
 public struct OptionsStorable: Encodable, Decodable, Hashable {
     
@@ -192,5 +193,34 @@ public struct Options: @unchecked Sendable {
         self.scales = scales
         self.usesReplayBuffer = usesReplayBuffer
         self.replayBufferDuration = replayBufferDuration
+    }
+    
+    func logStart(_ logger: Logger) {
+        logger.notice("""
+        Encoder session started with options:
+            bitrate           : \(destBitRate * 1000, format: .bitrate)
+            cbr               : \(rateControl == .cbr)
+            codec             : \(codec)
+            dimensions        : \(destWidth) x \(destHeight)
+            keyframe-duration : \(maxKeyFrameIntervalDuration) seconds
+            keyframe-interval : \(maxKeyFrameInterval) frames
+            out               : \(outputFolder, privacy: .private(mask: .hash))
+            pixel-format      : \(pixelFormat)
+            rate-control      : \(rateControl.rawValue)
+            icc-profile       : \(iccProfile.debugDescription)
+            bit-depth         : \(bitDepth)
+            color-primaries   : \(colorPrimaries ?? "untagged" as CFString)
+            transfer-function : \(transferFunction ?? "untagged" as CFString)
+            yuv-matrix        : \(yuvMatrix)
+            b-frames          : \(bFrames)
+            crf-value         : \(crfValue)
+            gamma-value       : \(gammaValue ?? 0.0, format: .hybrid)
+            converts-color    : \(convertsColorSpace)
+            target-space      : \(targetColorSpace ?? "nil" as CFString)
+            uses-ICC          : \(usesICC)
+            scales-output     : \(scales)
+            uses-buffer       : \(usesReplayBuffer)
+            replay-duration   : \(replayBufferDuration)
+        """)
     }
 }

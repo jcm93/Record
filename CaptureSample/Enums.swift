@@ -237,7 +237,7 @@ public enum CaptureYUVMatrix: Int, Codable, CaseIterable {
     }
 }
 
-public enum RateControlSetting: Int, Codable, CaseIterable {
+public enum RateControlSetting: String, Codable, CaseIterable {
     case cbr
     case abr
     case crf
