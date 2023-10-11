@@ -13,13 +13,17 @@ import VideoToolbox
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
-    static let invalid = CapturedFrame(surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
+    static let invalid = CapturedFrame(surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0, encodedSurface: nil, encodedContentRect: nil)
     
     let surface: IOSurface?
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
     var size: CGSize { contentRect.size }
+    
+    let encodedSurface: IOSurface?
+    let encodedContentRect: CGRect?
+    var encodedSize: CGSize? { encodedContentRect?.size }
 }
 
 /// An object that wraps an instance of `SCStream`, and returns its results as an `AsyncThrowingStream`.
@@ -225,7 +229,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         let frame = CapturedFrame(surface: surface,
                                   contentRect: contentRect,
                                   contentScale: contentScale,
-                                  scaleFactor: scaleFactor)
+                                  scaleFactor: scaleFactor,
+                                  encodedSurface: nil,
+                                  encodedContentRect: nil)
         return frame
     }
     
