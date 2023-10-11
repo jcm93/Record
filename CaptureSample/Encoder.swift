@@ -24,6 +24,7 @@ enum EncoderError: Error {
 class VTEncoder: NSObject {
     
     var session: VTCompressionSession!
+    var decodeSession: VTDecompressionSession!
     var videoSink: VideoSink!
     var pixelTransferSession: VTPixelTransferSession?
     var stoppingEncoding = false
@@ -37,6 +38,7 @@ class VTEncoder: NSObject {
     
     var hasStarted = false
     var isStarting = false
+    var decodes = true
     
     private let logger = Logger.encoder
     
@@ -209,6 +211,9 @@ class VTEncoder: NSObject {
                     self.logger.critical("Failed to initialize video sink: \(error, privacy: .public)")
                     self.isStarting = false
                 }
+                if self.decodes {
+                    VTDecompressionSessionCreate(allocator: nil, formatDescription: sbuf!.formatDescription!, decoderSpecification: nil, imageBufferAttributes: nil, outputCallback: nil, decompressionSessionOut: &self.decodeSession)
+                }
             } else {
                 self.criticalErrorEncountered = true
                 self.currentError = EncoderError.initialFrameNotEncoded
@@ -216,6 +221,10 @@ class VTEncoder: NSObject {
                 self.isStarting = false
             }
         }
+    }
+    
+    func outputHandler(_ status: OSStatus, flags: VTDecodeInfoFlags, buffer: CVImageBuffer?, uhtime: CMTime, uhothertime: CMTime) {
+        self.videoSink.mostRecentImageBuffer = buffer
     }
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
@@ -231,6 +240,9 @@ class VTEncoder: NSObject {
                 (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
                 if sbuf != nil {
                     self.videoSink.sendSampleBuffer(sbuf!)
+                    if self.decodes {
+                        VTDecompressionSessionDecodeFrame(self.decodeSession, sampleBuffer: sbuf!, flags: [._1xRealTimePlayback], infoFlagsOut: nil, outputHandler: self.outputHandler)
+                    }
                 }
             }
         } else {

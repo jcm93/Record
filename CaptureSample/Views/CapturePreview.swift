@@ -14,14 +14,14 @@ struct CapturePreview: NSViewRepresentable {
     private let encodedContentLayer = CALayer()
     
     init() {
-        contentLayer.contentsGravity = .resizeAspect
-        //contentLayer.contentsGravity = .topLeft
-        //encodedContentLayer.contentsGravity = .topRight
+        //contentLayer.contentsGravity = .resizeAspect
+        contentLayer.contentsGravity = .topLeft
+        encodedContentLayer.contentsGravity = .topRight
     }
     
-    func makeNSView(context: Context) -> CaptureVideoPreview {
-        CaptureVideoPreview(layer: contentLayer)
-        //CaptureSplitViewPreview(firstLayer: contentLayer, secondLayer: encodedContentLayer)
+    func makeNSView(context: Context) -> CaptureSplitViewPreview {
+        //CaptureVideoPreview(layer: contentLayer)
+        CaptureSplitViewPreview(firstLayer: contentLayer, secondLayer: encodedContentLayer)
     }
     
     // Called by ScreenRecorder as it receives new video frames.
@@ -31,7 +31,7 @@ struct CapturePreview: NSViewRepresentable {
     }
     
     // The view isn't updatable. Updates to the layer's content are done in outputFrame(frame:).
-    func updateNSView(_ nsView: CaptureVideoPreview, context: Context) {}
+    func updateNSView(_ nsView: CaptureSplitViewPreview, context: Context) {}
     
     class CaptureSplitViewPreview: NSSplitView {
         var firstView: NSView
@@ -45,7 +45,7 @@ struct CapturePreview: NSViewRepresentable {
             self.addSubview(self.firstView)
             self.addSubview(self.secondView)
             firstLayer.contentsScale = 3.0
-            secondLayer.contentsScale = 3.0
+            secondLayer.contentsScale = 1.5
             //firstLayer.contentsRect = self.visibleRect
             //secondLayer.contentsRect = self.visibleRect
             self.wantsLayer = true

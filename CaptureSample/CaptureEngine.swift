@@ -225,13 +225,19 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
               let contentScale = attachments[.contentScale] as? CGFloat,
               let scaleFactor = attachments[.scaleFactor] as? CGFloat else { return nil }
         
+        var encoderSurface: IOSurface?
+        if let decoderPreview = self.encoder?.videoSink?.mostRecentImageBuffer {
+            let ref = CVPixelBufferGetIOSurface(decoderPreview)?.takeUnretainedValue()
+            encoderSurface = unsafeBitCast(ref, to: IOSurface.self)
+        }
+        
         // Create a new frame with the relevant data.
         let frame = CapturedFrame(surface: surface,
                                   contentRect: contentRect,
                                   contentScale: contentScale,
                                   scaleFactor: scaleFactor,
-                                  encodedSurface: nil,
-                                  encodedContentRect: nil)
+                                  encodedSurface: encoderSurface,
+                                  encodedContentRect: contentRect)
         return frame
     }
     
