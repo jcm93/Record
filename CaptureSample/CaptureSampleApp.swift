@@ -61,6 +61,15 @@ struct CaptureSampleApp: App {
                 }, message: {
                     Text("\(self.screenRecorder.errorText)")
                 })
+                .fileExporter(isPresented: $isExporting, document: self.currentLog, contentType: .plainText, defaultFilename: "Record.log", onCompletion: {
+                    result in
+                    switch result {
+                    case .success:
+                        logger.notice("Successfully output log to file")
+                    case .failure:
+                        logger.notice("Did not output log to file")
+                    }
+                })
         }
         .commands {
             CommandMenu("Preset") {
@@ -82,6 +91,16 @@ struct CaptureSampleApp: App {
                 if (self.screenRecorder.selectedPreset != nil) {
                     Button("Delete Preset") {
                         isShowingDeleteAlert.toggle()
+                    }
+                }
+            }
+            CommandMenu("Logs") {
+                Button("Save Current Log") {
+                    Task {
+                        self.currentLog = await logger.generateLog()
+                        if self.currentLog != nil {
+                            isExporting = true
+                        }
                     }
                 }
             }
