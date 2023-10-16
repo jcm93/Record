@@ -196,6 +196,10 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
+    @AppStorage("showsEncodePreview") var showsEncodePreview: Bool = false {
+        didSet { updateEngine() }
+    }
+    
     @AppStorage("capturePixelFormat") var capturePixelFormat: CapturePixelFormat = .bgra {
         didSet { updateEngine() }
     }
@@ -295,8 +299,12 @@ class ScreenRecorder: ObservableObject {
     private var scaleFactor: Int { Int(NSScreen.main?.backingScaleFactor ?? 2) }
     
     /// A view that renders the screen content.
-    lazy var capturePreview: CapturePreview = {
-        CapturePreview()
+    lazy var capturePreview: CaptureSingleViewPreview = {
+        CaptureSingleViewPreview()
+    }()
+    
+    lazy var captureEncodePreview: CaptureSplitViewPreview = {
+        CaptureSplitViewPreview()
     }()
     
     private var availableApps = [SCRunningApplication]()
@@ -391,7 +399,10 @@ class ScreenRecorder: ObservableObject {
             updateEngine()
             // Start the stream and await new video frames.
             for try await frame in captureEngine.startCapture(configuration: config, filter: filter) {
-                self.capturePreview.updateFrame(frame)
+                switch self.showsEncodePreview {
+                case true: self.captureEncodePreview.updateFrame(frame)
+                case false: self.capturePreview.updateFrame(frame)
+                }
                 if contentSize != frame.size {
                     // Update the content size if it changed.
                     contentSize = frame.size
@@ -491,6 +502,9 @@ class ScreenRecorder: ObservableObject {
             }
         }
         self.eventTap?.callback = self.saveReplayBuffer
+        if self.showsEncodePreview {
+            
+        }
     }
     
     /// - Tag: UpdateFilter

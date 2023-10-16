@@ -23,36 +23,70 @@ struct ContentView: View {
             ConfigurationView(screenRecorder: screenRecorder, userStopped: $userStopped)
                 .frame(minWidth: 330, maxWidth: 330)
                 .disabled(disableInput)
-            screenRecorder.capturePreview
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .aspectRatio(screenRecorder.contentSize, contentMode: .fit)
-                .padding(8)
-                .overlay {
-                    if userStopped {
-                        Image(systemName: "nosign")
-                            .font(.system(size: 250, weight: .bold))
-                            .foregroundColor(Color(white: 0.3, opacity: 1.0))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(white: 0.0, opacity: 0.5))
+            if (screenRecorder.showsEncodePreview) {
+                screenRecorder.captureEncodePreview
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .aspectRatio(screenRecorder.contentSize, contentMode: .fit)
+                    .padding(8)
+                    .overlay {
+                        if userStopped {
+                            Image(systemName: "nosign")
+                                .font(.system(size: 250, weight: .bold))
+                                .foregroundColor(Color(white: 0.3, opacity: 1.0))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color(white: 0.0, opacity: 0.5))
+                        }
                     }
-                }
-        }
-        .overlay {
-            if isUnauthorized {
-                VStack() {
-                    Spacer()
-                    VStack {
-                        Text("No screen recording permission.")
-                            .font(.largeTitle)
-                            .padding(.top)
-                        Text("Open System Settings and go to Privacy & Security > Screen Recording to grant permission.")
-                            .font(.title2)
-                            .padding(.bottom)
+                    .overlay {
+                        if isUnauthorized {
+                            VStack() {
+                                Spacer()
+                                VStack {
+                                    Text("No screen recording permission.")
+                                        .font(.largeTitle)
+                                        .padding(.top)
+                                    Text("Open System Settings and go to Privacy & Security > Screen Recording to grant permission.")
+                                        .font(.title2)
+                                        .padding(.bottom)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .background(.red)
+                                
+                            }
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .background(.red)
-                    
-                }
+            } else {
+                screenRecorder.capturePreview
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .aspectRatio(screenRecorder.contentSize, contentMode: .fit)
+                    .padding(8)
+                    .overlay {
+                        if userStopped {
+                            Image(systemName: "nosign")
+                                .font(.system(size: 250, weight: .bold))
+                                .foregroundColor(Color(white: 0.3, opacity: 1.0))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color(white: 0.0, opacity: 0.5))
+                        }
+                    }
+                    .overlay {
+                        if isUnauthorized {
+                            VStack() {
+                                Spacer()
+                                VStack {
+                                    Text("No screen recording permission.")
+                                        .font(.largeTitle)
+                                        .padding(.top)
+                                    Text("Open System Settings and go to Privacy & Security > Screen Recording to grant permission.")
+                                        .font(.title2)
+                                        .padding(.bottom)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .background(.red)
+                                
+                            }
+                        }
+                    }
             }
         }
         .navigationTitle("Record")

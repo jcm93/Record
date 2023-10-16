@@ -16,7 +16,9 @@ public class VideoSink {
     var usingReplayBuffer = true
     var stupidTemporaryBuffer = [CMSampleBuffer]()
     var hasStarted = false
+    
     var mostRecentImageBuffer: CVImageBuffer?
+    var mostRecentSampleBuffer: CMSampleBuffer?
     
     private var bookmarkedURL: URL?
     

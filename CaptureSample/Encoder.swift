@@ -191,14 +191,17 @@ class VTEncoder: NSObject {
         guard !self.videoSink.hasStarted else {
             throw EncoderError.videoSinkAlreadyActive
         }
-        let pixelBufferToEncodeFrom = self.pixelTransferBuffer != nil ? self.pixelTransferBuffer : buffer
-        if let pixelTransferSession = pixelTransferSession {
+        var pixelBufferToEncodeFrom: CVPixelBuffer
+        if pixelTransferSession != nil {
             if self.pixelTransferBuffer == nil {
                 self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
             }
-            VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: pixelTransferBuffer)
+            VTPixelTransferSessionTransferImage(pixelTransferSession!, from: buffer, to: self.pixelTransferBuffer)
+            pixelBufferToEncodeFrom = self.pixelTransferSession != nil ? self.pixelTransferBuffer : buffer
+        } else {
+            pixelBufferToEncodeFrom = buffer
         }
-        VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom!, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
+        VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
             (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
             if sbuf != nil {
                 do {
@@ -229,18 +232,22 @@ class VTEncoder: NSObject {
     
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
         if self.stoppingEncoding != true {
-            let pixelBufferToEncodeFrom = self.pixelTransferSession != nil ? self.pixelTransferBuffer! : buffer
-            if let pixelTransferSession = pixelTransferSession {
+            var pixelBufferToEncodeFrom: CVPixelBuffer
+            if pixelTransferSession != nil {
                 if self.pixelTransferBuffer == nil {
                     self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
                 }
-                VTPixelTransferSessionTransferImage(pixelTransferSession, from: buffer, to: pixelTransferBuffer)
+                VTPixelTransferSessionTransferImage(pixelTransferSession!, from: buffer, to: self.pixelTransferBuffer)
+                pixelBufferToEncodeFrom = self.pixelTransferBuffer
+            } else {
+                pixelBufferToEncodeFrom = buffer
             }
             VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
                 (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
                 if sbuf != nil {
                     self.videoSink.sendSampleBuffer(sbuf!)
                     if self.decodes {
+                        self.videoSink.mostRecentSampleBuffer = sbuf!
                         VTDecompressionSessionDecodeFrame(self.decodeSession, sampleBuffer: sbuf!, flags: [._1xRealTimePlayback], infoFlagsOut: nil, outputHandler: self.outputHandler)
                     }
                 }

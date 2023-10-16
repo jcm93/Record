@@ -199,6 +199,10 @@ struct VideoCaptureConfigurationView: View {
                     .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
                         dimension[.leading]
                     }
+                Toggle("Live encode preview", isOn: $screenRecorder.showsEncodePreview)
+                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                        dimension[.leading]
+                    }
             }
             .padding(EdgeInsets(top: 4, leading: -2, bottom: 0, trailing: -2))
         }

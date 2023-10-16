@@ -13,7 +13,7 @@ import VideoToolbox
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
-    static let invalid = CapturedFrame(surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0, encodedSurface: nil, encodedContentRect: nil)
+    static let invalid = CapturedFrame(surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0, encodedFrame: nil, encodedContentRect: nil)
     
     let surface: IOSurface?
     let contentRect: CGRect
@@ -21,7 +21,7 @@ struct CapturedFrame {
     let scaleFactor: CGFloat
     var size: CGSize { contentRect.size }
     
-    let encodedSurface: IOSurface?
+    let encodedFrame: CMSampleBuffer?
     let encodedContentRect: CGRect?
     var encodedSize: CGSize? { encodedContentRect?.size }
 }
@@ -225,18 +225,14 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
               let contentScale = attachments[.contentScale] as? CGFloat,
               let scaleFactor = attachments[.scaleFactor] as? CGFloat else { return nil }
         
-        var encoderSurface: IOSurface?
-        if let decoderPreview = self.encoder?.videoSink?.mostRecentImageBuffer {
-            let ref = CVPixelBufferGetIOSurface(decoderPreview)?.takeUnretainedValue()
-            encoderSurface = unsafeBitCast(ref, to: IOSurface.self)
-        }
+        let encoderFrame = self.encoder?.videoSink?.mostRecentSampleBuffer
         
         // Create a new frame with the relevant data.
         let frame = CapturedFrame(surface: surface,
                                   contentRect: contentRect,
                                   contentScale: contentScale,
                                   scaleFactor: scaleFactor,
-                                  encodedSurface: encoderSurface,
+                                  encodedFrame: encoderFrame,
                                   encodedContentRect: contentRect)
         return frame
     }
