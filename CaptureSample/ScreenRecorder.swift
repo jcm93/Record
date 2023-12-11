@@ -11,6 +11,8 @@ import Combine
 import OSLog
 import SwiftUI
 import AVFoundation
+import com_jcm_record_RecordVirtualCam
+import SystemExtensions
 
 /// A provider of audio levels from the captured samples.
 class AudioLevelsProvider: ObservableObject {
@@ -19,8 +21,14 @@ class AudioLevelsProvider: ObservableObject {
 
 @MainActor
 class ScreenRecorder: ObservableObject {
+
+    
+    
+    private var extensionActivated = false
     
     //MARK: event tap
+    
+    //private var providerSource: RecordVirtualCamProviderSource!
     
     var eventTap: RecordEventTap! = nil
     
@@ -136,6 +144,7 @@ class ScreenRecorder: ObservableObject {
     
     @Published var isRunning = false
     @Published var isRecording = false
+    @Published var isEncoding = false
     
     @Published var captureWidth: Int = 0
     @Published var captureHeight: Int = 0
@@ -186,6 +195,16 @@ class ScreenRecorder: ObservableObject {
     
     @Published var selectedWindow: SCWindow? {
         didSet { updateEngine() }
+    }
+    
+    @Published var selectedApplications = Set<String>() {
+        willSet {
+            print("setting selected applications \(newValue)")
+        }
+        didSet {
+            print("set selected applications \(selectedApplications)")
+            updateEngine()
+        }
     }
     
     @AppStorage("excludeSelf") var isAppExcluded = true {
@@ -307,7 +326,7 @@ class ScreenRecorder: ObservableObject {
         CaptureSplitViewPreview()
     }()
     
-    private var availableApps = [SCRunningApplication]()
+    @Published var availableApps = [SCRunningApplication]()
     @Published private(set) var availableDisplays = [SCDisplay]()
     @Published private(set) var availableWindows = [SCWindow]()
     
@@ -424,9 +443,25 @@ class ScreenRecorder: ObservableObject {
         isRunning = false
     }
     
+    func startEncodingSession() async {
+        guard isRunning else { return }
+        guard !isRecording else { return }
+        guard !isEncoding else { return }
+        self.options.logStart(logger)
+        do {
+            try await captureEngine.startEncodingSession(options: self.options)
+            //self.isRecording = true
+        } catch {
+            self.isRecording = false
+            self.errorText = error.localizedDescription
+            self.isShowingError = true
+        }
+    }
+    
     func record() async {
         guard isRunning else { return }
         guard !isRecording else { return }
+        self.options.logStart(logger)
         guard self.filePath != "" else {
             self.isRecording = false
             self.errorText = "No output folder selected."
@@ -434,7 +469,6 @@ class ScreenRecorder: ObservableObject {
             self.isShowingError = true
             return
         }
-        self.options.logStart(logger)
         do {
             try await captureEngine.startRecording(options: self.options)
             self.isRecording = true
@@ -487,6 +521,13 @@ class ScreenRecorder: ObservableObject {
         audioLevelsProvider.audioLevels = AudioLevels.zero
     }*/
     
+    func updateEncodePreview() {
+        Task {
+            await self.stopRecord()
+            await self.startEncodingSession()
+        }
+    }
+    
     /// - Tag: UpdateCaptureConfig
     private func updateEngine() {
         guard isRunning else { return }
@@ -503,8 +544,17 @@ class ScreenRecorder: ObservableObject {
         }
         self.eventTap?.callback = self.saveReplayBuffer
         if self.showsEncodePreview {
-            
+            self.updateEncodePreview()
         }
+        /*if !self.extensionActivated {
+            let identifier = "com.example.apple-samplecode.CustomCamera.CameraExtension"
+            
+            
+            // Submit an activation request.
+            let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: identifier, queue: .main)
+            activationRequest.delegate = self
+            OSSystemExtensionManager.shared.submitRequest(activationRequest)
+        }*/
     }
     
     /// - Tag: UpdateFilter
@@ -513,13 +563,11 @@ class ScreenRecorder: ObservableObject {
         switch captureType {
         case .display:
             guard let display = selectedDisplay else { fatalError("No display selected.") }
-            var excludedApps = [SCRunningApplication]()
+            var excludedApps = self.availableApps
             // If a user chooses to exclude the app from the stream,
             // exclude it by matching its bundle identifier.
-            if isAppExcluded {
-                excludedApps = availableApps.filter { app in
-                    Bundle.main.bundleIdentifier == app.bundleIdentifier
-                }
+            excludedApps = availableApps.filter { app in
+                self.selectedApplications.contains(app.id)
             }
             // Create a content filter with excluded apps.
             filter = SCContentFilter(display: display,
@@ -541,6 +589,12 @@ class ScreenRecorder: ObservableObject {
         // Configure audio capture.
         streamConfig.capturesAudio = isAudioCaptureEnabled
         streamConfig.excludesCurrentProcessAudio = isAppAudioExcluded
+        if #available(macOS 14.0, *) {
+            //streamConfig.capturesShadowsOnly = true
+            //streamConfig.ignoreGlobalClipDisplay = true
+        } else {
+            // Fallback on earlier versions
+        }
         
         // Configure the display content width and height.
         if captureType == .display, let display = selectedDisplay {
@@ -641,5 +695,10 @@ extension SCWindow {
 extension SCDisplay {
     var displayName: String {
         "Display: \(width) x \(height)"
+    }
+}
+extension SCRunningApplication: Identifiable {
+    public var id: String {
+        self.bundleIdentifier
     }
 }

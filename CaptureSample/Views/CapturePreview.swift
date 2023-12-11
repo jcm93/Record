@@ -59,6 +59,7 @@ struct CaptureSplitViewPreview: NSViewRepresentable {
         if let frame = frame.encodedFrame {
             self.renderer.enqueue(frame)
         }
+        
         //encodedContentLayer.contents = frame.encodedSurface
     }
     
@@ -81,8 +82,6 @@ struct CaptureSplitViewPreview: NSViewRepresentable {
             self.isVertical = true
             self.addSubview(self.firstView)
             self.addSubview(self.secondView)
-            //let scale = CGFloat(IOSurfaceGetHeight(firstView.layer!.contents as! IOSurface)) / self.frame.height
-            //firstView.layer?.contentsScale = scale
             //secondView.layer?.contentsScale = scale
             self.wantsLayer = true
             if #available(macOS 14.0, *) {

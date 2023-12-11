@@ -21,7 +21,7 @@ enum EncoderError: Error {
     case unknownFrameType
 }
 
-class VTEncoder: NSObject {
+class VTEncoder {
     
     var session: VTCompressionSession!
     var decodeSession: VTDecompressionSession!
@@ -45,7 +45,6 @@ class VTEncoder: NSObject {
     init?(options: Options) async throws {
         self.destWidth = options.destWidth
         self.destHeight = options.destHeight
-        super.init()
         let sourceImageBufferAttributes = [kCVPixelBufferPixelFormatTypeKey: options.pixelFormat as CFNumber] as CFDictionary
         
         let err = VTCompressionSessionCreate(allocator: kCFAllocatorDefault,
@@ -224,6 +223,10 @@ class VTEncoder: NSObject {
                 self.isStarting = false
             }
         }
+    }
+    
+    func startRecording() {
+        self.videoSink.makeActive()
     }
     
     func outputHandler(_ status: OSStatus, flags: VTDecodeInfoFlags, buffer: CVImageBuffer?, uhtime: CMTime, uhothertime: CMTime) {

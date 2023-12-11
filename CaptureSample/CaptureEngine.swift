@@ -76,8 +76,16 @@ class CaptureEngine: @unchecked Sendable {
         powerMeter.processSilence()
     }
     
-    func startRecording(options: Options) async throws {
+    func startEncodingSession(options: Options) async throws {
         self.streamOutput.encoder = try await VTEncoder(options: options)
+    }
+    
+    func startRecording(options: Options) async throws {
+        if self.streamOutput.encoder == nil {
+            self.streamOutput.encoder = try await VTEncoder(options: options)
+        } else {
+            self.streamOutput.encoder.startRecording()
+        }
     }
     
     func stopRecording() async throws {
@@ -169,9 +177,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         }
     }
     
-    func stopReplayBuffer() {
+    func stopReplayBuffer() async {
         do {
-            try self.encoder.videoSink.stopReplayBuffer()
+            try await self.encoder.videoSink.stopReplayBuffer()
         } catch {
             self.errorHandler!(error)
         }

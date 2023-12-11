@@ -32,6 +32,7 @@ public class VideoSink {
     private let isRealTime: Bool
     private let usesReplayBuffer: Bool
     private let replayBufferDuration: Int
+    private var isActive: Bool
     
     var accessingBookmarkURL = false
     
@@ -59,6 +60,11 @@ public class VideoSink {
             self.audioReplayBuffer = ReplayBuffer(buffer: [], maxLengthInSeconds: Double(replayBufferDuration))
         }
         self.isStopping = false
+        self.isActive = true
+    }
+    
+    public func makeActive() {
+        self.isActive = true
     }
     
     /// Appends a video frame to the destination movie file.
@@ -97,52 +103,56 @@ public class VideoSink {
     }
     
     func initializeAssetWriters() throws {
-        //pretty ugly still
         logger.notice("Initializing file asset writers.")
+        let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
+        var isStale = false
         do {
-            let bookmarkedData = UserDefaults.standard.data(forKey: "mostRecentSinkURL")
-            var isStale = false
             if bookmarkedData != nil {
+                //self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, bookmarkDataIsStale: &isStale)
                 self.bookmarkedURL = try URL(resolvingBookmarkData: bookmarkedData!, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-            }
-            if bookmarkedURL?.path() == outputFolder.path() {
-                self.accessingBookmarkURL = true
-                bookmarkedURL?.startAccessingSecurityScopedResource()
-            }
-            let fileExtension = self.fileType == .mov ? "mov" : "mp4"
-            let sinkURL = outputFolder.appendingRecordFilename(fileExtension: fileExtension)
-            let bookmarkData = try outputFolder.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-            UserDefaults.standard.setValue(bookmarkData, forKey: "mostRecentSinkURL")
-            assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
-            
-            let videoFormatDesc = try CMFormatDescription(videoCodecType: CMFormatDescription.MediaSubType(rawValue: codec), width: width, height: height)
-            
-            assetWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: nil, sourceFormatHint: videoFormatDesc)
-            let audioFormatDescription = AudioStreamBasicDescription(mSampleRate: 48000.0, mFormatID: kAudioFormatLinearPCM, mFormatFlags: 0x29, mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
-            let outputSettings = [
-                AVFormatIDKey: UInt(kAudioFormatLinearPCM),
-                AVSampleRateKey: 48000,
-                AVNumberOfChannelsKey: 2,
-                //AVChannelLayoutKey: NSData(bytes:&channelLayout, length:MemoryLayout<AudioChannelLayout>.size),
-                AVLinearPCMBitDepthKey: 16,
-                AVLinearPCMIsNonInterleaved: false,
-                AVLinearPCMIsFloatKey: false,
-                AVLinearPCMIsBigEndianKey: false
-            ] as [String : Any]
-            let cmFormat = try CMFormatDescription(audioStreamBasicDescription: audioFormatDescription)
-            assetWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: outputSettings, sourceFormatHint: cmFormat)
-            
-            
-            assetWriterInput.expectsMediaDataInRealTime = true
-            assetWriterAudioInput.expectsMediaDataInRealTime = true
-            
-            assetWriter.add(assetWriterInput)
-            assetWriter.add(assetWriterAudioInput)
-            guard assetWriter.startWriting() else {
-                throw assetWriter.error!
+                if bookmarkedURL?.path() == outputFolder.path() {
+                    self.accessingBookmarkURL = true
+                    bookmarkedURL?.startAccessingSecurityScopedResource()
+                }
             }
         } catch {
-            logger.fault("Critical error initializing asset writers: \(error, privacy: .public)")
+            logger.fault("Failed to create bookmark URL from serialized NSData with security scope: \(error, privacy: .public)")
+            
+        }
+        let fileExtension = self.fileType == .mov ? "mov" : "mp4"
+        let sinkURL = outputFolder.appendingRecordFilename(fileExtension: fileExtension)
+        let bookmarkData = try outputFolder.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+        UserDefaults.standard.setValue(bookmarkData, forKey: "mostRecentSinkURL")
+        assetWriter = try AVAssetWriter(outputURL: sinkURL, fileType: fileType)
+        
+        let videoFormatDesc = try CMFormatDescription(videoCodecType: CMFormatDescription.MediaSubType(rawValue: codec), width: width, height: height)
+        
+        assetWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: nil, sourceFormatHint: videoFormatDesc)
+        let audioFormatDescription = AudioStreamBasicDescription(mSampleRate: 48000.0, mFormatID: kAudioFormatLinearPCM, mFormatFlags: 0x29, mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
+        let outputSettings = [
+            AVFormatIDKey: UInt(kAudioFormatLinearPCM),
+            AVSampleRateKey: 48000,
+            AVNumberOfChannelsKey: 2,
+            //AVChannelLayoutKey: NSData(bytes:&channelLayout, length:MemoryLayout<AudioChannelLayout>.size),
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsNonInterleaved: false,
+            AVLinearPCMIsFloatKey: false,
+            AVLinearPCMIsBigEndianKey: false
+        ] as [String : Any]
+        let cmFormat = try CMFormatDescription(audioStreamBasicDescription: audioFormatDescription)
+        assetWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: outputSettings, sourceFormatHint: cmFormat)
+        
+        
+        assetWriterInput.expectsMediaDataInRealTime = true
+        assetWriterAudioInput.expectsMediaDataInRealTime = true
+        
+        assetWriter.add(assetWriterInput)
+        assetWriter.add(assetWriterAudioInput)
+        guard assetWriter.startWriting() else {
+            throw assetWriter.error!
+        }
+        /*catch {
+            logger.fault("Failed to create bookmark URL from serialized NSData with security scope: \(error, privacy: .public)")
             if self.accessingBookmarkURL {
                 self.bookmarkedURL?.stopAccessingSecurityScopedResource()
                 self.accessingBookmarkURL = false
@@ -150,7 +160,7 @@ public class VideoSink {
             self.assetWriter?.cancelWriting()
             //this should be all the cleanup we need. everything else with `try`
             //shouldn't have any side effects, unlike AVAssetWriter and security-scoped bookmark
-        }
+        }*/
     }
     
     public func sendAudioBuffer(_ buffer: CMSampleBuffer) {

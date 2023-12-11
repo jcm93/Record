@@ -29,7 +29,6 @@
 		0D368B212A6CF6BA00DA288D /* VideoSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D368B202A6CF6BA00DA288D /* VideoSink.swift */; };
 		0D4875402A81A20800F6D832 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D48753F2A81A20800F6D832 /* Enums.swift */; };
 		0D52D73F2AB9283F0091AD97 /* EventTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D52D73E2AB9283F0091AD97 /* EventTap.swift */; };
-		0D5C3BB62ACE437800417FEB /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 0D5C3BB52ACE437800417FEB /* KeyboardShortcuts */; };
 		0D5C529C2AD60B8E00D11280 /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5C529B2AD60B8E00D11280 /* Logging.swift */; };
 		0DE5C82F2A95EDC60054AC23 /* PickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE5C82E2A95EDC60054AC23 /* PickerView.swift */; };
 		C470F0812811C5CB00D29309 /* ScreenRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C470F0802811C5CB00D29309 /* ScreenRecorder.swift */; };
@@ -44,6 +43,19 @@
 		C4B0DAC0276BA4B50015082A /* CaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B0DABD276BA4B50015082A /* CaptureEngine.swift */; };
 		C4EB90D428108656006A595C /* ConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EB90D328108656006A595C /* ConfigurationView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0DBF97E42AEB29CF00D21A33 /* Embed System Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(SYSTEM_EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			name = "Embed System Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0D1326772A85612B00B1E886 /* CVPixelBufferHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CVPixelBufferHelpers.swift; sourceTree = "<group>"; };
@@ -69,8 +81,9 @@
 		0D48753F2A81A20800F6D832 /* Enums.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Enums.swift; sourceTree = "<group>"; };
 		0D52D73E2AB9283F0091AD97 /* EventTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTap.swift; sourceTree = "<group>"; };
 		0D5C529B2AD60B8E00D11280 /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
+		0D64B0E62B1699E200A8CAFE /* Record-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Record-Info.plist"; sourceTree = "<group>"; };
 		0DE5C82E2A95EDC60054AC23 /* PickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerView.swift; sourceTree = "<group>"; };
-		0DF11FDD2A6ECBA500B45306 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		0DF11FDD2A6ECBA500B45306 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.markdown; };
 		7C6C99F1D4B6E3EBA3A7B7DF /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		C470F0802811C5CB00D29309 /* ScreenRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenRecorder.swift; sourceTree = "<group>"; };
 		C471DFF92809F440001D24C9 /* PowerMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerMeter.swift; sourceTree = "<group>"; };
@@ -92,7 +105,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0D5C3BB62ACE437800417FEB /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +172,7 @@
 		C4B0DA9E276BA4460015082A = {
 			isa = PBXGroup;
 			children = (
+				0D64B0E62B1699E200A8CAFE /* Record-Info.plist */,
 				0D164AAE2A996C6E003F2F7E /* objective-c-xcode.yml */,
 				0DF11FDD2A6ECBA500B45306 /* README.md */,
 				C4B0DAA9276BA4460015082A /* CaptureSample */,
@@ -226,6 +239,7 @@
 				C4B0DAA3276BA4460015082A /* Sources */,
 				C4B0DAA4276BA4460015082A /* Frameworks */,
 				C4B0DAA5276BA4460015082A /* Resources */,
+				0DBF97E42AEB29CF00D21A33 /* Embed System Extensions */,
 			);
 			buildRules = (
 			);
@@ -233,7 +247,6 @@
 			);
 			name = Record;
 			packageProductDependencies = (
-				0D5C3BB52ACE437800417FEB /* KeyboardShortcuts */,
 			);
 			productName = CaptureIt;
 			productReference = C4B0DAA7276BA4460015082A /* Record.app */;
@@ -246,7 +259,8 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1330;
+				DefaultBuildSystemTypeForWorkspace = Latest;
+				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = jcm;
 				TargetAttributes = {
@@ -266,7 +280,6 @@
 			);
 			mainGroup = C4B0DA9E276BA4460015082A;
 			packageReferences = (
-				0D5C3BB42ACE437800417FEB /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			productRefGroup = C4B0DAA8276BA4460015082A /* Products */;
 			projectDirPath = "";
@@ -455,12 +468,12 @@
 		C4B0DAB7276BA4480015082A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CaptureSample/CaptureSample.entitlements;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -470,6 +483,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Record-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Record;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -479,7 +493,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.1;
 				OTHER_SWIFT_FLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.jcm.record;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jcm.Record;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -491,12 +505,12 @@
 		C4B0DAB8276BA4480015082A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CaptureSample/CaptureSample.entitlements;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -506,6 +520,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Record-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Record;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -515,7 +530,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0.1;
 				OTHER_SWIFT_FLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.jcm.record;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jcm.Record;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -545,25 +560,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		0D5C3BB42ACE437800417FEB /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.15.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		0D5C3BB52ACE437800417FEB /* KeyboardShortcuts */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0D5C3BB42ACE437800417FEB /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
-			productName = KeyboardShortcuts;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C4B0DA9F276BA4460015082A /* Project object */;
 }

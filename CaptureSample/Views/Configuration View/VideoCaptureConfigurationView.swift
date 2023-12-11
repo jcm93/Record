@@ -33,21 +33,28 @@ struct VideoCaptureConfigurationView: View {
                     Text("Screen Content:")
                     switch screenRecorder.captureType {
                     case .display:
-                        Picker("Display", selection: $screenRecorder.selectedDisplay) {
-                            ForEach(screenRecorder.availableDisplays, id: \.self) { display in
-                                Text(display.displayName)
-                                    .tag(SCDisplay?.some(display))
+                        VStack {
+                            Picker("Display", selection: $screenRecorder.selectedDisplay) {
+                                ForEach(screenRecorder.availableDisplays, id: \.self) { display in
+                                    Text(display.displayName)
+                                        .tag(SCDisplay?.some(display))
+                                }
                             }
-                        }
-                        .onHover(perform: { hovering in
-                            Task {
-                                await self.screenRecorder.refreshAvailableContent()
+                            .onHover(perform: { hovering in
+                                Task {
+                                    await self.screenRecorder.refreshAvailableContent()
+                                }
+                            })
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
                             }
-                        })
-                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                            dimension[.leading]
+                            .frame(width: 150)
+                            
+                            List(screenRecorder.availableApps, selection: $screenRecorder.selectedApplications) {
+                                Text($0.applicationName)
+                            }
+                            .frame(height: 100)
                         }
-                        .frame(width: 150)
                         
                     case .window:
                         Picker("Window", selection: $screenRecorder.selectedWindow) {
