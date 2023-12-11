@@ -10,6 +10,9 @@ Record aims to be a low-overhead macOS screen recorder that emphasizes not missi
 * Live encode preview (WIP)
 
 # Installation
+> [!IMPORTANT]
+> Record is currently in an experimental state and CI builds are not stable. When this warning is removed, non-stable development will be taking place in feature branches and the CI builds under the "Development" deployment should be generally regarded as stable.
+
 Record is in active development and uses rolling releases. Download the most recent stable artifact using the "Development" deployment along the right sidebar.
 
 # Examples
