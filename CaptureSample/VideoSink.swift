@@ -18,7 +18,7 @@ public class VideoSink {
     var hasStarted = false
     
     var mostRecentImageBuffer: CVImageBuffer?
-    var mostRecentSampleBuffer: CMSampleBuffer?
+    //var mostRecentSampleBuffer: CMSampleBuffer?
     
     private var bookmarkedURL: URL?
     
@@ -33,6 +33,7 @@ public class VideoSink {
     private let usesReplayBuffer: Bool
     private let replayBufferDuration: Int
     private var isActive: Bool
+    private var replayBufferLock = NSLock()
     
     var accessingBookmarkURL = false
     
@@ -265,8 +266,10 @@ public class VideoSink {
     }
     
     func stopReplayBuffer() throws {
+        self.replayBufferLock.lock()
         self.videoReplayBuffer = nil
         self.audioReplayBuffer = nil
+        self.replayBufferLock.unlock()
     }
     
     /// Closes the destination movie file.

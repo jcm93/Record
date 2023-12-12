@@ -30,6 +30,8 @@ class VTEncoder {
     var stoppingEncoding = false
     var pixelTransferBuffer: CVPixelBuffer!
     
+    var hasStartedLock = NSLock()
+    
     var destWidth: Int
     var destHeight: Int
     
@@ -180,10 +182,13 @@ class VTEncoder {
     }
     
     func startSession(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) throws {
+        self.hasStartedLock.lock()
         guard !self.isStarting else {
+            self.hasStartedLock.unlock()
             return
         }
         self.isStarting = true
+        self.hasStartedLock.unlock()
         guard !self.criticalErrorEncountered else {
             throw self.currentError!
         }
@@ -205,7 +210,9 @@ class VTEncoder {
             if sbuf != nil {
                 do {
                     try self.videoSink.startSession(sbuf!)
+                    self.hasStartedLock.lock()
                     self.hasStarted = true
+                    self.hasStartedLock.unlock()
                     self.isStarting = false
                 } catch {
                     self.currentError = error
@@ -249,10 +256,10 @@ class VTEncoder {
                 (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
                 if sbuf != nil {
                     self.videoSink.sendSampleBuffer(sbuf!)
-                    if self.decodes {
+                    /*if self.decodes {
                         self.videoSink.mostRecentSampleBuffer = sbuf!
                         VTDecompressionSessionDecodeFrame(self.decodeSession, sampleBuffer: sbuf!, flags: [._1xRealTimePlayback], infoFlagsOut: nil, outputHandler: self.outputHandler)
-                    }
+                    }*/
                 }
             }
         } else {

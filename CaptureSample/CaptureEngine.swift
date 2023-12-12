@@ -233,7 +233,8 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
               let contentScale = attachments[.contentScale] as? CGFloat,
               let scaleFactor = attachments[.scaleFactor] as? CGFloat else { return nil }
         
-        let encoderFrame = self.encoder?.videoSink?.mostRecentSampleBuffer
+        //let encoderFrame = self.encoder?.videoSink?.mostRecentSampleBuffer
+        let encoderFrame: CMSampleBuffer? = nil
         
         // Create a new frame with the relevant data.
         let frame = CapturedFrame(surface: surface,

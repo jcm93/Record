@@ -1,5 +1,5 @@
 # Record
-Record aims to be a low-overhead macOS screen recorder that emphasizes not missing frames, color correctness and color-matching between output color spaces, and a variety of encoder options for size and quality flexibility.
+Record aims to be a low-overhead macOS screen recorder that emphasizes not missing frames, color correctness, and a variety of encoder options for size and quality flexibility.
 
 <img width="1840" alt="Screenshot 2023-08-25 at 7 58 44 PM" src="https://github.com/jcm93/Record/assets/6864788/7e683799-7ff9-4d31-8393-86c4ffa53f07">
 
