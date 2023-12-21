@@ -26,6 +26,8 @@ class ScreenRecorder: ObservableObject {
     
     private var extensionActivated = false
     
+    var requestDelegate = CameraExtensionRequestDelegate()
+    
     //MARK: event tap
     
     //private var providerSource: RecordVirtualCamProviderSource!
@@ -546,15 +548,15 @@ class ScreenRecorder: ObservableObject {
         if self.showsEncodePreview {
             self.updateEncodePreview()
         }
-        /*if !self.extensionActivated {
-            let identifier = "com.example.apple-samplecode.CustomCamera.CameraExtension"
+        if !self.extensionActivated {
+            let identifier = "com.jcm.Record.RecordCameraExtension"
             
             
             // Submit an activation request.
             let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: identifier, queue: .main)
-            activationRequest.delegate = self
+            activationRequest.delegate = self.requestDelegate
             OSSystemExtensionManager.shared.submitRequest(activationRequest)
-        }*/
+        }
     }
     
     /// - Tag: UpdateFilter

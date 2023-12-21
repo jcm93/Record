@@ -6,6 +6,7 @@ The entry point into this app.
 */
 import SwiftUI
 import OSLog
+import SystemExtensions
 
 let startupTime = Date()
 
@@ -22,8 +23,12 @@ struct CaptureSampleApp: App {
     @State var selectedPreset: OptionsStorable!
     
     var logger = Logger.application
+  
+    var extensionActivated = false
     
     @StateObject var screenRecorder = ScreenRecorder()
+  
+    var requestDelegate = CameraExtensionRequestDelegate()
     
     @State private var currentLog: TextDocument?
     
@@ -109,4 +114,31 @@ struct CaptureSampleApp: App {
             TestPatternView(fps: $screenRecorder.framesPerSecond)
         }
     }
+}
+
+class CameraExtensionRequestDelegate: NSObject, OSSystemExtensionRequestDelegate {
+    func request(_ request: OSSystemExtensionRequest, actionForReplacingExtension existing: OSSystemExtensionProperties, withExtension ext: OSSystemExtensionProperties) -> OSSystemExtensionRequest.ReplacementAction {
+        return .replace
+    }
+    
+    func requestNeedsUserApproval(_ request: OSSystemExtensionRequest) {
+        Logger.application.info("Camera extension requires user approval.")
+    }
+    
+    func request(_ request: OSSystemExtensionRequest, didFinishWithResult result: OSSystemExtensionRequest.Result) {
+        switch result {
+        case .completed:
+            Logger.application.info("Camera extension installation is complete.")
+        case .willCompleteAfterReboot:
+            Logger.application.info("Camera extension installation will complete after reboot.")
+        default:
+            Logger.application.info("poop.")
+        }
+    }
+    
+    func request(_ request: OSSystemExtensionRequest, didFailWithError error: Error) {
+        Logger.application.error("Camera extension installation failed with error \(error, privacy: .public)")
+    }
+    
+    
 }

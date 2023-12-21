@@ -10,6 +10,7 @@ import AVFAudio
 import ScreenCaptureKit
 import OSLog
 import VideoToolbox
+import com_jcm_Record_RecordCameraExtension
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
@@ -140,7 +141,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
         /// We assume that we don't want to perform lots of work on these queues, so they
         /// can be maximally available to handle new frames as they're delivered by SCK.
         /// Therefore, immediately dispatch to the frame handler queue.
-
+        
         self.frameHandlerQueue.schedule {
             guard sampleBuffer.isValid else {
                 self.logger.notice("ScreenCaptureKit emitted an invalid frame; skipping it. Timestamp: \(sampleBuffer.presentationTimeStamp.seconds, privacy: .public)")
