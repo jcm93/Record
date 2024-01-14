@@ -33,6 +33,8 @@
 		0D6933012B34B1850019368E /* RecordCameraExtensionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6933002B34B1850019368E /* RecordCameraExtensionProvider.swift */; };
 		0D6933032B34B1850019368E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6933022B34B1850019368E /* main.swift */; };
 		0D6933082B34B1850019368E /* com.jcm.Record.RecordCameraExtension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = 0D6932FE2B34B1850019368E /* com.jcm.Record.RecordCameraExtension.systemextension */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		0D6933B02B35322B0019368E /* RecordCameraExtensionSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6933AF2B35322B0019368E /* RecordCameraExtensionSink.swift */; };
+		0D6933B22B3688FD0019368E /* RecordCameraStreamSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6933B12B3688FD0019368E /* RecordCameraStreamSink.swift */; };
 		0DE5C82F2A95EDC60054AC23 /* PickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE5C82E2A95EDC60054AC23 /* PickerView.swift */; };
 		C470F0812811C5CB00D29309 /* ScreenRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C470F0802811C5CB00D29309 /* ScreenRecorder.swift */; };
 		C471DFFB2809F440001D24C9 /* PowerMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C471DFF92809F440001D24C9 /* PowerMeter.swift */; };
@@ -101,6 +103,8 @@
 		0D6933022B34B1850019368E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		0D6933042B34B1850019368E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0D6933052B34B1850019368E /* RecordCameraExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RecordCameraExtension.entitlements; sourceTree = "<group>"; };
+		0D6933AF2B35322B0019368E /* RecordCameraExtensionSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCameraExtensionSink.swift; sourceTree = "<group>"; };
+		0D6933B12B3688FD0019368E /* RecordCameraStreamSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCameraStreamSink.swift; sourceTree = "<group>"; };
 		0DE5C82E2A95EDC60054AC23 /* PickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerView.swift; sourceTree = "<group>"; };
 		0DF11FDD2A6ECBA500B45306 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.markdown; };
 		7C6C99F1D4B6E3EBA3A7B7DF /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
@@ -177,6 +181,7 @@
 			isa = PBXGroup;
 			children = (
 				0D6933002B34B1850019368E /* RecordCameraExtensionProvider.swift */,
+				0D6933AF2B35322B0019368E /* RecordCameraExtensionSink.swift */,
 				0D6933022B34B1850019368E /* main.swift */,
 				0D6933042B34B1850019368E /* Info.plist */,
 				0D6933052B34B1850019368E /* RecordCameraExtension.entitlements */,
@@ -232,6 +237,7 @@
 		C4B0DAA9276BA4460015082A /* CaptureSample */ = {
 			isa = PBXGroup;
 			children = (
+				0D6933B12B3688FD0019368E /* RecordCameraStreamSink.swift */,
 				C470F0802811C5CB00D29309 /* ScreenRecorder.swift */,
 				0D48753F2A81A20800F6D832 /* Enums.swift */,
 				0D1326772A85612B00B1E886 /* CVPixelBufferHelpers.swift */,
@@ -377,6 +383,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0D6933032B34B1850019368E /* main.swift in Sources */,
+				0D6933B02B35322B0019368E /* RecordCameraExtensionSink.swift in Sources */,
 				0D6933012B34B1850019368E /* RecordCameraExtensionProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -414,6 +421,7 @@
 				0D152E9F2AB9FF2700FEB9CE /* HotkeysPreferencesView.swift in Sources */,
 				0D164AA02A97E894003F2F7E /* OutputConfigurationView.swift in Sources */,
 				0D164AAA2A97EC32003F2F7E /* ReplayBufferTabItem.swift in Sources */,
+				0D6933B22B3688FD0019368E /* RecordCameraStreamSink.swift in Sources */,
 				0D368B1F2A6CED2F00DA288D /* EncoderOptions.swift in Sources */,
 				0D3065CC2A9466A600247474 /* Renderer.swift in Sources */,
 				0D164AA82A97EBDB003F2F7E /* KeyframesTabItem.swift in Sources */,

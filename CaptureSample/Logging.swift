@@ -22,6 +22,8 @@ extension Logger {
     
     static let application = Logger(subsystem: subsystem, category: "application")
     
+    static let virtualCamera = Logger(subsystem: subsystem, category: "virtualCamera")
+    
     func generateLog() async -> TextDocument? {
         do {
             let logStore = try OSLogStore(scope: .currentProcessIdentifier)

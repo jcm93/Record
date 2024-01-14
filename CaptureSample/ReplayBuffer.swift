@@ -137,49 +137,102 @@ extension CMSampleBuffer {
     }
     
     func deepCopy() -> CMSampleBuffer? {
-            guard let formatDesc = CMSampleBufferGetFormatDescription(self),
-                  let data = try? self.dataBuffer?.dataBytes() else {
-                      return nil
-                  }
-            let nFrames = CMSampleBufferGetNumSamples(self)
-            let pts = CMSampleBufferGetPresentationTimeStamp(self)
-            let dataBuffer = data.withUnsafeBytes { (buffer) -> CMBlockBuffer? in
-                var blockBuffer: CMBlockBuffer?
-                let length: Int = data.count
-                guard CMBlockBufferCreateWithMemoryBlock(
-                    allocator: kCFAllocatorDefault,
-                    memoryBlock: nil,
-                    blockLength: length,
-                    blockAllocator: nil,
-                    customBlockSource: nil,
-                    offsetToData: 0,
-                    dataLength: length,
-                    flags: 0,
-                    blockBufferOut: &blockBuffer) == noErr else {
-                        return nil
-                    }
-                guard CMBlockBufferReplaceDataBytes(
-                    with: buffer.baseAddress!,
-                    blockBuffer: blockBuffer!,
-                    offsetIntoDestination: 0,
-                    dataLength: length) == noErr else {
-                        return nil
-                    }
-                return blockBuffer
-            }
-            guard let dataBuffer = dataBuffer else {
-                return nil
-            }
-            var newSampleBuffer: CMSampleBuffer?
-            CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+        guard let formatDesc = CMSampleBufferGetFormatDescription(self),
+              let data = try? self.dataBuffer?.dataBytes() else {
+                  return nil
+              }
+        let nFrames = CMSampleBufferGetNumSamples(self)
+        let pts = CMSampleBufferGetPresentationTimeStamp(self)
+        let dataBuffer = data.withUnsafeBytes { (buffer) -> CMBlockBuffer? in
+            var blockBuffer: CMBlockBuffer?
+            let length: Int = data.count
+            guard CMBlockBufferCreateWithMemoryBlock(
                 allocator: kCFAllocatorDefault,
-                dataBuffer: dataBuffer,
-                formatDescription: formatDesc,
-                sampleCount: nFrames,
-                presentationTimeStamp: pts,
-                packetDescriptions: nil,
-                sampleBufferOut: &newSampleBuffer
-            )
-            return newSampleBuffer
+                memoryBlock: nil,
+                blockLength: length,
+                blockAllocator: nil,
+                customBlockSource: nil,
+                offsetToData: 0,
+                dataLength: length,
+                flags: 0,
+                blockBufferOut: &blockBuffer) == noErr else {
+                    return nil
+                }
+            guard CMBlockBufferReplaceDataBytes(
+                with: buffer.baseAddress!,
+                blockBuffer: blockBuffer!,
+                offsetIntoDestination: 0,
+                dataLength: length) == noErr else {
+                    return nil
+                }
+            return blockBuffer
         }
+        guard let dataBuffer = dataBuffer else {
+            return nil
+        }
+        var newSampleBuffer: CMSampleBuffer?
+        CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+            allocator: kCFAllocatorDefault,
+            dataBuffer: dataBuffer,
+            formatDescription: formatDesc,
+            sampleCount: nFrames,
+            presentationTimeStamp: pts,
+            packetDescriptions: nil,
+            sampleBufferOut: &newSampleBuffer
+        )
+        return newSampleBuffer
+    }
+}
+
+extension CVPixelBuffer {
+    func copy() -> CVPixelBuffer {
+        precondition(CFGetTypeID(self) == CVPixelBufferGetTypeID(), "copy() cannot be called on a non-CVPixelBuffer")
+
+        let ioSurfaceProps = [
+            "IOSurfaceOpenGLESFBOCompatibility": true as CFBoolean,
+            "IOSurfaceOpenGLESTextureCompatibility": true as CFBoolean,
+            "IOSurfaceCoreAnimationCompatibility": true as CFBoolean
+        ] as CFDictionary
+
+        let options = [
+            String(kCVPixelBufferMetalCompatibilityKey): true as CFBoolean,
+            String(kCVPixelBufferIOSurfacePropertiesKey): ioSurfaceProps
+        ] as CFDictionary
+
+        var _copy : CVPixelBuffer?
+        CVPixelBufferCreate(
+            nil,
+            CVPixelBufferGetWidth(self),
+            CVPixelBufferGetHeight(self),
+            CVPixelBufferGetPixelFormatType(self),
+            options,
+            &_copy)
+
+        guard let copy = _copy else { fatalError() }
+
+        CVBufferPropagateAttachments(self as CVBuffer, copy as CVBuffer)
+
+        CVPixelBufferLockBaseAddress(self, CVPixelBufferLockFlags.readOnly)
+        CVPixelBufferLockBaseAddress(copy, CVPixelBufferLockFlags(rawValue: 0))
+
+        let copyBaseAddress = CVPixelBufferGetBaseAddress(copy)
+        let currBaseAddress = CVPixelBufferGetBaseAddress(self)
+
+        memcpy(copyBaseAddress, currBaseAddress, CVPixelBufferGetDataSize(self))
+
+        CVPixelBufferUnlockBaseAddress(copy, CVPixelBufferLockFlags(rawValue: 0))
+        CVPixelBufferUnlockBaseAddress(self, CVPixelBufferLockFlags.readOnly)
+
+        // let's make sure they have the same average color
+//        let originalImage = CIImage(cvPixelBuffer: self)
+//        let copiedImage = CIImage(cvPixelBuffer: copy)
+//
+//        let averageColorOriginal = originalImage.averageColour()
+//        let averageColorCopy = copiedImage.averageColour()
+//
+//        assert(averageColorCopy == averageColorOriginal)
+//        debugPrint("average frame color: \(averageColorCopy)")
+
+        return copy
+    }
 }

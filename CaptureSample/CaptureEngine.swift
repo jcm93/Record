@@ -122,6 +122,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var dstData: UnsafeMutableRawPointer!
     private let frameHandlerQueue = DispatchQueue(label: "com.jcm.Record.FrameHandlerQueue")
     
+    var sink: RecordCameraStreamSink! = RecordCameraStreamSink()
+    var sinkInitialized = false
+    
     var framesWritten = 0
     
     private let logger = Logger.capture
@@ -147,10 +150,15 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                 self.logger.notice("ScreenCaptureKit emitted an invalid frame; skipping it. Timestamp: \(sampleBuffer.presentationTimeStamp.seconds, privacy: .public)")
                 return
             }
+            if !self.sinkInitialized {
+                self.sink.connectToCamera(width: 3456, height: 2234)
+                self.sinkInitialized = true
+            }
             switch outputType {
             case .screen:
                 if let frame = self.createFrame(for: sampleBuffer) {
                     self.capturedFrameHandler?(frame)
+                    self.sink.enqueue(frame.surface!)
                 }
             case .audio:
                 if let copy = self.createAudioFrame(for: sampleBuffer) {

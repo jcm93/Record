@@ -74,5 +74,30 @@ struct AppControlsConfigurationView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(EdgeInsets(top: 0, leading: 0, bottom: 15, trailing: 0))
+        HStack {
+            Button {
+                Task { await screenRecorder.uninstallExtension() }
+            } label: {
+                Text("Remove Extension")
+            }
+            .controlSize(.large)
+            .buttonStyle(.borderedProminent)
+            Button {
+                Task { screenRecorder.installExtension() }
+            } label: {
+                Text("Install Extension")
+            }
+            .controlSize(.large)
+            .buttonStyle(.borderedProminent)
+            Button {
+                Task { screenRecorder.testSetProperty() }
+            } label: {
+                Text("Test Set Property")
+            }
+            .controlSize(.large)
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(EdgeInsets(top: 0, leading: 0, bottom: 15, trailing: 0))
     }
 }

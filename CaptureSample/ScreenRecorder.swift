@@ -22,7 +22,7 @@ class AudioLevelsProvider: ObservableObject {
 @MainActor
 class ScreenRecorder: ObservableObject {
 
-    
+    var sink: RecordCameraStreamSink!
     
     private var extensionActivated = false
     
@@ -548,15 +548,33 @@ class ScreenRecorder: ObservableObject {
         if self.showsEncodePreview {
             self.updateEncodePreview()
         }
-        if !self.extensionActivated {
-            let identifier = "com.jcm.Record.RecordCameraExtension"
-            
-            
-            // Submit an activation request.
-            let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: identifier, queue: .main)
-            activationRequest.delegate = self.requestDelegate
-            OSSystemExtensionManager.shared.submitRequest(activationRequest)
-        }
+    }
+    
+    func uninstallExtension() {
+        let identifier = "com.jcm.Record.RecordCameraExtension"
+        
+        
+        // Submit an activation request.
+        /*let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: identifier, queue: .main)
+        activationRequest.delegate = self.requestDelegate
+        OSSystemExtensionManager.shared.submitRequest(activationRequest)*/
+        let deactivationRequest = OSSystemExtensionRequest.deactivationRequest(forExtensionWithIdentifier: identifier, queue: .main)
+        deactivationRequest.delegate = self.requestDelegate
+        OSSystemExtensionManager.shared.submitRequest(deactivationRequest)
+    }
+    
+    func installExtension() {
+        let identifier = "com.jcm.Record.RecordCameraExtension"
+        
+        
+        // Submit an activation request.
+        let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: identifier, queue: .main)
+        activationRequest.delegate = self.requestDelegate
+        OSSystemExtensionManager.shared.submitRequest(activationRequest)
+    }
+    
+    func testSetProperty() {
+        print("poop")
     }
     
     /// - Tag: UpdateFilter
