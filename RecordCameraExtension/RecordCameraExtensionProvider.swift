@@ -6,7 +6,7 @@ import AppKit
 
 // MARK: -
 
-let customExtensionPropertyTest: CMIOExtensionProperty = CMIOExtensionProperty(rawValue: "4cc_test_glob_0000")
+let customExtensionPropertyTest: CMIOExtensionProperty = CMIOExtensionProperty(rawValue: "4cc_just_glob_0000")
 let kFrameRate: Int = 60
 
 class RecordCameraExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
@@ -45,6 +45,8 @@ class RecordCameraExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
 	private var _whiteStripeStartRow: UInt32 = 0
 	
 	private var _whiteStripeIsAscending: Bool = false
+    
+    private var client: CMIOExtensionClient!
     
     var stupidCount = 0
 	
@@ -220,10 +222,31 @@ class RecordCameraExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
         }
     }
     
+    func otherConsumeBuffer() {
+        guard let client = self.client else { return }
+        os_log("dequeue called")
+        self._streamSink.stream.consumeSampleBuffer(from: client) { sbuf, seq, discontinuity, hasMoreSampleBuffers, err in
+            if sbuf != nil {
+                self.lastTimingInfo.presentationTimeStamp = CMClockGetTime(CMClockGetHostTimeClock())
+                let output: CMIOExtensionScheduledOutput = CMIOExtensionScheduledOutput(sequenceNumber: seq, hostTimeInNanoseconds: UInt64(self.lastTimingInfo.presentationTimeStamp.seconds * Double(NSEC_PER_SEC)))
+                os_log("streamingCounter is \(self._streamingCounter)")
+                if self._streamingCounter > 0 {
+                    os_log("sending boofer")
+                    self._streamSource.stream.send(sbuf!, discontinuity: [], hostTimeInNanoseconds: UInt64(sbuf!.presentationTimeStamp.seconds * Double(NSEC_PER_SEC)))
+                }
+                self._streamSink.stream.notifyScheduledOutputChanged(output)
+            }
+            if err != nil {
+                os_log("LOGGING AN ERROR POOPY")
+                os_log("\(err!.localizedDescription)")
+            }
+        }
+    }
+    
     func startStreamingSink(client: CMIOExtensionClient) {
         _streamingSinkCounter += 1
         self.sinkStarted = true
-        consumeBuffer(client)
+        self.client = client
     }
         
     func stopStreamingSink() {
@@ -303,6 +326,9 @@ class RecordCameraExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
             if let newValue = state.value as? String {
                 self.test = newValue
                 os_log("test is \(self.test, privacy: .public)")
+                if let deviceSource = device.source as? RecordCameraExtensionDeviceSource {
+                    deviceSource.otherConsumeBuffer()
+                }
             }
         }
     }

@@ -30,3 +30,16 @@ struct SheetMaterialView: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
+
+struct OverlayMaterialView: NSViewRepresentable {
+    @Environment(\.colorScheme) var colorScheme
+    
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .fullScreenUI
+        view.blendingMode = .withinWindow
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}

@@ -29,8 +29,8 @@ class RecordCameraStreamSink: NSObject {
     private var timer: Timer?
     private var propTimer: Timer?
     
-    func getJustProperty(streamId: CMIOStreamID) -> String? {
-        let selector = "just".convertedToCMIOObjectPropertySelectorName()
+    func getTestProperty(streamId: CMIOStreamID) -> String? {
+        let selector = FourCharCode("just")
         var address = CMIOObjectPropertyAddress(selector, .global, .main)
         let exists = CMIOObjectHasProperty(streamId, &address)
         if exists {
@@ -45,8 +45,8 @@ class RecordCameraStreamSink: NSObject {
         }
     }
 
-    func setJustProperty(streamId: CMIOStreamID, newValue: String) {
-        let selector = "just".convertedToCMIOObjectPropertySelectorName()
+    func setTestProperty(streamId: CMIOStreamID, newValue: String) {
+        let selector = FourCharCode("just")
         var address = CMIOObjectPropertyAddress(selector, .global, .main)
         let exists = CMIOObjectHasProperty(streamId, &address)
         if exists {
@@ -59,6 +59,7 @@ class RecordCameraStreamSink: NSObject {
             CMIOObjectGetPropertyDataSize(streamId, &address, 0, nil, &dataSize)
             var newName: CFString = newValue as NSString
             CMIOObjectSetPropertyData(streamId, &address, 0, nil, dataSize, &newName)
+            print("setting test property")
         }
     }
     
@@ -179,6 +180,7 @@ class RecordCameraStreamSink: NSObject {
                 if let sbuf = sbuf {
                     let pointerRef = UnsafeMutableRawPointer(Unmanaged.passRetained(sbuf).toOpaque())
                     CMSimpleQueueEnqueue(self.sinkQueue!, element: pointerRef)
+                    self.setTestProperty(streamId: self.sourceStream!, newValue: "a")
                 }
             }
         } else {
@@ -186,6 +188,48 @@ class RecordCameraStreamSink: NSObject {
         }
     }
     
+}
+
+extension FourCharCode: ExpressibleByStringLiteral {
+    
+    public init(stringLiteral value: StringLiteralType) {
+        var code: FourCharCode = 0
+        // Value has to consist of 4 printable ASCII characters, e.g. '420v'.
+        // Note: This implementation does not enforce printable range (32-126)
+        if value.count == 4 && value.utf8.count == 4 {
+            for byte in value.utf8 {
+                code = code << 8 + FourCharCode(byte)
+            }
+        }
+        else {
+            print("FourCharCode: Can't initialize with '\(value)', only printable ASCII allowed. Setting to '????'.")
+            code = 0x3F3F3F3F // = '????'
+        }
+        self = code
+    }
+    
+    public init(extendedGraphemeClusterLiteral value: String) {
+        self = FourCharCode(stringLiteral: value)
+    }
+    
+    public init(unicodeScalarLiteral value: String) {
+        self = FourCharCode(stringLiteral: value)
+    }
+    
+    public init(_ value: String) {
+        self = FourCharCode(stringLiteral: value)
+    }
+    
+    public var string: String? {
+        let cString: [CChar] = [
+            CChar(self >> 24 & 0xFF),
+            CChar(self >> 16 & 0xFF),
+            CChar(self >> 8 & 0xFF),
+            CChar(self & 0xFF),
+            0
+        ]
+        return String(cString: cString)
+    }
 }
 
 extension String {

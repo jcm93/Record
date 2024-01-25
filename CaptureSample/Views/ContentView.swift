@@ -15,6 +15,8 @@ struct ContentView: View {
     @State var userStopped = false
     @State var disableInput = false
     @State var isUnauthorized = false
+    @State var mouseCursorHovering = false
+    @State var overlayOpacity = 1.0
     
     @EnvironmentObject var screenRecorder: ScreenRecorder
     
@@ -85,6 +87,20 @@ struct ContentView: View {
                                 .background(.red)
                                 
                             }
+                        }
+                    }
+                    .overlay(alignment: .leading) {
+                        VStack() {
+                            CaptureConfigurationOverlay(screenRecorder: self.screenRecorder)
+                            Spacer()
+                        }
+                        .padding(EdgeInsets(top: 75, leading: 75, bottom: 0, trailing: 0))
+                        .opacity(overlayOpacity)
+                    }
+                    .onHover { hover in
+                        mouseCursorHovering = hover
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            overlayOpacity = hover == true ? 1.0 : 0.0
                         }
                     }
             }

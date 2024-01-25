@@ -14,61 +14,38 @@ struct EncoderConfigurationView: View {
     @State var currentTab: Int = 0
     
     var body: some View {
-        VStack(alignment: .imageTitleAlignmentGuide) {
-            Group {
-                HStack {
-                    Text("Codec:")
-                    Picker("Codec", selection: $screenRecorder.encoderSetting) {
-                        ForEach(EncoderSetting.allCases, id: \.self) { format in
-                            Text(format.stringValue())
-                                .tag(format)
-                        }
-                    }
-                    //.pickerStyle(.radioGroup)
-                    .frame(width: 150)
-                    .horizontalRadioGroupLayout()
-                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                        dimension[.leading]
-                    }
-                }
-                
-            }
-            .controlSize(.small)
-            .labelsHidden()
-            
-            Group {
-                HStack {
-                    Text("Container:")
-                    Picker("Container", selection: $screenRecorder.containerSetting) {
-                        Text(".mp4")
-                            .tag(ContainerSetting.mp4)
-                        Text(".mov")
-                            .tag(ContainerSetting.mov)
-                    }
-                    .frame(width: 150)
-                    //.pickerStyle(.radioGroup)
-                    .horizontalRadioGroupLayout()
-                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                        dimension[.leading]
-                    }
-                }
-            }
-            .controlSize(.small)
-            .labelsHidden()
-            if (self.screenRecorder.encoderSetting == .H264 || self.screenRecorder.encoderSetting == .H265) {
+        GroupBox {
+            VStack(alignment: .imageTitleAlignmentGuide) {
                 Group {
                     HStack {
-                        Spacer(minLength: 20)
-                        Text("Rate Control:")
-                        Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
-                            Text("CBR")
-                                .tag(RateControlSetting.cbr)
-                            Text("ABR")
-                                .tag(RateControlSetting.abr)
-                            Text("CRF")
-                                .tag(RateControlSetting.crf)
+                        Text("Codec:")
+                        Picker("Codec", selection: $screenRecorder.encoderSetting) {
+                            ForEach(EncoderSetting.allCases, id: \.self) { format in
+                                Text(format.stringValue())
+                                    .tag(format)
+                            }
+                        }
+                        //.pickerStyle(.radioGroup)
+                        .frame(width: 150)
+                        .horizontalRadioGroupLayout()
+                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                            dimension[.leading]
+                        }
+                    }
+                    
+                }
+                .controlSize(.small)
+                .labelsHidden()
+                
+                Group {
+                    HStack {
+                        Text("Container:")
+                        Picker("Container", selection: $screenRecorder.containerSetting) {
+                            Text(".mp4")
+                                .tag(ContainerSetting.mp4)
+                            Text(".mov")
+                                .tag(ContainerSetting.mov)
                         }
                         .frame(width: 150)
                         //.pickerStyle(.radioGroup)
@@ -81,79 +58,104 @@ struct EncoderConfigurationView: View {
                 }
                 .controlSize(.small)
                 .labelsHidden()
-                
-                
-                if (screenRecorder.rateControlSetting != .crf) {
+                if (self.screenRecorder.encoderSetting == .H264 || self.screenRecorder.encoderSetting == .H265) {
                     Group {
                         HStack {
-                            Text("Bitrate:")
-                            HStack {
-                                TextField("", value: $screenRecorder.bitRate, format: .number)
-                                    .frame(width: 100)
-                                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                                        dimension[.leading]
-                                    }
-                                Text("kbps")
-                                    .frame(width: 40)
+                            Spacer(minLength: 20)
+                            Text("Rate Control:")
+                            Picker("Rate Control", selection: $screenRecorder.rateControlSetting) {
+                                Text("CBR")
+                                    .tag(RateControlSetting.cbr)
+                                Text("ABR")
+                                    .tag(RateControlSetting.abr)
+                                Text("CRF")
+                                    .tag(RateControlSetting.crf)
                             }
-                        }
-                    }
-                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                    .controlSize(.small)
-                    .labelsHidden()
-                } else {
-                    Group {
-                        //Text("Quality")
-                        HStack {
-                            Text("Quality:")
-                            Slider(
-                                value: $screenRecorder.crfValue,
-                                in: 0.0...1.00
-                            ) {
-                                Text("Values from 0 to 1.00")
-                            }
-                            .frame(width: 150)/*minimumValueLabel: {
-                                               Text("Poor")
-                                               } maximumValueLabel: {
-                                               Text("'Lossless'")
-                                               }*/
+                            .frame(width: 150)
+                            //.pickerStyle(.radioGroup)
+                            .horizontalRadioGroupLayout()
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                             .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
                                 dimension[.leading]
                             }
                         }
-                        HStack {
-                            Text("CRF:")
-                            TextField("CRF", value: $screenRecorder.crfValue, format: .number)
-                                .frame(width: 70)
+                    }
+                    .controlSize(.small)
+                    .labelsHidden()
+                    
+                    
+                    if (screenRecorder.rateControlSetting != .crf) {
+                        Group {
+                            HStack {
+                                Text("Bitrate:")
+                                HStack {
+                                    TextField("", value: $screenRecorder.bitRate, format: .number)
+                                        .frame(width: 100)
+                                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                            dimension[.leading]
+                                        }
+                                    Text("kbps")
+                                        .frame(width: 40)
+                                }
+                            }
+                        }
+                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        .controlSize(.small)
+                        .labelsHidden()
+                    } else {
+                        Group {
+                            //Text("Quality")
+                            HStack {
+                                Text("Quality:")
+                                Slider(
+                                    value: $screenRecorder.crfValue,
+                                    in: 0.0...1.00
+                                ) {
+                                    Text("Values from 0 to 1.00")
+                                }
+                                .frame(width: 150)/*minimumValueLabel: {
+                                                   Text("Poor")
+                                                   } maximumValueLabel: {
+                                                   Text("'Lossless'")
+                                                   }*/
                                 .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
                                     dimension[.leading]
                                 }
+                            }
+                            HStack {
+                                Text("CRF:")
+                                TextField("CRF", value: $screenRecorder.crfValue, format: .number)
+                                    .frame(width: 70)
+                                    .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                        dimension[.leading]
+                                    }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        .controlSize(.small)
+                        .labelsHidden()
                     }
-                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                } else {
+                    Group {
+                        HStack {
+                            Text("ProRes Setting:")
+                            Picker("ProRes Setting", selection: $screenRecorder.proResSetting) {
+                                ForEach(ProResSetting.allCases, id: \.self) { format in
+                                    Text(format.stringValue())
+                                        .tag(format)
+                                }
+                            }
+                            .frame(width: 150)
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                        }
+                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                    }
                     .controlSize(.small)
                     .labelsHidden()
                 }
-            } else {
-                Group {
-                    HStack {
-                        Text("ProRes Setting:")
-                        Picker("ProRes Setting", selection: $screenRecorder.proResSetting) {
-                            ForEach(ProResSetting.allCases, id: \.self) { format in
-                                Text(format.stringValue())
-                                    .tag(format)
-                            }
-                        }
-                        .frame(width: 150)
-                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                            dimension[.leading]
-                        }
-                    }
-                    .padding(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
-                }
-                .controlSize(.small)
-                .labelsHidden()
             }
         }
         .modifier(ConfigurationSubViewStyle())

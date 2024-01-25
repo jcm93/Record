@@ -11,10 +11,12 @@ import SwiftUI
 struct AudioConfigurationView: View {
     @ObservedObject var screenRecorder: ScreenRecorder
     var body: some View {
-        VStack(alignment: .trailing) {
-            Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
-                .padding(EdgeInsets(top: 0, leading: 48, bottom: 0, trailing: 0))
-                .controlSize(.small)
+        GroupBox {
+            VStack(alignment: .imageTitleAlignmentGuide) {
+                Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
+                    .padding(EdgeInsets(top: 0, leading: 48, bottom: 0, trailing: 0))
+                    .controlSize(.small)
+            }
         }
         .modifier(ConfigurationSubViewStyle())
     }

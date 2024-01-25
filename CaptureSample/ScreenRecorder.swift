@@ -11,7 +11,6 @@ import Combine
 import OSLog
 import SwiftUI
 import AVFoundation
-import com_jcm_record_RecordVirtualCam
 import SystemExtensions
 
 /// A provider of audio levels from the captured samples.
@@ -199,7 +198,7 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
-    @Published var selectedApplications = Set<String>() {
+    @Published var selectedApplications = Set<SCRunningApplication>() {
         willSet {
             print("setting selected applications \(newValue)")
         }
@@ -208,6 +207,8 @@ class ScreenRecorder: ObservableObject {
             updateEngine()
         }
     }
+    
+    @State var bindingBool =  [String : Binding<Bool>]()
     
     @AppStorage("excludeSelf") var isAppExcluded = true {
         didSet { updateEngine() }
@@ -574,7 +575,7 @@ class ScreenRecorder: ObservableObject {
     }
     
     func testSetProperty() {
-        print("poop")
+        print("a")
     }
     
     /// - Tag: UpdateFilter
@@ -587,7 +588,7 @@ class ScreenRecorder: ObservableObject {
             // If a user chooses to exclude the app from the stream,
             // exclude it by matching its bundle identifier.
             excludedApps = availableApps.filter { app in
-                self.selectedApplications.contains(app.id)
+                !self.selectedApplications.contains(app)
             }
             // Create a content filter with excluded apps.
             filter = SCContentFilter(display: display,
@@ -674,6 +675,7 @@ class ScreenRecorder: ObservableObject {
                 availableWindows = windows
             }
             availableApps = availableContent.applications
+            selectedApplications = Set<SCRunningApplication>(availableApps.filter({UserDefaults.standard.bool(forKey: $0.bundleIdentifier) == true}))
             
             if selectedDisplay == nil {
                 selectedDisplay = availableDisplays.first

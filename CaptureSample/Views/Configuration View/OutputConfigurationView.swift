@@ -19,20 +19,22 @@ struct OutputConfigurationView: View {
     var logger = Logger.application
     
     var body: some View {
-        VStack(alignment: .imageTitleAlignmentGuide) {
-            HStack {
-                Text("Output folder:")
-                    .padding(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 0))
+        GroupBox {
+            VStack(alignment: .imageTitleAlignmentGuide) {
                 HStack {
-                    TextField("Path", text: $screenRecorder.filePath)
-                        .disabled(true)
-                        .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                            dimension[.leading]
+                    Text("Output folder:")
+                        .padding(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 0))
+                    HStack {
+                        TextField("Path", text: $screenRecorder.filePath)
+                            .disabled(true)
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                        Button {
+                            Task { await self.selectFolder() }
+                        } label: {
+                            Image(systemName: "folder")
                         }
-                    Button {
-                        Task { await self.selectFolder() }
-                    } label: {
-                        Image(systemName: "folder")
                     }
                 }
             }

@@ -157,8 +157,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
             switch outputType {
             case .screen:
                 if let frame = self.createFrame(for: sampleBuffer) {
+                    IOSurfaceLock(frame.surface!, [], nil)
                     self.capturedFrameHandler?(frame)
                     self.sink.enqueue(frame.surface!)
+                    IOSurfaceUnlock(frame.surface!, [], nil)
                 }
             case .audio:
                 if let copy = self.createAudioFrame(for: sampleBuffer) {

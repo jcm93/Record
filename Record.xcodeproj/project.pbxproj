@@ -35,6 +35,7 @@
 		0D6933082B34B1850019368E /* com.jcm.Record.RecordCameraExtension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = 0D6932FE2B34B1850019368E /* com.jcm.Record.RecordCameraExtension.systemextension */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0D6933B02B35322B0019368E /* RecordCameraExtensionSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6933AF2B35322B0019368E /* RecordCameraExtensionSink.swift */; };
 		0D6933B22B3688FD0019368E /* RecordCameraStreamSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D6933B12B3688FD0019368E /* RecordCameraStreamSink.swift */; };
+		0D85BC012B5E30B400EC424B /* CaptureConfigurationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D85BC002B5E30B400EC424B /* CaptureConfigurationOverlay.swift */; };
 		0DE5C82F2A95EDC60054AC23 /* PickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE5C82E2A95EDC60054AC23 /* PickerView.swift */; };
 		C470F0812811C5CB00D29309 /* ScreenRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C470F0802811C5CB00D29309 /* ScreenRecorder.swift */; };
 		C471DFFB2809F440001D24C9 /* PowerMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C471DFF92809F440001D24C9 /* PowerMeter.swift */; };
@@ -105,6 +106,7 @@
 		0D6933052B34B1850019368E /* RecordCameraExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RecordCameraExtension.entitlements; sourceTree = "<group>"; };
 		0D6933AF2B35322B0019368E /* RecordCameraExtensionSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCameraExtensionSink.swift; sourceTree = "<group>"; };
 		0D6933B12B3688FD0019368E /* RecordCameraStreamSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCameraStreamSink.swift; sourceTree = "<group>"; };
+		0D85BC002B5E30B400EC424B /* CaptureConfigurationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureConfigurationOverlay.swift; sourceTree = "<group>"; };
 		0DE5C82E2A95EDC60054AC23 /* PickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerView.swift; sourceTree = "<group>"; };
 		0DF11FDD2A6ECBA500B45306 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.markdown; };
 		7C6C99F1D4B6E3EBA3A7B7DF /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
@@ -203,6 +205,7 @@
 				0D152E9E2AB9FF2700FEB9CE /* HotkeysPreferencesView.swift */,
 				0DE5C82E2A95EDC60054AC23 /* PickerView.swift */,
 				C4B0DABB276BA4B50015082A /* ContentView.swift */,
+				0D85BC002B5E30B400EC424B /* CaptureConfigurationOverlay.swift */,
 				C4B0DABC276BA4B50015082A /* CapturePreview.swift */,
 				0D164AA32A97EACB003F2F7E /* Configuration View */,
 				C471DFFD280A0968001D24C9 /* AudioLevelsView.swift */,
@@ -418,6 +421,7 @@
 				0D3065CA2A94667E00247474 /* TestPatternView.swift in Sources */,
 				0D164AA62A97EB30003F2F7E /* ColorTabItem.swift in Sources */,
 				0D164A9C2A97E783003F2F7E /* AudioConfigurationView.swift in Sources */,
+				0D85BC012B5E30B400EC424B /* CaptureConfigurationOverlay.swift in Sources */,
 				0D152E9F2AB9FF2700FEB9CE /* HotkeysPreferencesView.swift in Sources */,
 				0D164AA02A97E894003F2F7E /* OutputConfigurationView.swift in Sources */,
 				0D164AAA2A97EC32003F2F7E /* ReplayBufferTabItem.swift in Sources */,

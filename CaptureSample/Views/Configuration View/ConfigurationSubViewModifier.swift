@@ -15,10 +15,10 @@ struct ConfigurationSubViewStyle: ViewModifier {
             .frame(width: 260)
             .padding(EdgeInsets(top: 13, leading: 15, bottom: 13, trailing: 15))
             .controlSize(.small)
-            .background(.quinary, in: RoundedRectangle(cornerRadius: 5))
-            .overlay(
+            //.background(.quinary, in: RoundedRectangle(cornerRadius: 5))
+            /*.overlay(
                 RoundedRectangle(cornerRadius: 5)
                     .stroke(Color(.quinaryLabel), lineWidth: 1)
-            )
+            )*/
     }
 }
