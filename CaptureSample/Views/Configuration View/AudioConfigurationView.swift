@@ -13,9 +13,13 @@ struct AudioConfigurationView: View {
     var body: some View {
         GroupBox {
             VStack(alignment: .imageTitleAlignmentGuide) {
-                Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
-                    .padding(EdgeInsets(top: 0, leading: 48, bottom: 0, trailing: 0))
-                    .controlSize(.small)
+                HStack {
+                    Spacer()
+                    Toggle("Capture audio", isOn: $screenRecorder.isAudioCaptureEnabled)
+                        .padding(EdgeInsets(top: 0, leading: 48, bottom: 0, trailing: 0))
+                        .controlSize(.small)
+                    Spacer()
+                }
             }
         }
         .modifier(ConfigurationSubViewStyle())

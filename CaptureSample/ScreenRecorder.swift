@@ -165,6 +165,10 @@ class ScreenRecorder: ObservableObject {
         }
     }
     
+    @Published var applicationFilterIsInclusive = false {
+        didSet { updateEngine() }
+    }
+    
     @Published var errorText = ""
     @Published var isShowingError = false
     
@@ -588,7 +592,7 @@ class ScreenRecorder: ObservableObject {
             // If a user chooses to exclude the app from the stream,
             // exclude it by matching its bundle identifier.
             excludedApps = availableApps.filter { app in
-                !self.selectedApplications.contains(app)
+                self.selectedApplications.contains(app) == self.applicationFilterIsInclusive
             }
             // Create a content filter with excluded apps.
             filter = SCContentFilter(display: display,
@@ -642,7 +646,7 @@ class ScreenRecorder: ObservableObject {
         
         // Increase the depth of the frame queue to ensure high fps at the expense of increasing
         // the memory footprint of WindowServer.
-        streamConfig.queueDepth = 5
+        streamConfig.queueDepth = 15
         
         return streamConfig
     }

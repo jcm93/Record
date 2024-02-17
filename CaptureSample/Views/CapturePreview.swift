@@ -55,11 +55,12 @@ struct CaptureSplitViewPreview: NSViewRepresentable {
     
     // Called by ScreenRecorder as it receives new video frames.
     func updateFrame(_ frame: CapturedFrame) {
+        IOSurfaceLock(frame.surface!, [], nil)
         contentLayer.contents = frame.surface
         if let frame = frame.encodedFrame {
             self.renderer.enqueue(frame)
         }
-        
+        IOSurfaceUnlock(frame.surface!, [], nil)
         //encodedContentLayer.contents = frame.encodedSurface
     }
     
@@ -93,8 +94,10 @@ struct CaptureSplitViewPreview: NSViewRepresentable {
         
         override func viewDidEndLiveResize() {
             super.viewDidEndLiveResize()
+            IOSurfaceLock(firstView.layer!.contents as! IOSurface, [], nil)
             let scale = CGFloat(IOSurfaceGetHeight(firstView.layer!.contents as! IOSurface)) / self.frame.height
             firstView.layer?.contentsScale = scale
+            IOSurfaceUnlock(firstView.layer!.contents as! IOSurface, [], nil)
             if let surface = secondView.layer?.contents as? IOSurface {
                 let otherScale = CGFloat(IOSurfaceGetHeight(surface)) / self.frame.height
                 secondView.layer?.contentsScale = otherScale

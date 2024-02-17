@@ -81,7 +81,7 @@ class RecordCameraStreamSink: NSObject {
         
         CVPixelBufferPoolCreate(kCFAllocatorDefault, nil, pixelBufferAttributes, &_bufferPool)
 
-        let pointerQueue = UnsafeMutablePointer<Unmanaged<CMSimpleQueue>?>.allocate(capacity: 1)
+        let pointerQueue = UnsafeMutablePointer<Unmanaged<CMSimpleQueue>?>.allocate(capacity: 8)
         let pointerRef = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         let result = CMIOStreamCopyBufferQueue(sinkStream, {
             (sinkStream: CMIOStreamID, buf: UnsafeMutableRawPointer?, refcon: UnsafeMutableRawPointer?) in
@@ -163,8 +163,9 @@ class RecordCameraStreamSink: NSObject {
     }
     
     func enqueue(_ image: IOSurfaceRef) {
+        guard sinkQueue != nil else { return }
         guard CMSimpleQueueGetCount(sinkQueue!) < CMSimpleQueueGetCapacity(sinkQueue!) else {
-            print("error enqueuing")
+            //print("error enqueuing")
             return
         }
         var err: OSStatus = 0
@@ -172,15 +173,18 @@ class RecordCameraStreamSink: NSObject {
         CVPixelBufferCreateWithIOSurface(kCFAllocatorDefault, image, self._bufferAuxAttributes, &pixelBuffer)
         if let pixelBuffer = pixelBuffer {
             
-            var sbuf: CMSampleBuffer!
+            var sbuf: CMSampleBuffer?
             var timingInfo = CMSampleTimingInfo()
             timingInfo.presentationTimeStamp = CMClockGetTime(CMClockGetHostTimeClock())
             err = CMSampleBufferCreateForImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: pixelBuffer.takeRetainedValue(), dataReady: true, makeDataReadyCallback: nil, refcon: nil, formatDescription: self._videoDescription, sampleTiming: &timingInfo, sampleBufferOut: &sbuf)
             if err == 0 {
                 if let sbuf = sbuf {
                     let pointerRef = UnsafeMutableRawPointer(Unmanaged.passRetained(sbuf).toOpaque())
-                    CMSimpleQueueEnqueue(self.sinkQueue!, element: pointerRef)
-                    self.setTestProperty(streamId: self.sourceStream!, newValue: "a")
+                    let queueError = CMSimpleQueueEnqueue(self.sinkQueue!, element: pointerRef)
+                    if queueError != 0 {
+                        //print(queueError)
+                    }
+                    //self.setTestProperty(streamId: self.sourceStream!, newValue: "a")
                 }
             }
         } else {

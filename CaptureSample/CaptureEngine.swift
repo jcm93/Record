@@ -122,6 +122,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     var dstData: UnsafeMutableRawPointer!
     private let frameHandlerQueue = DispatchQueue(label: "com.jcm.Record.FrameHandlerQueue")
     
+    var onehundredthframetest: CMSampleBuffer!
+    var counttest = 0
+    
     var sink: RecordCameraStreamSink! = RecordCameraStreamSink()
     var sinkInitialized = false
     
@@ -157,6 +160,10 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
             switch outputType {
             case .screen:
                 if let frame = self.createFrame(for: sampleBuffer) {
+                    self.counttest += 1
+                    if self.counttest == 100 {
+                        self.onehundredthframetest = frame.encodedFrame
+                    }
                     IOSurfaceLock(frame.surface!, [], nil)
                     self.capturedFrameHandler?(frame)
                     self.sink.enqueue(frame.surface!)

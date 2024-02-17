@@ -192,9 +192,9 @@ public enum CapturePixelFormat: Int, Codable, CaseIterable {
         case .l10r:
             return kCVPixelFormatType_ARGB2101010LEPacked
         case .biplanarpartial420v:
-            return kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange
+            return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
         case .biplanarfull420f:
-            return kCVPixelFormatType_420YpCbCr10BiPlanarFullRange
+            return kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
         }
     }
     func stringValue() -> String {
