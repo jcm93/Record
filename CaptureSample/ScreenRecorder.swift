@@ -146,6 +146,11 @@ class ScreenRecorder: ObservableObject {
     @Published var isRunning = false
     @Published var isRecording = false
     @Published var isEncoding = false
+    @Published var virtualCameraIsActive = true {
+        didSet {
+            self.captureEngine.streamOutput.virtualCameraIsActive = virtualCameraIsActive
+        }
+    }
     
     @Published var captureWidth: Int = 0
     @Published var captureHeight: Int = 0
@@ -616,7 +621,7 @@ class ScreenRecorder: ObservableObject {
         streamConfig.excludesCurrentProcessAudio = isAppAudioExcluded
         if #available(macOS 14.0, *) {
             //streamConfig.capturesShadowsOnly = true
-            //streamConfig.ignoreGlobalClipDisplay = true
+            streamConfig.ignoreGlobalClipDisplay = true
         } else {
             // Fallback on earlier versions
         }
@@ -647,6 +652,7 @@ class ScreenRecorder: ObservableObject {
         // Increase the depth of the frame queue to ensure high fps at the expense of increasing
         // the memory footprint of WindowServer.
         streamConfig.queueDepth = 15
+        streamConfig.backgroundColor = CGColor.clear
         
         return streamConfig
     }

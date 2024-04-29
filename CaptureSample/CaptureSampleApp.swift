@@ -109,6 +109,14 @@ struct CaptureSampleApp: App {
                     }
                 }
             }
+            CommandMenu("Camera Extension") {
+                Button("Install Camera Extension...") {
+                    self.screenRecorder.installExtension()
+                }
+                Button("Uninstall Camera Extension...") {
+                    self.screenRecorder.uninstallExtension()
+                }
+            }
         }
         Window("Test Pattern", id: "testpattern") {
             TestPatternView(fps: $screenRecorder.framesPerSecond)

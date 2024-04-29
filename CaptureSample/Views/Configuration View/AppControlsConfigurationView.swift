@@ -41,16 +41,6 @@ struct AppControlsConfigurationView: View {
         }
         Spacer(minLength: 10)
         HStack {
-            if !screenRecorder.isRecording {
-                Button {
-                    Task { await screenRecorder.record() }
-                } label: {
-                    Text("Start Recording")
-                }
-                .controlSize(.large)
-                .buttonStyle(.borderedProminent)
-                .disabled(screenRecorder.isRecording || !screenRecorder.isRunning)
-            }
             if screenRecorder.usesReplayBuffer && screenRecorder.isRecording {
                 Button {
                     Task { screenRecorder.saveReplayBuffer() }
@@ -60,6 +50,16 @@ struct AppControlsConfigurationView: View {
                 .controlSize(.large)
                 .buttonStyle(.borderedProminent)
                 .disabled(!screenRecorder.isRecording || !screenRecorder.isRunning)
+            }
+            if !screenRecorder.isRecording {
+                Button {
+                    Task { await screenRecorder.record() }
+                } label: {
+                    Text("Start Recording")
+                }
+                .controlSize(.large)
+                .buttonStyle(.borderedProminent)
+                .disabled(screenRecorder.isRecording || !screenRecorder.isRunning)
             }
             if screenRecorder.isRecording {
                 Button {
@@ -74,30 +74,19 @@ struct AppControlsConfigurationView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(EdgeInsets(top: 0, leading: 0, bottom: 15, trailing: 0))
-        HStack {
+        if !screenRecorder.virtualCameraIsActive {
             Button {
-                Task { await screenRecorder.uninstallExtension() }
+                Task { screenRecorder.virtualCameraIsActive = true }
             } label: {
-                Text("Remove Extension")
+                Text("Start Virtual Camera")
             }
-            .controlSize(.large)
-            .buttonStyle(.borderedProminent)
-            Button {
-                Task { screenRecorder.installExtension() }
-            } label: {
-                Text("Install Extension")
-            }
-            .controlSize(.large)
-            .buttonStyle(.borderedProminent)
-            Button {
-                Task { screenRecorder.testSetProperty() }
-            } label: {
-                Text("Test Set Property")
-            }
-            .controlSize(.large)
-            .buttonStyle(.borderedProminent)
         }
-        .frame(maxWidth: .infinity)
-        .padding(EdgeInsets(top: 0, leading: 0, bottom: 15, trailing: 0))
+        if screenRecorder.virtualCameraIsActive {
+            Button {
+                Task { screenRecorder.virtualCameraIsActive = false }
+            } label: {
+                Text("Stop Virtual Camera")
+            }
+        }
     }
 }

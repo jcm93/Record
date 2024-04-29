@@ -127,6 +127,7 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     
     var sink: RecordCameraStreamSink! = RecordCameraStreamSink()
     var sinkInitialized = false
+    var virtualCameraIsActive = false
     
     var framesWritten = 0
     
@@ -166,7 +167,9 @@ class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
                     }
                     IOSurfaceLock(frame.surface!, [], nil)
                     self.capturedFrameHandler?(frame)
-                    self.sink.enqueue(frame.surface!)
+                    if self.virtualCameraIsActive {
+                        self.sink.enqueue(frame.surface!)
+                    }
                     IOSurfaceUnlock(frame.surface!, [], nil)
                 }
             case .audio:

@@ -21,9 +21,11 @@ Record is in active development and uses rolling releases. Download the most rec
 <video src="https://github.com/jcm93/Record/assets/6864788/53d590c5-e4da-45e7-adf2-8b54d585175b" controls="controls" style="max-width: 730px;"></video>
 
 # Roadmap
+* fixup virtual camera, implement install flow for CMIO extension
 * menu bar mode / run in background
+* better test pattern
+* stable builds / unbreak CI
 * audio settings / audio metering / audio only
-* advanced capture options (include some apps, not others)
 * compositing?
 * streaming?
 

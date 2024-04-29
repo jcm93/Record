@@ -233,7 +233,12 @@ class RecordCameraExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
                 self.lastTimingInfo.presentationTimeStamp = CMClockGetTime(CMClockGetHostTimeClock())
                 let output: CMIOExtensionScheduledOutput = CMIOExtensionScheduledOutput(sequenceNumber: seq, hostTimeInNanoseconds: UInt64(self.lastTimingInfo.presentationTimeStamp.seconds * Double(NSEC_PER_SEC)))
                 if self._streamingCounter > 0 {
-                    self._streamSource.stream.send(sbuf!, discontinuity: [], hostTimeInNanoseconds: UInt64(sbuf!.presentationTimeStamp.seconds * Double(NSEC_PER_SEC)))
+                    var newSbuf: CMSampleBuffer?
+                    var timingInfo = CMSampleTimingInfo()
+                    timingInfo.presentationTimeStamp = CMClockGetTime(CMClockGetHostTimeClock())
+                    var err: OSStatus = 0
+                    err = CMSampleBufferCreateCopyWithNewTiming(allocator: kCFAllocatorDefault, sampleBuffer: sbuf!, sampleTimingEntryCount: 1, sampleTimingArray: &timingInfo, sampleBufferOut: &newSbuf)
+                    self._streamSource.stream.send(newSbuf!, discontinuity: [], hostTimeInNanoseconds: UInt64(newSbuf!.presentationTimeStamp.seconds * Double(NSEC_PER_SEC)))
                 }
                 self._streamSink.stream.notifyScheduledOutputChanged(output)
                 if let surface = CVPixelBufferGetIOSurface(sbuf?.imageBuffer)?.takeUnretainedValue() {

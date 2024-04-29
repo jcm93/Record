@@ -103,6 +103,7 @@ struct ContentView: View {
                             overlayOpacity = hover == true ? 1.0 : 0.0
                         }
                     }
+                    .background(.white)
             }
         }
         .navigationTitle("Record")

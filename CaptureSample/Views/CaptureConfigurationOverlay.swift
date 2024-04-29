@@ -23,10 +23,10 @@ struct CaptureConfigurationOverlay: View {
             VStack {
                 //GroupBox {
                     Picker("Capture", selection: $screenRecorder.applicationFilterIsInclusive) {
-                        Text("Inclusive")
+                        Text("Exclude:")
                             .tag(true)
                             .font(.title)
-                        Text("Exclusive")
+                        Text("Include:")
                             .tag(false)
                             .font(.title)
                     }

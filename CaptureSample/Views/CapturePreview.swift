@@ -44,13 +44,14 @@ struct CaptureSplitViewPreview: NSViewRepresentable {
     init() {
         //contentLayer.contentsGravity = .resizeAspect
         contentLayer.contentsGravity = .topLeft
+        contentLayer.backgroundColor = CGColor.clear
         encodedContentLayer.contentsGravity = .topRight
         self.renderer = encodedContentLayer
     }
     
     func makeNSView(context: Context) -> CaptureSplitViewPreview {
         //CaptureVideoPreview(layer: contentLayer)
-        CaptureSplitViewPreview(firstLayer: contentLayer, secondLayer: encodedContentLayer)
+        return CaptureSplitViewPreview(firstLayer: contentLayer, secondLayer: encodedContentLayer)
     }
     
     // Called by ScreenRecorder as it receives new video frames.
@@ -79,6 +80,7 @@ struct CaptureSplitViewPreview: NSViewRepresentable {
         init(firstLayer: CALayer, secondLayer: CALayer) {
             self.firstView = CaptureVideoPreview(layer: firstLayer)
             self.secondView = CaptureVideoPreview(layer: secondLayer)
+            self.firstView.layer?.backgroundColor = CGColor.clear
             super.init(frame: .zero)
             self.isVertical = true
             self.addSubview(self.firstView)
