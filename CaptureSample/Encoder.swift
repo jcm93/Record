@@ -41,6 +41,7 @@ class VTEncoder {
     var hasStarted = false
     var isStarting = false
     var decodes = true
+    var options: Options
     
     private let logger = Logger.encoder
     
@@ -48,6 +49,7 @@ class VTEncoder {
         self.destWidth = options.destWidth
         self.destHeight = options.destHeight
         let sourceImageBufferAttributes = [kCVPixelBufferPixelFormatTypeKey: options.pixelFormat as CFNumber] as CFDictionary
+        self.options = options
         
         let err = VTCompressionSessionCreate(allocator: kCFAllocatorDefault,
                                              width: Int32(options.destWidth),
@@ -243,6 +245,15 @@ class VTEncoder {
     func encodeFrame(buffer: CVImageBuffer, timeStamp: CMTime, duration: CMTime, properties: CFDictionary?, infoFlags: UnsafeMutablePointer<VTEncodeInfoFlags>?) {
         if self.stoppingEncoding != true {
             var pixelBufferToEncodeFrom: CVPixelBuffer
+            if let primaries = options.colorPrimaries {
+                CVBufferSetAttachment(buffer, kCVImageBufferColorPrimariesKey, primaries, .shouldPropagate)
+            }
+            /*if let matrix = options.yuvMatrix {
+                CVBufferSetAttachment(buffer, kCVImageBufferYCbCrMatrixKey, matrix, .shouldPropagate)
+            }*/
+            /*if let tf = options.transferFunction {
+                CVBufferSetAttachment(buffer, kCVImageBufferTransferFunctionKey, tf, .shouldPropagate)
+            }*/
             if pixelTransferSession != nil {
                 if self.pixelTransferBuffer == nil {
                     self.pixelTransferBuffer = copyPixelBuffer(withNewDimensions: self.destWidth, y: self.destHeight, srcPixelBuffer: buffer)
