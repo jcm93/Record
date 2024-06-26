@@ -199,6 +199,10 @@ class ScreenRecorder: ObservableObject {
         didSet { updateEngine() }
     }
     
+    @Published var captureHDRStatus: CaptureHDRStatus = .localHDR {
+        didSet { updateEngine() }
+    }
+    
     @Published var selectedDisplay: SCDisplay? {
         didSet { updateEngine() }
     }
@@ -406,6 +410,17 @@ class ScreenRecorder: ObservableObject {
         await self.refreshAvailableContent()
     }
     
+    func initializeEventTap() async {
+        if self.eventTap == nil {
+            do {
+                self.eventTap = try RecordEventTap()
+            } catch {
+                logger.fault("Hotkey listener was not initialized: \(error, privacy: .public)")
+            }
+        }
+        self.eventTap?.callback = self.saveReplayBuffer
+    }
+    
     /// Starts capturing screen content.
     func start() async {
         // Exit early if already running.
@@ -547,17 +562,6 @@ class ScreenRecorder: ObservableObject {
             await captureEngine.update(configuration: streamConfiguration, filter: contentFilter)
         }
         self.selectedPreset = nil
-        if self.eventTap == nil {
-            do {
-                self.eventTap = try RecordEventTap()
-            } catch {
-                logger.fault("Hotkey listener was not initialized: \(error, privacy: .public)")
-            }
-        }
-        self.eventTap?.callback = self.saveReplayBuffer
-        if self.showsEncodePreview {
-            self.updateEncodePreview()
-        }
     }
     
     func uninstallExtension() {
@@ -614,7 +618,8 @@ class ScreenRecorder: ObservableObject {
     
     private var streamConfiguration: SCStreamConfiguration {
         
-        let streamConfig = SCStreamConfiguration()
+        let streamConfig = SCStreamConfiguration(preset: .captureHDRStreamCanonicalDisplay)
+        streamConfig.captureDynamicRange = captureHDRStatus.enumValue()
         
         // Configure audio capture.
         streamConfig.capturesAudio = isAudioCaptureEnabled
@@ -653,23 +658,18 @@ class ScreenRecorder: ObservableObject {
         // the memory footprint of WindowServer.
         streamConfig.queueDepth = 15
         streamConfig.backgroundColor = CGColor.clear
+        //streamConfig.colorMatrix = "" as CFString
         
         return streamConfig
     }
     
     func assignPixelFormatAndColorMatrix(_ config: SCStreamConfiguration) {
         config.pixelFormat = self.capturePixelFormat.osTypeFormat()
-        if self.bitDepthSetting == .eight {
-            if config.pixelFormat == kCVPixelFormatType_420YpCbCr10BiPlanarFullRange {
-                config.pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
-            } else if config.pixelFormat == kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange {
-                config.pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
-            }
-        }
-        if (self.capturePixelFormat == .biplanarpartial420v || self.capturePixelFormat == .biplanarpartial420v) {
+        /*if (self.capturePixelFormat == .biplanarpartial420v || self.capturePixelFormat == .biplanarpartial420v) {
             config.colorMatrix = self.captureYUVMatrix.cfStringFormat()
-        }
+        }*/
         config.colorSpaceName = self.captureColorSpace.cfString()
+        config.colorMatrix = self.captureYUVMatrix.cfStringFormat()
     }
     
     /// - Tag: GetAvailableContent

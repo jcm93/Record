@@ -1,10 +1,28 @@
 import Foundation
 import VideoToolbox
+import ScreenCaptureKit
 
 public enum CaptureType: Int, Codable, CaseIterable {
     case display
     case window
 }
+
+public enum CaptureHDRStatus: Int, Codable, CaseIterable {
+    case SDR
+    case localHDR
+    case canonicalHDR
+    func enumValue() -> SCCaptureDynamicRange {
+        switch self {
+        case .SDR:
+            .SDR
+        case .localHDR:
+            .hdrLocalDisplay
+        case .canonicalHDR:
+            .hdrCanonicalDisplay
+        }
+    }
+}
+
 
 public enum EncoderSetting: Int, Codable, CaseIterable {
     case H264
@@ -185,6 +203,7 @@ public enum CapturePixelFormat: Int, Codable, CaseIterable {
     case l10r
     case biplanarpartial420v
     case biplanarfull420f
+    case biplanarfull444f
     func osTypeFormat() -> OSType {
         switch self {
         case .bgra:
@@ -195,6 +214,8 @@ public enum CapturePixelFormat: Int, Codable, CaseIterable {
             return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
         case .biplanarfull420f:
             return kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+        case .biplanarfull444f:
+            return kCVPixelFormatType_444YpCbCr10BiPlanarFullRange
         }
     }
     func stringValue() -> String {
@@ -207,6 +228,8 @@ public enum CapturePixelFormat: Int, Codable, CaseIterable {
             return "420v"
         case .biplanarfull420f:
             return "420f"
+        case .biplanarfull444f:
+            return "xf44"
         }
     }
 }
@@ -215,6 +238,7 @@ public enum CaptureYUVMatrix: Int, Codable, CaseIterable {
     case itu_r_709
     case itu_r_601
     case smpte_240m_1995
+    case none
     func cfStringFormat() -> CFString {
         switch self {
         case .itu_r_709:
@@ -223,6 +247,8 @@ public enum CaptureYUVMatrix: Int, Codable, CaseIterable {
             return CGDisplayStream.yCbCrMatrix_ITU_R_601_4
         case .smpte_240m_1995:
             return CGDisplayStream.yCbCrMatrix_SMPTE_240M_1995
+        case .none:
+            return "" as CFString
         }
     }
     func stringValue() -> String {
@@ -233,6 +259,8 @@ public enum CaptureYUVMatrix: Int, Codable, CaseIterable {
             return "601"
         case .smpte_240m_1995:
             return "SMPTE 240M 1995"
+        case .none:
+            return ""
         }
     }
 }
@@ -339,3 +367,4 @@ extension FourCharCode {
         return NSFileTypeForHFSTypeCode(self)
     }
 }
+

@@ -27,6 +27,7 @@ class VTEncoder {
     var decodeSession: VTDecompressionSession!
     var videoSink: VideoSink!
     var pixelTransferSession: VTPixelTransferSession?
+    var hdrMetadataGenerationSession: VTHDRPerFrameMetadataGenerationSession!
     var stoppingEncoding = false
     var pixelTransferBuffer: CVPixelBuffer!
     
@@ -75,6 +76,7 @@ class VTEncoder {
                                        isRealTime: true,
                                        usesReplayBuffer: options.usesReplayBuffer,
                                        replayBufferDuration: options.replayBufferDuration)
+        try self.hdrMetadataGenerationSession = VTHDRPerFrameMetadataGenerationSession(framesPerSecond: 120, hdrFormats: [.dolbyVision])
         if options.convertsColorSpace || options.scales {
             var err2 = VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &pixelTransferSession)
             if noErr != err2 {
@@ -98,7 +100,12 @@ class VTEncoder {
         if options.codec == kCMVideoCodecType_H264 {
             err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_H264_Main_AutoLevel)
         } else if options.codec == kCMVideoCodecType_HEVC {
-            err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_HEVC_Main_AutoLevel)
+            switch options.bitDepth {
+            case 8:
+                err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_HEVC_Main_AutoLevel)
+            default:
+                err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_HEVC_Main10_AutoLevel)
+            }
         }
         if noErr != err {
             logger.fault("Failed to set profile level: \(err, privacy: .public)")
@@ -161,6 +168,10 @@ class VTEncoder {
         if noErr != err {
             logger.fault("Failed to set bit depth: \(err, privacy: .public)")
         }
+        err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_HDRMetadataInsertionMode, value: kVTHDRMetadataInsertionMode_Auto)
+        if noErr != err {
+            logger.fault("Failed to set hdr metadata insertion mode: \(err, privacy: .public)")
+        }
         err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_YCbCrMatrix, value: options.yuvMatrix)
         if noErr != err {
             logger.fault("Failed to set YCbCr matrix: \(err, privacy: .public)")
@@ -207,6 +218,11 @@ class VTEncoder {
         } else {
             pixelBufferToEncodeFrom = buffer
         }
+        do {
+            try self.hdrMetadataGenerationSession.attachMetadata(to: pixelBufferToEncodeFrom)
+        } catch {
+            fatalError()
+        }
         VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
             (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in
             if sbuf != nil {
@@ -250,8 +266,8 @@ class VTEncoder {
             }
             /*if let matrix = options.yuvMatrix {
                 CVBufferSetAttachment(buffer, kCVImageBufferYCbCrMatrixKey, matrix, .shouldPropagate)
-            }*/
-            /*if let tf = options.transferFunction {
+            }
+            if let tf = options.transferFunction {
                 CVBufferSetAttachment(buffer, kCVImageBufferTransferFunctionKey, tf, .shouldPropagate)
             }*/
             if pixelTransferSession != nil {
@@ -262,6 +278,11 @@ class VTEncoder {
                 pixelBufferToEncodeFrom = self.pixelTransferBuffer
             } else {
                 pixelBufferToEncodeFrom = buffer
+            }
+            do {
+                try self.hdrMetadataGenerationSession.attachMetadata(to: pixelBufferToEncodeFrom)
+            } catch {
+                fatalError()
             }
             VTCompressionSessionEncodeFrame(self.session, imageBuffer: pixelBufferToEncodeFrom, presentationTimeStamp: timeStamp, duration: duration, frameProperties: properties, infoFlagsOut: infoFlags) {
                 (status: OSStatus, infoFlags: VTEncodeInfoFlags, sbuf: CMSampleBuffer?) -> Void in

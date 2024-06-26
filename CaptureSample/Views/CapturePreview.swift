@@ -17,6 +17,7 @@ struct CaptureSingleViewPreview: NSViewRepresentable {
     init() {
         //contentLayer.contentsGravity = .resizeAspect
         contentLayer.contentsGravity = .resizeAspect
+        contentLayer.wantsExtendedDynamicRangeContent = true
     }
     
     func makeNSView(context: Context) -> CaptureVideoPreview {

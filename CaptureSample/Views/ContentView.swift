@@ -110,6 +110,7 @@ struct ContentView: View {
         .onAppear {
             Task {
                 if await screenRecorder.canRecord {
+                    await screenRecorder.initializeEventTap()
                     await screenRecorder.start()
                 } else {
                     isUnauthorized = true
@@ -117,11 +118,5 @@ struct ContentView: View {
                 }
             }
         }
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }

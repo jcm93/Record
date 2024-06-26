@@ -28,7 +28,8 @@ extension Logger {
         do {
             let logStore = try OSLogStore(scope: .currentProcessIdentifier)
             let timeIntervalToFetch = Date().timeIntervalSince(startupTime)
-            let predicate = NSPredicate(format: "subsystem CONTAINS[c] 'com.jcm.record'")
+            guard let bundleIdentifier = Bundle.main.bundleIdentifier else { return nil }
+            let predicate = NSPredicate(format: "subsystem CONTAINS[c] '\(bundleIdentifier)'")
             let entries = try logStore.getEntries(at: logStore.position(timeIntervalSinceEnd: timeIntervalToFetch), matching: predicate)
             var logString = ""
             for entry in entries {

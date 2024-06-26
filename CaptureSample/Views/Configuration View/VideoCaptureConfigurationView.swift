@@ -73,6 +73,22 @@ struct VideoCaptureConfigurationView: View {
                     .labelsHidden()
                     Group {
                         HStack {
+                            Text("Capture HDR Status:")
+                            Picker("Capture", selection: $screenRecorder.captureHDRStatus) {
+                                Text("SDR")
+                                    .tag(CaptureHDRStatus.SDR)
+                                Text("Local HDR")
+                                    .tag(CaptureHDRStatus.localHDR)
+                                Text("Canonical HDR")
+                                    .tag(CaptureHDRStatus.canonicalHDR)
+                            }
+                            .pickerStyle(.radioGroup)
+                            .horizontalRadioGroupLayout()
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                        }
+                        HStack {
                             Text("Pixel Format:")
                             Picker("Pixel Format", selection: $screenRecorder.capturePixelFormat) {
                                 ForEach(CapturePixelFormat.allCases, id: \.self) { format in
@@ -85,20 +101,18 @@ struct VideoCaptureConfigurationView: View {
                             }
                             .frame(width: 150)
                         }
-                        if (self.screenRecorder.capturePixelFormat == .biplanarfull420f || self.screenRecorder.capturePixelFormat == .biplanarpartial420v) {
-                            HStack {
-                                Text("Transfer Function:")
-                                Picker("Transfer Function", selection: $screenRecorder.captureYUVMatrix) {
-                                    ForEach(CaptureYUVMatrix.allCases, id: \.self) { format in
-                                        Text(format.stringValue())
-                                            .tag(format)
-                                    }
+                        HStack {
+                            Text("Transfer Function:")
+                            Picker("Transfer Function", selection: $screenRecorder.captureYUVMatrix) {
+                                ForEach(CaptureYUVMatrix.allCases, id: \.self) { format in
+                                    Text(format.stringValue())
+                                        .tag(format)
                                 }
-                                .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
-                                    dimension[.leading]
-                                }
-                                .frame(width: 150)
                             }
+                            .alignmentGuide(.imageTitleAlignmentGuide) { dimension in
+                                dimension[.leading]
+                            }
+                            .frame(width: 150)
                         }
                         HStack {
                             Text("Color Space:")
